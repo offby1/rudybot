@@ -1,0 +1,244 @@
+-*-outline-*-
+
+-- High priority
+
+* bugs
+
+** "seen" in query
+   *sigh* why does this keep happening?
+
+** sporadic test failure
+   "channel doesn't go idle when we are yammering at it".  No idea
+   why, really.  I've refactored the file that test lives in, in the
+   hope that that will magically make the problem go away.  I've also
+   built a statue to Thoth, the God of software quality.
+
+
+-- Low priority
+
+* bugs
+
+** too many open files
+   Around midnight, the bot said "No data from server for a while;
+   reconnecting".  No problem.  But then, for the next four hours, it
+   tried to reconnect, and failed with ERR_NICKNAMEINUSE; it kept
+   trying about twice a minute fruitlessly until around 4:30 AM, at
+   which point the logs show 
+
+   thread 0: 2007-09-08T04:27:23-0700:  <= #5(struct:ERR_NICKNAMEINUSE #4(struct:prefix "kubrick.freenode.net" #f) "433" ("*" "rudybot" "Nickname is already in use.") "rudybot")
+   thread 0: 2007-09-08T04:27:23-0700:  <= #4(struct:message #4(struct:prefix "kubrick.freenode.net" #f) "451" ("*" "PRIVMSG" "Register first."))
+   thread 0: 2007-09-08T04:27:31-0700:  <= #4(struct:message #f "ERROR" ("Closing Link: 127.0.0.1 (Connection Timed Out)"))
+   thread 0: 2007-09-08T04:27:31-0700: eof on server; reconnecting
+   Caught an exception: #3(struct:exn:fail:filesystem "open-output-file: cannot open output file: \"/var/log/irc-bot/irc.freenode.org-2007-09-08T11:27:41Z\" (Too many open files; errno=24)" #<continuation-mark-set>)
+
+   ... with the above "Caught an exception" message repeated more or
+   less endlessly.
+
+** "CTCP source" doesn't return an FTP site :-)
+
+http://www.irchelp.org/irchelp/rfc/ctcpspec.html says that the source
+should be hosted on an FTP server, which I don't care to run, so ...
+
+* finer control of logging
+  Right now I have a single boolean -- *verbose* -- which controls
+  logging.  But it might be nice to have that be a list instead; each
+  module would log if and only if it finds on that list a symbol
+  assoicated with that module.  That way I could start with the list
+  empty, but if I suspected that (say) the moviestowatchfor thread was
+  acting funny, I could do, at the repl, something like (add-to-list!
+  (*things-to-log*) 'moviestowatchfor)
+
+  If modules were first-class, we could put _them_ on the list
+  directly, instead of each module having to create its own symbol
+  just for that purpose.
+
+** open log file before threads start
+   I often see messages going to stderr even though I've specified
+   that they should go to the log file; I assume these messages are
+   coming from threads that are running before *log-output-port* gets
+   set to the log file.
+
+* read memos?
+2007-08-10T15:35:01-0700:  <= #4(struct:message "MemoServ!MemoServ@services." "NOTICE" ("rudybot" "You have a new memo from \u0002offby1\u0002 (#2)"))
+2007-08-10T15:35:01-0700:  <= #4(struct:message "MemoServ!MemoServ@services." "NOTICE" ("rudybot" "Type \u0002/msg MemoServ READ 2\u0002 to read it"))
+
+* ack "MODE" at startup
+  after we do "/msg nickserv identify" (so that we can send private
+  messages on freenode), the server responds with <<:services. MODE
+  rudebot :+e>> .  We should note receipt of that message, in case it
+  _doesn't_ come and we're wondering why we can't sent private
+  messages.
+
+** don't log in everywhere?
+   I imagine that other IRC networks, besides freenode, either don't
+   require logging in, or have a different way of doing it.  We should
+   really log in only if we clearly need it
+
+* quotes and news headlines
+
+  I should make the silly quotes have a different period than the news
+  headlines, so they don't always arrive together.  This is mostly
+  irrelevant, though, since if there's any real chatter in the
+  channel, each will get delayed by more-or-less random amounts.
+
+** <j85wilson> 
+
+   offby1: suggestion for rudybot: only have him spew news in a
+   channel if there has been speech since the last time he spewed news
+
+* Windows
+
+** Test regularly
+   I'd have expected that the repl won't work there, since I try to
+   use "readline", and yet it seems ok
+
+* write our own identd server
+  like every other IRC client out there.
+
+* reset terminal state on abort
+  I notice that, when I abort the terminal in which the bot (and, in
+  particular, its repl) is running, I need to type "reset" at the
+  shell in order to see characters echo.  This is a bug in mzscheme
+  itself
+  (http://bugs.plt-scheme.org/query/gnatsweb.pl?cmd=view%20audit-trail&database=default&pr=8836),
+  but I should at least work around it.  (elibarzilay says it can't be
+  done but I don't believe him)
+
+* persistence
+  It'd be nice to save stuff to disk.  Currently I save the date of
+  the last planet.emacsen.org headline that we spewed in the the PLT
+  "preferences" file ...  But I dunno if simply "write"ing an
+  sexpression will suffice for more complex data ... it'd be nice to
+  have bindings to Berkeley DB.
+
+  On the other hand, I can't think of much that I need to persist
+  ... maybe the appearances-by-nick data for the "seen" command.  That
+  seems a perfect application for sqlite, which I seem to have an urge
+  to play with ...
+
+  http://www.elemental-programming.org/Bigloo%20SQLI.html and
+  http://planet.plt-scheme.org/package-source/jaymccarthy/sqlite.plt/3/1/doc.txt
+  both seem like they might do it; the former seems slightly more
+  up-to-date.
+  http://planet.plt-scheme.org/package-source/dfisher/sql-table.plt/1/1/doc.txt
+  looks particularly pleasant.
+
+* Find some way to deal with exceptions in threads
+  e.g., "procedure internal-entries-newer-than: expects 3 arguments,
+  given 2 ...".  That procedure application is happening in a thread
+  other than the main one, and so rather than the whole app dying, it
+  just hangs.  This is annoying when I'm running tests -- the tests
+  will sometimes pass despite the thread puking.  Naturally I want the
+  process to exit with a non-zero status, to ensure that I notice the
+  thread dying.
+
+* Convert from strings to bytes
+  Wherever possible, change from using "string" procedures to "bytes"
+  procedures -- since IRC doesn't specify any character encoding.  As
+  things stand now, we're implicitly using UTF-8 everywhere; it'd be
+  better for the encoding to be explicit.  That way, eventually I
+  could have per-channel encodings.
+
+* maybe periodically see what channels _I'm_ in ...
+  (where "I" means "someone with the nick 'offby1'") and have the bot
+  join them if it's not already in them.  Like a little puppy dog.
+  This is harder than it sounds, since it's not blindingly clear who
+  "I" am -- sometimes my nick changes.  It would probably be best to
+  find me by host name, not nick.
+
+** brx suggests a "stalk" function
+   which takes the name of a victim.  Like the above but oh so
+   sinister.
+
+* Catch Control-C so that we don't spew an ugly stack trace when we're killed.
+  Maybe even do a nice PART and QUIT while we're at it.
+
+* movies
+** Do buubot's job...
+  ... find Ebert reviews of movies.  Use IMDB; find the "external
+  reviews" link; find Ebert's name.  (I honestly think this would be
+  as reliable as searching on rogerebert.com; that site's design is as
+  lame as its content is excellent)
+
+** restrict to more recent reviews
+   rather than always displaying the 15 most recent, limit to, say,
+   those from the last week
+
+* emacschannelquotes
+  <e1f> offby1: you need to include emacschannelquotes in rudebot
+  He means snag stuff from
+  http://www.emacswiki.org/cgi-bin/wiki?EmacsChannelQuotes, but I'd
+  rather not do that since most of those quotes are multi-line, and
+  wouldn't look good if collapsed.
+
+* eval
+
+** output formatting
+
+   put value and output on separate lines, prefixed with ;
+   <Riastradh> ;Output: mumble grumble stumble
+   <Riastradh> ;Value: 2+3i
+
+** reset
+   
+   <eli> offby1: BTW, another extension to rudybot: have a way to kill my evaluator, so it will be
+         recreated again on the next interaction.
+   <eli> So if I do something stupid like:
+   <eli> rudybot: eval (define define 1)
+   <rudybot> #<void>:""
+   <eli> rudybot: eval (define x 1)
+   <rudybot> reference to an identifier before its definition: x in module: program
+   <eli> then I can restart from a fresh one.
+
+
+* new commands
+
+** "you suck"
+   to emit some TODO list entries, or just a URL to the TODO file
+
+** "help"
+
+** auto shakespeare insults
+   I've got scheme code to do that around here somewhere.
+
+** echo URL titles
+   the way feck does
+
+** fallback
+   If it's a single word, look for that tag on del.icio.us, and return
+   either the first link, or one of the first links.
+
+* repl commands
+
+I wonder if I should make a new module that contains stuff
+specifically for interacting with the bot via the REPL.  It'd be
+essentially a full-blown IRC client with a scheme syntax.
+
+** examine a timer
+   Maybe have the timers constantly visible in the repl (it'd be nice
+   to have curses support to do this).  So I could watch them count
+   down.
+
+* "seen" command
+
+** summarize the time difference
+   It now says "bob last spoke in #scheme 2007-08-31T03:05:50Z, saying
+   ..."; it'd be nice if it said "bob last spoke in #scheme
+   2007-08-31T03:05:50Z (about 12 hours ago), saying ..."
+
+** truncate output
+   because it can be annoyingly long, if the last thing they said was
+   annoyingly long.
+
+* respond to jordanb
+  <fledermaus> every time jordanb chips in with a "Let's..."
+  statement, rudebot should reciprocate.
+
+  Or at least it should squirrel away the quip.
+
+* Terminology
+  I suspect there is one RFC-1149-ly correct term for what I variously
+  call "requester" and "source" (i.e., the guy who sends an IRC
+  message), and other terms.  Try to use the same terms that the RFC
+  uses, so that someone who's familiar with the RFC, when reading this
+  code, will feel right at home.

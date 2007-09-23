@@ -1,0 +1,20 @@
+Doesn't "related work" sound grandly academic?
+
+Anyway, here are some other bots, and bot-related code, that I know
+of:
+
+* https://svn.bountysource.com/scm-irc/trunk
+
+* http://www.call-with-current-continuation.org/eggs/irc.html
+  (not a bot, really; just a library)
+
+* http://monkeyboy.td.org.uit.no/~cin/feckbot
+
+  Cin is often in #scheme. Feckbot contains the funniest bot code I've
+  ever seen: the "tourettes" command.  Describing it is hopeless; just
+  try it.
+
+* http://svn.navi.cx/misc/trunk/cia/ -- CIA.  A pretty serious bot,
+  probably carefully designed
+
+* http://poe.perl.org/?POE_Cookbook/IRC_Bots

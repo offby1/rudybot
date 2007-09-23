@@ -1,0 +1,29 @@
+-*-scheme-*-
+; from a discussion with Riastradh; I forget the context
+(sync
+ (wrap (message-fromserver-evt server-a)
+       (lambda (message)
+         ...))
+ (wrap (message-fromserver-evt server-b)
+       (lambda (message)
+         ...))
+ )
+
+
+
+;;  a "join calculus" example.
+(define (run-news-responder session timer-alarm-delta)
+  (with-process
+   ((when (and (new-news item)
+               (someone-requested-news who))
+      (respond-with-message session "Here's the news, ~A: ~S" who item))
+    (when (someone-requested-news who)
+      (respond-with-message session "No gnus for you!"))
+    (when (and (new-news item)
+               (timer-alarm))
+      (send-message channel "There's news, folks!")
+      (new-news item)
+      (after-time timer-alarm-delta timer-alarm)))
+   (subscribe-to-rss-feed "gnomon's RSS feed for Riastradh's blag"
+                          new-news)
+   (register-irc-message-receiver session news-request? someone-requested-news)))
