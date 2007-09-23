@@ -15,6 +15,7 @@
     sleep 10
 
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: news\\r"
+    echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: source\\r"
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: quote\\r"
     echo -e ":a!b@c PRIVMSG rudybot :\001VERSION\001\\r"
     echo -e ":a!b@c PRIVMSG rudybot :what ho, my good man\\r"

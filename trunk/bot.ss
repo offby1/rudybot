@@ -553,9 +553,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
        (or (SOURCE? m)
            (gist-equal? "source" m session)))
      (lambda (m)
-       (let ((source-host "offby1.ath.cx")
-             (source-directory "/~erich/bot/")
-             (source-file-names "rudybot.tar.gz"))
+       (let ((source-host "rudybot.googlecode.com")
+             (source-directory "/svn/")
+             (source-file-names "trunk"))
          (if (SOURCE? m)
              (out session "NOTICE ~a :\u0001SOURCE ~a:~a:~a\0001~%"
                   (PRIVMSG-speaker m)
