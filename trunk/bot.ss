@@ -611,9 +611,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
      (lambda (m)
        (reply session m (format "OK, so I've been up ~a; this TCP/IP connection has been up ~a."
                                 (spelled-out-time (- (current-seconds)
-                                                     (irc-session-start-time-seconds session)))
+                                                     *process-start-time*))
                                 (spelled-out-time (- (current-seconds)
-                                                     *process-start-time*)))))
+                                                     (irc-session-start-time-seconds session))))))
      #:responds? #t)
     (add!
      (lambda (m)
