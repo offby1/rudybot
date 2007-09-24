@@ -1,0 +1,34 @@
+
+
+
+[Sun Sep 23 2007]
+*** Users on #scheme-bots: offby1 chandler rudybot Cin feck                                [17:34]
+*** #scheme-bots modes: +sn
+*** #scheme-bots was created on Sunday 2007/09/02 12:42:08 PM
+<offby1> eli barzilay would _really_ like to see someone break rudybot's eval
+<chandler> oh, you missed the flushing issue I had earlier                                 [17:36]
+<chandler> rudybot: eval (make-string 500 #\a)
+<offby1> aha!
+<chandler> ... no answer
+<chandler> rudybot: eval 1
+<rudybot>
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+<chandler> where's the answer to "eval 1"?
+<offby1> I suspect he'll always get back to you eventually, but something about long strings
+         makes him slow down.
+<chandler> rudybot: eval 1
+<rudybot> 1:""
+<offby1> rudybot: eval 2                                                                   [17:37]
+<rudybot> 2:""
+<offby1> wow
+<offby1> you're right
+<chandler> no, it's some kind of flushing issue
+<offby1> a new entry for my TODO list!
+<offby1> at least he doesn't leave the seat up.
+<chandler> rudybot: eval (string-length (make-string 500 #\a))
+<rudybot> 500:""
+<chandler> rudybot: eval call/cc
+<rudybot> #<primitive:call-with-current-continuation>:""
+<offby1> the Queens Monthly Reporter just released a special "Flushing" issue.             [17:38]
+<offby1> I guess it has to do with _outputting_ long strings, not merely _generating_ them.
+ERC> 

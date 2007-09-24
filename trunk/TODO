@@ -4,6 +4,9 @@
 
 * bugs
 
+** chandler's "flushing issue"
+   See the file in bugs/.
+
 ** "seen" in query
    *sigh* why does this keep happening?
 
