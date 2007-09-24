@@ -2,6 +2,11 @@
 
 -- High priority
 
+* one-click startup
+  For people who have never seen it before, provide a shell script
+  that connects to freenode with a random nick.  This, of course,
+  requires that I write some code to generate a random nick.
+
 * bugs
 
 ** chandler's "flushing issue"
