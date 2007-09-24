@@ -19,6 +19,10 @@
 
 -- Low priority
 
+* auto translate, like fsbot
+  http://paste.lisp.org/display/48148 is a Python example
+  see http://translate.google.com
+
 * bugs
 
 ** too many open files

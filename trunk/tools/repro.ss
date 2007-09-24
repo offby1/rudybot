@@ -3,6 +3,15 @@
 #$Id$
 exec mzscheme -qr "$0" ${1+"$@"}
 |#
+
+;; This helped me track down a bug involving the "quote" command
+;; (namely -- it responded more than once).  I checked out various
+;; revisions from Subversion, and ran this on each; and used a binary
+;; search to narrow down the guilty revision.
+
+;; I've since fixed the bug, but suspect this could be handy in the
+;; future, so ... here it remains.
+
 (define *channels*  (list "#squank" "#wank" "#hippy" "#hoppy" "#flippy" "#floppy" "#silly" "#sally"))
 
 (define *cmdline-words*
