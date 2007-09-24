@@ -1,0 +1,15 @@
+#summary Mostly-empty page to see if wiki pages really live in the svn repos, as the docs say
+
+= Introduction =
+
+Welcome to this page.
+
+
+= Details =
+
+Let us use the word "content".
+  * Pretentious.
+  * Trendy.
+  * Jargon.
+
+ 
