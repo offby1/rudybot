@@ -54,7 +54,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
        ((sandbox-evaluator sb)
         (with-output-to-string
          (lambda ()
-           (write first-sexp))))))))
+           (write first-sexp)
+           (flush-output (current-output-port)))))))))
 ;(trace sandbox-eval)
 
 (define (get-sandbox-by-name name)
