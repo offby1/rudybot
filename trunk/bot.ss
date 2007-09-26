@@ -699,7 +699,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
       (register-usual-services! *sess*)
 
       (out *sess* "NICK ~a~%" (irc-session-nick *sess*))
-      (out *sess* "USER ~a unknown-host ~a :~a, ~a~%"
+      (out *sess* "USER ~a unknown-host ~a :~a, version ~a~%"
            (or (getenv "USER") "unknown")
            (*irc-server-name*)
            *client-name*

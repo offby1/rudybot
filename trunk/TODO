@@ -9,6 +9,13 @@
 
 * bugs
 
+** eval ignoring parens?
+   <offby1> rudybot: eval ((+ 1 2))
+   <rudybot> procedure application: expected procedure, given: 3 (no arguments)
+   <offby1> rudybot: eval((+ 1 2))
+   <rudybot> 1:""
+   <offby1> weird.
+
 ** chandler's "flushing issue"
    See the file in bugs/.
 
