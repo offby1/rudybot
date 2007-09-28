@@ -1,0 +1,20 @@
+I've seen this in the repl a few times (at r11, e.g.); I cannot
+reproduce it, don't know what's causing it.  On the other hand, it
+doesn't seem to cause any lasting damage.
+
+> match: no matching clause for #f
+/home/offby1/new-bot/del.ss:61:9: (lifted tag)
+/home/offby1/new-bot/del.ss:57:4: (map (lambda (post) (make-entry (date->time-utc (lifted ....)) (lifted post) (lifted ....))) (lifted tag))
+/home/offby1/new-bot/bot.ss:402:19: (shuffle-list (snarf-some-recent-posts))
+/home/offby1/new-bot/bot.ss:397:18: (for-each (lambda (post) (cached-channel-put (irc-session-movies-queue session) (maybe-make-URL-tiny post))) (shuffle-list (snarf-some-recent-posts)))
+[unknown source]: (call-with-continuation-prompt (lambda () (with-continuation-mark break-enabled-key bpz (with-continuation-mark ....))) handler-prompt-key (lambda (thunk) (thunk)))
+/home/offby1/new-bot/bot.ss:404:16: (loop)
+[unknown source]: (call-with-continuation-prompt (lambda () (with-continuation-mark break-enabled-key bpz (with-continuation-mark ....))) handler-prompt-key (lambda (thunk) (thunk)))
+
+
+ === context ===
+/home/offby1/local/stow/plt/lib/plt/collects/mzlib/private/match/match-error.ss:9:4: match:error
+send-request
+recent-posts
+loop
+/home/offby1/new-bot/bot.ss:391:14: loop

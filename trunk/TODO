@@ -17,7 +17,7 @@
    <offby1> weird.
 
 ** chandler's "flushing issue"
-   See the file in bugs/.
+   See the file in bug/.
 
 ** "seen" in query
    *sigh* why does this keep happening?
@@ -28,8 +28,16 @@
    hope that that will magically make the problem go away.  I've also
    built a statue to Thoth, the God of software quality.
 
-
+** Occasional mystery stack trace
+   See the file in bug/.
 -- Low priority
+
+* A way to hack the sandboxes
+
+  Let's say eli is messing with rudybot's "eval" command.  I'd like to
+  be able to hop into the repl, and fiddle with that namespace -- say,
+  redefine "cons" to display "Eli Barzilay, you have been hax0red" or
+  something equally juvenile.
 
 * auto translate, like fsbot
   http://paste.lisp.org/display/48148 is a Python example
