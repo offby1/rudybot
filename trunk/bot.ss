@@ -57,6 +57,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
     (let* ((full-length (apply format args))
            (l (string-length full-length))
            (trimmed (substring full-length 0 (min 500 l))))
+      (if (not (equal? #\newline (string-ref trimmed (sub1 (string-length trimmed)))))
+          (set! trimmed (string-append trimmed (string #\newline))))
       (display trimmed (irc-session-op s))
       (vtprintf " => ~s~%" trimmed))))
 
@@ -161,13 +163,19 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
         (reply s message
                (format "\u0001ACTION ~a\u0001"
                        (random-choice
-                        (list "is at a loss for words, as usual"
-                              "'s jaw slackens"
-                              "stares vacantly"
-                              "pretends to pay attention"
-                              "mumbles incoherently")))))
-       ))))
-
+                        (list
+                         "'s attention wanders"
+                         "'s jaw slackens"
+                         "checks his eyelids for pinholes"
+                         "idly leafs through an old copy of \"Time\" magazine"
+                         "imagines a sunny summer scene"
+                         "is at a loss for words, as usual"
+                         "mumbles incoherently"
+                         "picks his teeth with a matchbook cover"
+                         "pretends to pay attention"
+                         "rubs his eyes"
+                         "stares vacantly"
+                         "studies his nails")))))))))
 
 ;;(trace respond)
 
