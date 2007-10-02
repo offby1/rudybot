@@ -30,6 +30,9 @@ sources=$(filter-out version.ss,$(wildcard *.ss))
 bot: $(sources) version.ss
 	mzc --exe $@ run-bot.ss
 
+# TODO -- do some clever tricky whereby we preserve the timestamp on
+# version.ss if its contents don't change -- that way stuff that
+# depends on it won't needlessly rebuild whenever we rebuild _it_.
 version.ss: FORCE
 	echo -n '(define *svnversion-string* "' > $@
 	echo -n $(svnversion) >> $@

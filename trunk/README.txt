@@ -1,6 +1,9 @@
 Yes, I am nineteen years old, and have written a complex,
 over-engineered IRC bot.
 
+If you got the source from Subversion, you'll need to type "make
+version.ss" to create the file "version.ss".
+
 To run the bot, try "./run-bot.ss --help".  
 
 To do very crude code-coverage analysis, type "./tools/coverage.ss".
