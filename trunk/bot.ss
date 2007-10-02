@@ -57,22 +57,27 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
     (let* ((full-length (apply format args))
            (l (string-length full-length))
            (trimmed (substring full-length 0 (min 500 l))))
-      (if (not (equal? #\newline (string-ref trimmed (sub1 (string-length trimmed)))))
-          (set! trimmed (string-append trimmed (string #\newline))))
+      (when  (equal? #\newline (string-ref trimmed (sub1 (string-length trimmed))))
+        (fprintf (current-error-port)
+                 "Warning: someone sent 'out' a string that was terminated with a newline~%")
+        (fprintf (current-error-port)
+                 (current-continuation-marks)))
+
       (display trimmed (irc-session-op s))
+      (newline (irc-session-op s))
       (vtprintf " => ~s~%" trimmed))))
 
 (define pm
   (lambda (s target msg)
     (check-type 'pm string? msg)
     (check-type 'pm string? target)
-    (out  s "PRIVMSG ~a :~a~%" target msg)))
+    (out  s "PRIVMSG ~a :~a" target msg)))
 
 (define notice
   (lambda (s target msg)
     (check-type 'pm string? msg)
     (check-type 'pm string? target)
-    (out  s "NOTICE ~a :~a~%" target msg)))
+    (out  s "NOTICE ~a :~a" target msg)))
 
 (define reply
   (lambda/kw (s message response #:key [proc pm] )
@@ -237,7 +242,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                             (second (message-params m)))
               ))
        (lambda (m)
-         (out session "PRIVMSG NickServ :identify ~a~%" (*nickserv-password*)))))
+         (out session "PRIVMSG NickServ :identify ~a" (*nickserv-password*)))))
 
     (add!
      RPL_ENDOFNAMES?
@@ -374,7 +379,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                            *prefs-file-semaphore*
                            (lambda ()
                              (begin0
-                               (thunk)
+                                 (thunk)
                                (vtprintf "Got through prefs file semaphore; posting to it.~%")))))
               #:descr "periodic news spewage")))
 
@@ -535,10 +540,10 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
          (when (not (equal? (*desired-nick*)
                             (irc-session-nick session)))
            ;; TODO -- check for responses to these messages
-           (out session "PRIVMSG NickServ :ghost ~a ~a~%"
+           (out session "PRIVMSG NickServ :ghost ~a ~a"
                 (*desired-nick*)
                 (*nickserv-password*))
-           (out session "NICK ~a~%"
+           (out session "NICK ~a"
                 (*desired-nick*))
            (set-irc-session-nick! (*desired-nick*)))
          )
@@ -550,7 +555,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                      (gist-equal? "version" m session)))
      (lambda (m)
        (if (VERSION? m)
-           (out session "NOTICE ~a :\u0001VERSION ~a\0001~%"
+           (out session "NOTICE ~a :\u0001VERSION ~a\0001"
                 (PRIVMSG-speaker m)
                 (long-version-string))
          (reply session m (long-version-string))))
@@ -565,7 +570,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
              (source-directory "/svn/")
              (source-file-names "trunk"))
          (if (SOURCE? m)
-             (out session "NOTICE ~a :\u0001SOURCE ~a:~a:~a\0001~%"
+             (out session "NOTICE ~a :\u0001SOURCE ~a:~a:~a\0001"
                   (PRIVMSG-speaker m)
                   source-host
                   source-directory
@@ -580,7 +585,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
      (lambda (m)
        (for-each (lambda (cn)
                    (vtprintf "Joining ~a~%" cn)
-                   (out session "JOIN ~a~%" cn))
+                   (out session "JOIN ~a" cn))
                  (*initial-channel-names*))))
 
 
@@ -588,7 +593,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
      (lambda (m)
        (equal? 'PING (message-command m)))
      (lambda (m)
-       (out session "PONG :~a~%" (car (message-params m)))))
+       (out session "PONG :~a" (car (message-params m)))))
 
     (add!
      (lambda (m)
@@ -706,8 +711,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
       (register-usual-services! *sess*)
 
-      (out *sess* "NICK ~a~%" (irc-session-nick *sess*))
-      (out *sess* "USER ~a unknown-host ~a :~a, version ~a~%"
+      (out *sess* "NICK ~a" (irc-session-nick *sess*))
+      (out *sess* "USER ~a unknown-host ~a :~a, version ~a"
            (or (getenv "USER") "unknown")
            (*irc-server-name*)
            *client-name*
@@ -725,7 +730,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                ;; this may be because the server ignores custom QUIT
                ;; messages from clients that haven't been connected for
                ;; very long.
-               (out *sess* "QUIT :Ah been shot!~%")
+               (out *sess* "QUIT :Ah been shot!")
                (flush-output op)
                (close-output-port op))]
             [exn:fail?
@@ -738,7 +743,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                    ([exn:fail?
                      (lambda (e)
                        (vtprintf "oh hell, I can't send a quit message~%"))])
-                 (out *sess* "QUIT :unexpected failure~%")
+                 (out *sess* "QUIT :unexpected failure")
                  (flush-output op)
                  (close-output-port op))
 

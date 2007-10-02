@@ -33,7 +33,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 ;; I wonder if join, select, and part should be defined in session.ss
 ;; instead of here ...
 (define (join channel)
-  (bot:out bot:*sess* "JOIN ~a~%" channel)
+  (bot:out bot:*sess* "JOIN ~a" channel)
   (set-irc-session-joined-channels!
    bot:*sess*
    (mru-add (irc-session-joined-channels bot:*sess*) channel))
@@ -48,11 +48,11 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
   (bot:pm bot:*sess* channel (format "\u0001ACTION ~a\u0001~%" text)))
 
 (define/kw (part #:key [channel (car (irc-session-joined-channels bot:*sess*))])
-  (bot:out bot:*sess* "PART ~a~%" channel)
+  (bot:out bot:*sess* "PART ~a" channel)
   (set-irc-session-joined-channels! bot:*sess* (mru-remove (irc-session-joined-channels bot:*sess*) channel)))
 
 (define (quit message)
-  (bot:out bot:*sess* "QUIT :~a~%" message)
+  (bot:out bot:*sess* "QUIT :~a" message)
   (exit))
 
 (define (run-repl)

@@ -29,8 +29,8 @@
 
                  ))))))
     (begin0
-      (and (sync/timeout seconds ch)
-           ch)
+        (and (sync/timeout seconds ch)
+             ch)
 
       (kill-thread reader))))
 

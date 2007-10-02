@@ -9,7 +9,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 
 (define (port->string/close ip)
   (begin0
-    (port->string ip)
+      (port->string ip)
     (close-input-port ip)))
 
 (provide (all-defined))

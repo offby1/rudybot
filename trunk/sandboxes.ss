@@ -28,17 +28,17 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
       (let ((op (open-output-string))
             (ep (open-output-string)))
         (begin0
-          (make-sandbox
-           (parameterize ((sandbox-output       op)
-                          (sandbox-error-output ep)
-                          (sandbox-eval-limits '(2 20)))
+            (make-sandbox
+             (parameterize ((sandbox-output       op)
+                            (sandbox-error-output ep)
+                            (sandbox-eval-limits '(2 20)))
 
-             (make-evaluator 'mzscheme '(begin) '()))
+               (make-evaluator 'mzscheme '(begin) '()))
 
-           0
-           op
-           ep
-           sandboxes-created)
+             0
+             op
+             ep
+             sandboxes-created)
           (set! sandboxes-created (add1 sandboxes-created)))))))
 
 (define (sandbox-eval sb string)
@@ -90,8 +90,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 (define (sandbox-get-stdout s)
   (bytes->string/utf-8 (get-output-bytes
                         (sandbox-output-string-port s)
-                        #t) #\?))
-
+                        #t)
+                       #\?))
 
 (define *sandboxes-by-nick* (make-hash-table 'equal))
 

@@ -87,7 +87,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
      ;; / ... Burma Shave
      (html->shtml
       (begin0
-        (port->string/close ip)
+          (port->string/close ip)
         (close-input-port ip)))))
 
    (lambda (e1 e2)
