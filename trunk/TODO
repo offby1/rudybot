@@ -19,9 +19,6 @@
 ** chandler's "flushing issue"
    See the file in bug/.
 
-** "seen" in query
-   *sigh* why does this keep happening?
-
 ** sporadic test failure
    "channel doesn't go idle when we are yammering at it".  No idea
    why, really.  I've refactored the file that test lives in, in the

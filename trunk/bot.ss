@@ -132,18 +132,19 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
         (reply s message
                (format
                 "\u0001ACTION ~a\u0001"
-                (random-choice (list "purrs"
-                                     "half-closes his eyes"
-                                     "yawns and stretches"
-                                     "scratches his ear with his hind leg"
-                                     "rubs his cheek against the chair leg"
-                                     "rolls on his back"
-                                     "jumps onto the counter"
-                                     "pretends to stalk a bug"
-                                     (format "twines around ~a's feet"
-                                             (PRIVMSG-speaker message))
-                                     (format "bats at ~a's shoelaces"
-                                             (PRIVMSG-speaker message)))))))
+                (random-choice (list
+                                "half-closes his eyes"
+                                "jumps onto the counter"
+                                "pretends to stalk a bug"
+                                "purrs"
+                                "rolls on his back"
+                                "rubs his cheek against the chair leg"
+                                "scratches his ear with his hind leg"
+                                "yawns and stretches"
+                                (format "twines around ~a's feet"
+                                        (PRIVMSG-speaker message))
+                                (format "bats at ~a's shoelaces"
+                                        (PRIVMSG-speaker message)))))))
        ((with-handlers
             ([(lambda (e)
                 (or (exn:delicious:auth? e)
@@ -290,7 +291,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                      ;; call-with-semaphore, since in at least one
                      ;; case, those procedures need to read and write
                      ;; the PLT preferences file.
-                     [wrapper (lambda ( t) ( t))]
+                     [wrapper (lambda (t) (t))]
 
                      [descr "unknown, damn it"])
            (exponentially-backing-off-spewer
@@ -498,9 +499,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
     (add!
      (lambda (m)
        (and (gist-equal? "seen" m session)
-            (< 2 (length (PRIVMSG-text-words m)))))
+            (= 2 (length (text-for-us m session)))))
      (lambda (m)
-       (let* ((who (regexp-replace #rx"\\?+$" (third (PRIVMSG-text-words m)) ""))
+       (let* ((who (regexp-replace #rx"\\?+$" (second (text-for-us m session)) ""))
               (s (hash-table-get (irc-session-appearances-by-nick session) who #f)))
          (reply session
                 m
