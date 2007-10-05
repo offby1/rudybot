@@ -20,7 +20,9 @@
    joined, which is reasonable; but each answers the PRIVMSG directed
    at the bot, in addition to any PRIVMSG directed at the channel.
    It's not clear how to fix this; perhaps only the first such task
-   should handle PRIVMSGs directed to the bot.
+   should handle PRIVMSGs directed to the bot.  Or (more sensibly) I
+   should only create one such task per session, and have it handle all
+   PRIVMSGs, be they directed to channels or to the bot.
 
 ** eval ignoring parens?
    <offby1> rudybot: eval ((+ 1 2))
