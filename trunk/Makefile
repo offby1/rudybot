@@ -30,13 +30,16 @@ sources=$(filter-out version.ss,$(wildcard *.ss))
 bot: $(sources) version.ss
 	mzc --exe $@ run-bot.ss
 
-# TODO -- do some clever tricky whereby we preserve the timestamp on
-# version.ss if its contents don't change -- that way stuff that
-# depends on it won't needlessly rebuild whenever we rebuild _it_.
+# All this complexity preserves the timestamp on version.ss if its
+# contents haven't changed -- that way stuff that depends on it won't
+# needlessly rebuild whenever we rebuild _it_.
 version.ss: FORCE
-	echo -n '(define *svnversion-string* "' > $@
-	echo -n $(svnversion) >> $@
-	echo    '")' >> $@
+	@temp=`mktemp botXXXXXX` ; \
+	echo -n '(define *svnversion-string* "' > $${temp}; \
+	echo -n $(svnversion) >> $${temp}; \
+	echo    '")' >> $${temp}; \
+	if ! cmp --quiet $${temp} $@; then mv -v $${temp} $@; fi; \
+	rm -f $${temp}
 
 $(plt-file): version.ss
 	$(make-export-dir) && \
