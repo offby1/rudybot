@@ -91,7 +91,7 @@ should be hosted on an FTP server, which I don't care to run, so ...
   after we do "/msg nickserv identify" (so that we can send private
   messages on freenode), the server responds with <<:services. MODE
   rudebot :+e>> .  We should note receipt of that message, in case it
-  _doesn't_ come and we're wondering why we can't sent private
+  _doesn't_ come and we're wondering why we can't send private
   messages.
 
 ** don't log in everywhere?
@@ -228,10 +228,6 @@ should be hosted on an FTP server, which I don't care to run, so ...
 
 ** echo URL titles
    the way feck does
-
-** fallback
-   If it's a single word, look for that tag on del.icio.us, and return
-   either the first link, or one of the first links.
 
 * repl commands
 
