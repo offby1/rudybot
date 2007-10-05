@@ -36,20 +36,20 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
 ;; web site being down.
 (define (quotes-of-the-day)
   (parameterize ((current-alist-separator-mode 'amp))
-                (let* ((url (string->url "http://feeds.feedburner.com/quotationspage/qotd")))
-                  (let ((stuff
-                         (html->shtml
-                          (port->string/close
-                           (get-pure-port
-                            url
-                            (list))))
-                         ))
-                    ;; I suspect there's a way to do this with nothing
-                    ;; more than a single call to sxpath -- no maps, no
-                    ;; cars, no seconds.  Hmph.
-                    (map (lambda (quote author)
-                           (cons (trim quote)
-                                 (trim author)))
-                         (map second ((sxpath '(rss channel item description ) ) stuff))
-                         ((sxpath '(rss channel item title *text*) ) stuff))))))
+    (let* ((url (string->url "http://feeds.feedburner.com/quotationspage/qotd")))
+      (let ((stuff
+             (html->shtml
+              (port->string/close
+               (get-pure-port
+                url
+                (list))))
+             ))
+        ;; I suspect there's a way to do this with nothing
+        ;; more than a single call to sxpath -- no maps, no
+        ;; cars, no seconds.  Hmph.
+        (map (lambda (quote author)
+               (cons (trim quote)
+                     (trim author)))
+             (map second ((sxpath '(rss channel item description ) ) stuff))
+             ((sxpath '(rss channel item title *text*) ) stuff))))))
 )
