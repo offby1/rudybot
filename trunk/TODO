@@ -9,6 +9,19 @@
 
 * bugs
 
+** "quote", "news", and "movie" still provoke multiple responses in query
+   I was using version 11M, which has been running on freenode.  I did
+   /query rudybot, and then "movie"; it responded five times instead
+   of once.  Similarly for "news" and "quote".
+
+   *** rudybot is on channel(s): #emacs #scheme #bots ##cinema 
+
+   I think that I'm creating a new "movie" task for each channel he's
+   joined, which is reasonable; but each answers the PRIVMSG directed
+   at the bot, in addition to any PRIVMSG directed at the channel.
+   It's not clear how to fix this; perhaps only the first such task
+   should handle PRIVMSGs directed to the bot.
+
 ** eval ignoring parens?
    <offby1> rudybot: eval ((+ 1 2))
    <rudybot> procedure application: expected procedure, given: 3 (no arguments)
