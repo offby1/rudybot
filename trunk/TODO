@@ -29,9 +29,6 @@
    <rudybot> 1:""
    <offby1> weird.
 
-** chandler's "flushing issue"
-   See the file in bug/.
-
 ** sporadic test failure
    "channel doesn't go idle when we are yammering at it".  No idea
    why, really.  I've refactored the file that test lives in, in the
