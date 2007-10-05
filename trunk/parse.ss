@@ -384,5 +384,10 @@
     (test-prefix-pieces "goofy"            ":fsbot!n=user@batfish.pepperfish.net a b c"
                         '("fsbot" "n=user" "batfish.pepperfish.net")))))
 
-(provide (all-defined-except message-command PRIVMSG-text-words)
+(provide (all-defined-except
+          message-command
+
+          ;; use text-for-us instead.
+          PRIVMSG-text-words
+          )
          (rename public-message-command message-command)))
