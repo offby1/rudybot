@@ -62,32 +62,22 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 ;(trace sandbox-eval)
 
 (define (get-sandbox-by-name name)
-  ;; if necessary, "evict" the least-recently-used evaluator.
+  (hash-table-get *sandboxes-by-nick* name
+    (lambda ()
+      (when (>= (hash-table-count *sandboxes-by-nick*) (*max-sandboxes*))
+        ;; evict the sandbox that has been unused the longest
+        (let ([moldiest #f])
+          (hash-table-for-each *sandboxes-by-nick*
+            (lambda (name sb)
+              (let ([t (sandbox-last-used-time sb)])
+                (unless (and moldiest (> t (car moldiest)))
+                  (set! moldiest (cons t name))))))
+          (assert moldiest)
+          (hash-table-remove! *sandboxes-by-nick* (cdr moldiest))))
+      (let ([sb (public-make-sandbox)])
+        (hash-table-put! *sandboxes-by-nick* name sb)
+        sb))))
 
-  (when (and (not (hash-table-get *sandboxes-by-nick* name #f))
-             (= (hash-table-count *sandboxes-by-nick*)
-                (*max-sandboxes*)))
-    (let ((name-of-lru
-           (cdar
-            (sort
-             (hash-table-map
-              *sandboxes-by-nick*
-              (lambda (k v)
-                (cons (sandbox-last-used-time v) k)))
-             (lambda (p1 p2)
-               (< (car p1)
-                  (car p2)))))))
-
-      (assert (not (equal? name-of-lru name)))
-      ;; (vtprintf
-;;        "Evicting ~s => ~s~%"
-;;        name-of-lru
-;;        (hash-table-get *sandboxes-by-nick* name-of-lru))
-      (hash-table-remove! *sandboxes-by-nick* name-of-lru)))
-
-  (let ((rv (hash-table-get *sandboxes-by-nick* name (lambda () (public-make-sandbox)))))
-    (hash-table-put! *sandboxes-by-nick* name rv)
-    rv))
 ;(trace get-sandbox-by-name)
 
 (define (sandbox-get-stdout s)
