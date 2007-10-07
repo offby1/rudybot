@@ -40,7 +40,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                           (sandbox-error-output #f)
                           (sandbox-eval-limits '(2 20)))
 
-             (make-evaluator 'mzscheme '(begin) '()))
+             (make-evaluator '(begin) '()))
 
            0
            sandboxes-created)
