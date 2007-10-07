@@ -39,6 +39,11 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
      (make-evaluator '(begin) '()))
    0))
 
+;; I no longer remember precisely why this is so complex -- it would
+;; seem that the entire body of this procedure could be
+;; ((sandbox-evaluator sb) string).  But I suspect that causes
+;; weirdness when passed an empty string.  This weirdness may well be
+;; fixed in PLT's r7445 (probably release 372).
 (define (sandbox-eval sb string)
   (let ((first-sexp (read (open-input-string string))))
     (if (eof-object? first-sexp)
