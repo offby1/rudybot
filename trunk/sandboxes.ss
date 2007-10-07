@@ -6,15 +6,12 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 (module sandboxes mzscheme
 (require (only (lib "misc.ss" "swindle") with-output-to-string)
          (lib "sandbox.ss")
-         (lib "trace.ss")
          (only (lib "list.ss") sort)
          (only (lib "1.ss" "srfi") iota)
          (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
          (only (planet "assert.ss" ("offby1" "offby1.plt")) assert)
          "globals.ss"
-         "test-utils.ss"
-         "vprintf.ss")
+         )
 (register-version-string "$Id$")
 
 (define-struct sandbox (evaluator
