@@ -20,19 +20,31 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 (define public-make-sandbox
   (let ((sandboxes-created 0))
     (lambda ()
-      (let ((op (open-output-string))
-            (ep (open-output-string)))
-        (begin0
-            (make-sandbox
-             (parameterize ((sandbox-output       'string)
-                            (sandbox-error-output 'string)
-                            (sandbox-eval-limits '(2 20)))
+      (begin0
+          (make-sandbox
+           (parameterize ((sandbox-output       'string)
 
-               (make-evaluator 'mzscheme '(begin) '()))
+                          ;; You'll note I'm setting the parameter
+                          ;; sandbox-error-output to #f, which means
+                          ;; "silently discard error output".  This
+                          ;; isn't _quite_ as bad as it sounds:
+                          ;; evaluation errors will raise an
+                          ;; exception, and the exception message will
+                          ;; contain a good error message.  However,
+                          ;; if someone evals error-free code that
+                          ;; nevertheless writes to
+                          ;; current-error-port, I silently discard
+                          ;; what they wrote.  This of course is a
+                          ;; shortcoming, but nobody's yet complained
+                          ;; :-|
+                          (sandbox-error-output #f)
+                          (sandbox-eval-limits '(2 20)))
 
-             0
-             sandboxes-created)
-          (set! sandboxes-created (add1 sandboxes-created)))))))
+             (make-evaluator 'mzscheme '(begin) '()))
+
+           0
+           sandboxes-created)
+        (set! sandboxes-created (add1 sandboxes-created))))))
 
 (define (sandbox-eval sb string)
   (let ((first-sexp (read (open-input-string string))))
