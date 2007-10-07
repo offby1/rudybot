@@ -42,6 +42,10 @@
 
 -- Low priority
 
+* Find a way to reload code while running
+  (Pity this isn't obvious, as in Common Lisp) Eli suggests I look at
+  /usr/local/src/langs/scheme/plt/collects/handin-server/private/reloadable.ss
+
 * A way to hack the sandboxes
 
   Let's say eli is messing with rudybot's "eval" command.  I'd like to
