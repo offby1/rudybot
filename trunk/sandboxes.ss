@@ -15,36 +15,29 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 (register-version-string "$Id$")
 
 (define-struct sandbox (evaluator
-                        last-used-time
-                        serial-number) #f)
-(define public-make-sandbox
-  (let ((sandboxes-created 0))
-    (lambda ()
-      (begin0
-          (make-sandbox
-           (parameterize ((sandbox-output       'string)
+                        last-used-time) #f)
+(define (public-make-sandbox)
+  (make-sandbox
+   (parameterize ((sandbox-output       'string)
 
-                          ;; You'll note I'm setting the parameter
-                          ;; sandbox-error-output to #f, which means
-                          ;; "silently discard error output".  This
-                          ;; isn't _quite_ as bad as it sounds:
-                          ;; evaluation errors will raise an
-                          ;; exception, and the exception message will
-                          ;; contain a good error message.  However,
-                          ;; if someone evals error-free code that
-                          ;; nevertheless writes to
-                          ;; current-error-port, I silently discard
-                          ;; what they wrote.  This of course is a
-                          ;; shortcoming, but nobody's yet complained
-                          ;; :-|
-                          (sandbox-error-output #f)
-                          (sandbox-eval-limits '(2 20)))
+                  ;; You'll note I'm setting the parameter
+                  ;; sandbox-error-output to #f, which means
+                  ;; "silently discard error output".  This
+                  ;; isn't _quite_ as bad as it sounds:
+                  ;; evaluation errors will raise an
+                  ;; exception, and the exception message will
+                  ;; contain a good error message.  However,
+                  ;; if someone evals error-free code that
+                  ;; nevertheless writes to
+                  ;; current-error-port, I silently discard
+                  ;; what they wrote.  This of course is a
+                  ;; shortcoming, but nobody's yet complained
+                  ;; :-|
+                  (sandbox-error-output #f)
+                  (sandbox-eval-limits '(2 20)))
 
-             (make-evaluator '(begin) '()))
-
-           0
-           sandboxes-created)
-        (set! sandboxes-created (add1 sandboxes-created))))))
+     (make-evaluator '(begin) '()))
+   0))
 
 (define (sandbox-eval sb string)
   (let ((first-sexp (read (open-input-string string))))
