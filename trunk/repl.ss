@@ -45,7 +45,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
   (set-irc-session-joined-channels! bot:*sess* (mru-add (irc-session-joined-channels bot:*sess*) channel)))
 
 (define/kw (me text #:key [channel (car (irc-session-joined-channels bot:*sess*))])
-  (bot:pm bot:*sess* channel (format "\u0001ACTION ~a\u0001~%" text)))
+  (bot:pm bot:*sess* channel (format "\u0001ACTION ~a\u0001" text)))
 
 (define/kw (part #:key [channel (car (irc-session-joined-channels bot:*sess*))])
   (bot:out bot:*sess* "PART ~a" channel)

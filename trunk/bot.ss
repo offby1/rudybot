@@ -61,7 +61,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
         (fprintf (current-error-port)
                  "Warning: someone sent 'out' a string that was terminated with a newline~%")
         (fprintf (current-error-port)
-                 (current-continuation-marks)))
+                 "~s"
+                 (continuation-mark-set->context (current-continuation-marks))))
 
       (display trimmed (irc-session-op s))
       (newline (irc-session-op s))
