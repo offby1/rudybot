@@ -59,6 +59,21 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
   (set-irc-session-joined-channels! bot:*sess* (make-mru (irc-session-joined-channels bot:*sess*)))
   (read-eval-print-loop))
 
+;; copied from .../collects/handin-server/private/reloadable.ss
+(define (reload-module modspec)
+  (let* ([name ((current-module-name-resolver) modspec #f #f)]
+         [name (symbol->string name)]
+         [name (if (eq? #\, (string-ref name 0))
+                   (substring name 1)
+                 (error 'reload-module
+                        "unexpected module name for ~e: ~e" modspec name))]
+         [prefix (let-values ([(base name dir?) (split-path name)])
+                   (string->symbol (format ",~a" base)))])
+    (fprintf (current-error-port) "(re)loading module from ~a~%" modspec)
+    (parameterize ([current-module-name-prefix prefix]
+                   [compile-enforce-module-constants #f])
+      (load/use-compiled (resolve-module-path modspec #f)))))
+
 
 (provide run-repl)
 
