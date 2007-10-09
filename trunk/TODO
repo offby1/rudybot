@@ -42,6 +42,14 @@
 
 -- Low priority
 
+* dynamically load verbs
+  <eli> offby1: Now make verbs like `eval' and `uptime' come from files under the same name in a
+        "verb" directory,
+  <offby1> dynamically loaded?
+  <eli> offby1: Yeah.
+  <offby1> yup
+  <eli> You could add and remove verbs on demand.
+
 * Find a way to reload code while running
   (Pity this isn't obvious, as in Common Lisp) Eli suggests I look at
   /usr/local/src/langs/scheme/plt/collects/handin-server/private/reloadable.ss

@@ -52,10 +52,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
 (define out
   (lambda (s . args)
-
-    (define (first-line s)
-      (car (regexp-match #rx"(?m:^.*$)" s)))
-
     ;; ensure the output doesn't exceed around 500 characters, lest
     ;; the IRC server kick us for flooding.
     (let* ((full-length (apply format args))
@@ -68,9 +64,13 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                  "~s"
                  (continuation-mark-set->context (current-continuation-marks))))
 
-      ;; only display the first line, to prevent people from embedding
-      ;; a newline followed by an IRC protocol command ...
-      (display (first-line trimmed) (irc-session-op s))
+      (display
+
+       ;; only display the first line, to prevent people from
+       ;; embedding a newline followed by an IRC protocol command ...
+       (regexp-replace #rx"\n.*" trimmed "")
+
+       (irc-session-op s))
       (newline (irc-session-op s))
       (vtprintf " => ~s~%" trimmed))))
 
@@ -608,19 +608,26 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
      (lambda (m)
 
+
        (with-handlers
-           ((exn:fail? (lambda (e)
-                         (reply session m (exn-message e)))))
+           ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
+           ;; killing this thread.
+           ([void
+             (lambda (v)
+               (reply session m (if (exn? v)
+                                    (exn-message v)
+                                  (format "~a" v))))])
 
          (let ((s (get-sandbox-by-name
                    (PRIVMSG-speaker m))))
 
            (reply session m
-                  (let* ((value (sandbox-eval
-                                 s
-                                 (string-join
-                                  (cdr (text-for-us m session))
-                                  " ")))
+                  (let* ((value
+                          (sandbox-eval
+                           s
+                           (string-join
+                            (cdr (text-for-us m session))
+                            " ")))
                          (output (sandbox-get-stdout s)))
                     (format "~s:~s"
                             value output))))))
