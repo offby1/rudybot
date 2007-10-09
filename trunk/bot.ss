@@ -52,6 +52,10 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
 (define out
   (lambda (s . args)
+
+    (define (first-line s)
+      (car (regexp-match #rx"(?m:^.*$)" s)))
+
     ;; ensure the output doesn't exceed around 500 characters, lest
     ;; the IRC server kick us for flooding.
     (let* ((full-length (apply format args))
@@ -64,7 +68,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                  "~s"
                  (continuation-mark-set->context (current-continuation-marks))))
 
-      (display trimmed (irc-session-op s))
+      ;; only display the first line, to prevent people from embedding
+      ;; a newline followed by an IRC protocol command ...
+      (display (first-line trimmed) (irc-session-op s))
       (newline (irc-session-op s))
       (vtprintf " => ~s~%" trimmed))))
 
