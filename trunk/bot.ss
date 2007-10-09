@@ -616,7 +616,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
              (lambda (v)
                (reply session m (if (exn? v)
                                     (exn-message v)
-                                  (format "~a" v))))])
+                                  (format "~s" v))))])
 
          (let ((s (get-sandbox-by-name
                    (PRIVMSG-speaker m))))
