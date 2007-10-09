@@ -11,6 +11,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
          (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
          (prefix bot: "bot.ss")
          (planet "zdate.ss"   ("offby1" "offby1.plt"))
+         (lib "modresolve.ss" "syntax")
          "session.ss")
 
 (define/kw (make-mru #:optional [initial '()])
