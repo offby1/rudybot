@@ -105,23 +105,19 @@
                    (loop (cons one params)
                          (substring param-string (string-length match)))))))))))))
 
-    (when (not (message? m))
+    (unless (message? m)
+      (fprintf (current-error-port)
+               "Hmm, ~s => ~s doesn't appear to be a message.~%"
+               string m)
       (raise (make-exn:fail:irc-parse
               "Can't parse string from server"
               (current-continuation-marks)
               string)))
-    (with-handlers
-        (;; [exn:fail:contract?
-;;           (lambda (e)
-;;             (raise (make-exn:fail:irc-parse
-;;                     "Can't parse string from server"
-;;                     (current-continuation-marks)
-;;                     string)))]
-         )
-      (or (maybe-make-RPL_ENDOFNAMES m)
-          (maybe-make-ERR_NICKNAMEINUSE m)
-          (maybe-make-PRIVMSG m)
-          m))))
+
+    (or (maybe-make-RPL_ENDOFNAMES m)
+        (maybe-make-ERR_NICKNAMEINUSE m)
+        (maybe-make-PRIVMSG m)
+        m)))
 
 ;(trace parse-irc-message)
 
