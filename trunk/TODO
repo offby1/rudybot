@@ -31,6 +31,13 @@
    <rudybot> 1:""
    <offby1> weird.
 
+   probably related:
+
+   <eli> rudybot: eval.1 2
+   <rudybot> 2:""
+   <eli> rudybot: eval.x 2
+   * rudybot stares vacantly
+
 ** sporadic test failure
    "channel doesn't go idle when we are yammering at it".  No idea
    why, really.  I've refactored the file that test lives in, in the
