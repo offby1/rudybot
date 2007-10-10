@@ -1,0 +1,27 @@
+#!/bin/bash -x
+
+make bot
+
+(
+
+    echo -e ":localhost. 001 rudybot :Welcome to the faked-up shell script rudybot \\r"
+
+    sleep 10
+
+    # Should either complain, or return 3
+    echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: eval((+ 1 2))\\r"
+
+    # Should probably return .1
+    echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: eval.1 2\\r"
+
+    # Should probably return x's value, or error if they ain't no X.
+    echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: eval.x 2\\r"
+
+    sleep 10
+
+#     while true
+#     do
+#         sleep 120
+#     done
+
+    ) | ./bot -c '#scheme-bots' -n rudybot
