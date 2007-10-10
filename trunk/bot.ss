@@ -67,8 +67,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
       (display
 
        ;; only display the first line, to prevent people from
-       ;; embedding a newline followed by an IRC protocol command ...
-       (regexp-replace #rx"\n.*" trimmed "")
+       ;; embedding an end-of-line character followed by an IRC
+       ;; protocol command ...
+       (regexp-replace #rx"(\n|\r).*" trimmed "")
 
        (irc-session-op s))
       (newline (irc-session-op s))
