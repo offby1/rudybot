@@ -49,24 +49,16 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
          ;; create another.  It works, though :-)
          (sleeper (lambda ()
                     (let loop ()
-;;                       (vtprintf "snooze sleeper ~a sleeping for ~a seconds~%"
-;;                                 id interval)
                       (sleep interval)
                       (semaphore-post s)
-;;                       (vtprintf "snooze sleeper ~a posted~%"
-;;                                 id)
                       (when periodic? (loop))))))
     (let ((t (thread sleeper)))
       (make-resettable-alarm
        s
        (lambda/kw (#:key [fatal? #f])
          (kill-thread t)
-;;          (vtprintf "reset button for ~a killed thread ~a~%"
-;;                    id (eq-hash-code t))
          (when (not fatal?)
            (set! t (thread sleeper))
-;;            (vtprintf "reset button for ~a made fresh sleeper ~a~%"
-;;                    id (eq-hash-code t))
            ))
        id))))
 
