@@ -11,7 +11,7 @@ distdir   := $(HOME)/public_html/bot
 
 all: plt tar
 plt: $(plt-file)
-tar: $(tarball)
+tar tarball: $(tarball)
 
 define make-export-dir
 tempdir=`mktemp -d botXXXXXX` ; \
@@ -77,4 +77,4 @@ tags: TAGS
 TAGS: $(sources)
 	PATH=/usr/local/src/emacs-cvs/lib-src:$(dir $(EMACS))../lib-src:$$PATH etags --regex='/[ \t]*(def\w+[^ \t]+[ \t]+(?\([^ \t]*?\)\W+/\1/' *.ss
 
-.PHONY: clean all dist plt tar check svnup
+.PHONY: all check clean dist plt svnup tar tarball
