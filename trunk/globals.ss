@@ -55,7 +55,11 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
                                      "quotes")))
 
 (define *use-real-atom-feed?* (make-parameter #f))
-(define *nickserv-password* (make-parameter #f))
+(define *nickserv-password*
+  (begin0
+      (or (getenv "NICKSERV_PASSWORD") "no nickserv password specified")
+    (putenv "NICKSERV_PASSWORD" "sorry!  Nice try.")))
+
 (define (*atom-timestamp-preference-name*)
   (if (*use-real-atom-feed?*)
       'rudybot-planet-emacs-last-headlines
@@ -66,7 +70,10 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
 ;; shorter than triple that.
 (define *tinyurl-url-length-threshold* (make-parameter 75))
 
-(define *del.icio.us-password* (make-parameter #f))
+(define *del.icio.us-password*
+  (begin0
+      (or (getenv "DELICIOUS_PASSWORD") "no delicious password specified.")
+    (putenv "DELICIOUS_PASSWORD" "sorry!  Nice try.")))
 (define *log-output-port* (make-parameter (current-error-port)))
 (define *log-to-file* (make-parameter #f))
 (provide (all-defined))

@@ -43,16 +43,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
             #:key [tag "moviestowatchfor"])
 
   (parameterize
-      ((current-password
-        (or (*del.icio.us-password*)
-
-            ;; more convenient for testing
-            (getenv "DELICIOUS_PASSWORD")
-
-            "unknown"))
-
+      ((current-password *del.icio.us-password*)
        (current-username "tucumcari"))
-
 
     (map (lambda (post)
            (make-entry (date->time-utc (post-date post))

@@ -29,13 +29,8 @@ exec mzscheme -qu "$0" ${1+"$@"}
     (vector->pseudo-random-generator (read (open-input-string vec)))))
   (("-s" "--host") host "Name of the IRC server to connect to"
    (*irc-server-name* host))
-  (("--delicious") del "del.icio.us password"
-   (*del.icio.us-password* del))
   (("-n" "--nick") nick "The nick I _want to_ be known by; but we might need to append characters to it"
    (*desired-nick* nick))
-  (("--nickserv")
-   pw "Password for NICKSERV"
-   (*nickserv-password* pw))
   (("--planet") "Actually hit planet.emacsen.org, rather than using test data"
    (*use-real-atom-feed?* #t))
   (("-l" "--log") "Spew to log file as opposed to stderr"

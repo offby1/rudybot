@@ -237,7 +237,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
         #:descr descr)
        session))
 
-    (when (*nickserv-password*)
+    (when *nickserv-password*
       (add!
        (lambda (m)
          (and (eq? (message-command m)
@@ -251,7 +251,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                             (second (message-params m)))
               ))
        (lambda (m)
-         (out session "PRIVMSG NickServ :identify ~a" (*nickserv-password*)))))
+         (out session "PRIVMSG NickServ :identify ~a" *nickserv-password*))))
 
     (add!
      RPL_ENDOFNAMES?
@@ -550,7 +550,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
            ;; TODO -- check for responses to these messages
            (out session "PRIVMSG NickServ :ghost ~a ~a"
                 (*desired-nick*)
-                (*nickserv-password*))
+                *nickserv-password*)
            (out session "NICK ~a"
                 (*desired-nick*))
            (set-irc-session-nick! (*desired-nick*)))
