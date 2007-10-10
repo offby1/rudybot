@@ -22,7 +22,12 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                   (sandbox-error-output current-output-port)
                   (sandbox-eval-limits '(2 20)))
 
-     (make-evaluator '(begin) '()))
+     (make-evaluator '(begin
+                        ;; these functions are dangerous, so we
+                        ;; disable them.
+                        (set! getenv  (lambda args "Oh no, you don't."))
+                        (set! putenv getenv))
+                     '()))
    0))
 
 ;; I no longer remember precisely why this is so complex -- it would
