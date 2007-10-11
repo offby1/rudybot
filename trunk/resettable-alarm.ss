@@ -16,7 +16,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 ;; goes off (unlike a real alarm clock, whose snooze button is for
 ;; _after_it buzzes), which causes the alarm to reset.  I.e., if you
 ;; set the alarm to go off five seconds from now, wait four seconds,
-;; then hit the snooze button, the alarm will eventually go off nine
+;; then hit the reset button, the alarm will eventually go off nine
 ;; seconds after you set it.
 
 ;; You can control whether it's periodic or not, which simply means:
@@ -45,7 +45,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
             [periodic? #f])
   (let* ((s (make-semaphore))
          ;; This seems like an expensive way to go about this -- every
-         ;; time they hit the snooze button, we kill one thread and
+         ;; time they hit the reset button, we kill one thread and
          ;; create another.  It works, though :-)
          (sleeper (lambda ()
                     (let loop ()
