@@ -29,7 +29,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 ;; spew when it fails
 (define (got-response? sess ip input regexp)
   (respond (parse-irc-message input) sess)
-  (expect/timeout ip regexp 3/2))
+  (expect/timeout ip regexp 2))
 
 (define (fresh-session op)
   (let ((s (make-irc-session op)))
@@ -50,7 +50,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                (custodian-shutdown-all test-cust)
                (fprintf (current-error-port)
                         "Creating a fresh session~%")
-               (*minimum-delay-for-periodic-spew* 1/10)
+               (*minimum-delay-for-periodic-spew* 1/5)
                (*planet-poll-interval* 2)
                (reliably-put-pref #f)
                (reset-prefs-file-semaphore!)
@@ -80,7 +80,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                                sess
                                ip
                                (format ":a!b@c PRIVMSG #d :~a: eval (+ 1 2)" (irc-session-nick sess))
-                               #rx"PRIVMSG #d :3:")))
+                               #rx"PRIVMSG #d :; Value: 3")))
             (test-with-setup
              "proper display of output"
              (check-not-false (got-response?
@@ -89,14 +89,14 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                                (format
                                 ":a!b@c PRIVMSG #d :~a: eval (display \"fred\")"
                                 (irc-session-nick sess))
-                               #rx"PRIVMSG #d :.*:\"fred\"")))
+                               #rx"PRIVMSG #d :; stdout: \"fred\"")))
             (test-with-setup
              "works in \"/QUERY\""
              (check-not-false (got-response?
                                sess
                                ip
                                (format ":a!b@c PRIVMSG ~a :eval (+ 1 2)" (irc-session-nick sess))
-                               #rx"PRIVMSG a :3:"))))
+                               #rx"PRIVMSG a :; Value: 3"))))
 
            (test-with-setup
             "join"

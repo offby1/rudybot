@@ -229,12 +229,6 @@ should be hosted on an FTP server, which I don't care to run, so ...
 
 * eval
 
-** output formatting
-
-   put value and output on separate lines, prefixed with ;
-   <Riastradh> ;Output: mumble grumble stumble
-   <Riastradh> ;Value: 2+3i
-
 ** reset
    
    <eli> offby1: BTW, another extension to rudybot: have a way to kill my evaluator, so it will be
@@ -272,11 +266,6 @@ essentially a full-blown IRC client with a scheme syntax.
    down.
 
 * "seen" command
-
-** summarize the time difference
-   It now says "bob last spoke in #scheme 2007-08-31T03:05:50Z, saying
-   ..."; it'd be nice if it said "bob last spoke in #scheme
-   2007-08-31T03:05:50Z (about 12 hours ago), saying ..."
 
 ** truncate output
    because it can be annoyingly long, if the last thing they said was

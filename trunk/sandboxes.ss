@@ -19,7 +19,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 (define (public-make-sandbox)
   (make-sandbox
    (parameterize ((sandbox-output       'string)
-                  (sandbox-error-output current-output-port)
+                  (sandbox-error-output 'string)
                   (sandbox-eval-limits '(2 20)))
 
      (make-evaluator '(begin
@@ -73,6 +73,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 
 (define (sandbox-get-stdout s)
   (get-output (sandbox-evaluator s)))
+
+(define (sandbox-get-stderr s)
+  (get-error-output (sandbox-evaluator s)))
 
 (define *sandboxes-by-nick* (make-hash-table 'equal))
 
@@ -189,6 +192,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 (provide *max-sandboxes*
          get-sandbox-by-name
          sandbox-eval
+         sandbox-get-stderr
          sandbox-get-stdout
          sandboxes-tests
          (rename public-make-sandbox make-sandbox))

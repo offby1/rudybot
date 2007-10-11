@@ -612,36 +612,47 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
      (lambda (m)
 
+       (let ((s (get-sandbox-by-name
+                 (PRIVMSG-speaker m))))
 
-       (with-handlers
-           ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
-           ;; killing this thread.
-           ([void
-             (lambda (v)
-               (let ((whine (if (exn? v)
-                                (exn-message v)
-                              (format "~s" v))))
-                 (reply
-                  session
-                  m
-                  ;; make sure our error message begins with "error: ".
-                  (if (regexp-match #rx"^error: " whine)
-                      whine
-                    (format "error: ~a" whine)))))])
+         (with-handlers
+             ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
+             ;; killing this thread.
+             ([void
+               (lambda (v)
+                 (let ((whine (if (exn? v)
+                                  (exn-message v)
+                                (format "~s" v))))
+                   (reply
+                    session
+                    m
+                    ;; make sure our error message begins with "error: ".
+                    (if (regexp-match #rx"^error: " whine)
+                        whine
+                      (format "error: ~a" whine)))))])
 
-         (let ((s (get-sandbox-by-name
-                   (PRIVMSG-speaker m))))
+           (let ((value (sandbox-eval
+                         s
+                         (string-join
+                          (cdr (text-for-us m session))
+                          " "))))
 
-           (reply session m
-                  (let* ((value
-                          (sandbox-eval
-                           s
-                           (string-join
-                            (cdr (text-for-us m session))
-                            " ")))
-                         (output (sandbox-get-stdout s)))
-                    (format "~s:~s"
-                            value output))))))
+             (when (not (void? value))
+               (reply
+                session
+                m
+                (format "; Value: ~s" value)))))
+
+         (let ((stdout (sandbox-get-stdout s))
+               (stderr (sandbox-get-stderr s)))
+           (when (and (string? stdout)
+                      (positive? (string-length stdout)))
+             (reply session m (format "; stdout: ~s" stdout)))
+           (when (and (string? stderr)
+                      (positive? (string-length stderr)))
+             (reply session m (format "; stderr: ~s" stderr)))
+           )))
+
 
      #:responds? #t)
     (add!
