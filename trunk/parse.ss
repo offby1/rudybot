@@ -203,16 +203,16 @@
 (define (gist-for-us message sess)
   (check-type 'gist-for-us message? message)
   (let ((t (text-for-us message sess)))
-    ;; trim trailing punctuation
+    ;; trim trailing non-command stuff
     (and t
-         (regexp-replace (pregexp "[^[:alpha:]]+$") (car t) ""))))
+         (regexp-replace #px"^([[:alpha:]]+).*$" (car t) "\\1"))))
 
 (define (gist-equal? str message sess)
   (check-type 'gist-equal? message? message)
   (equal? str (gist-for-us message sess)))
-;(trace gist-equal?)
-;(trace for-us?)
-;(trace gist-for-us)
+ ; (trace gist-equal?)
+ ; (trace for-us?)
+ ; (trace gist-for-us)
 
 ;(trace parse-irc-message)
 
@@ -370,7 +370,24 @@
        (gist-equal?
         "yow"
         (parse-irc-message (format ":x!y@z PRIVMSG #ch-ch-ch-changes :~a, yow" nick))
-        sess))))
+        sess))
+      (test-case
+       "eval"
+       (let* ((sess (make-irc-session (open-output-string)))
+              (nick (irc-session-nick sess)))
+         (define (hmm str)
+           (gist-equal?
+            "eval"
+            (parse-irc-message
+             (format ":x!y@z PRIVMSG #ch-ch-ch-changes :~a: ~a" nick str))
+            sess))
+
+         (check-not-false  (hmm "eval ((+ 1 2))"))
+         (check-not-false  (hmm "eval((+ 1 2))"))
+         (check-not-false  (hmm "eval.1 2"))
+         (check-not-false  (hmm "eval.x 2"))
+         ))
+      ))
    (test-suite
     "prefix"
     (test-prefix-pieces "nick only"        ":nick foo bar baz"             '("nick" #f #f))
