@@ -181,6 +181,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                          "'s attention wanders"
                          "'s jaw slackens"
                          "checks his eyelids for pinholes"
+                         "fantasizes about Rita Hayworth"
                          "idly leafs through an old copy of \"Time\" magazine"
                          "imagines a sunny summer scene"
                          "is at a loss for words, as usual"
@@ -189,7 +190,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                          "pretends to pay attention"
                          "rubs his eyes"
                          "stares vacantly"
-                         "studies his nails")))))))))
+                         "studies his nails"
+                         "talks about mining" ;'nethack' joke
+                         )))))))))
 
 ;;(trace respond)
 
@@ -615,9 +618,16 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
            ;; killing this thread.
            ([void
              (lambda (v)
-               (reply session m (if (exn? v)
-                                    (exn-message v)
-                                  (format "~s" v))))])
+               (let ((whine (if (exn? v)
+                                (exn-message v)
+                              (format "~s" v))))
+                 (reply
+                  session
+                  m
+                  ;; make sure our error message begins with "error: ".
+                  (if (regexp-match #rx"^error: " whine)
+                      whine
+                    (format "error: ~a" whine)))))])
 
          (let ((s (get-sandbox-by-name
                    (PRIVMSG-speaker m))))
