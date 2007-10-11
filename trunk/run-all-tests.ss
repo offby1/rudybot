@@ -21,16 +21,17 @@ exec mzscheme -M errortrace -qtmv "$0" -e "(run-and-exit)"
 (register-version-string "$Id$")
 (define eva-thang (test-suite
                    "eva thang"
-                   resettable-alarm-tests
                    bot-tests
                    channel-events-tests
                    del.icio.us-tests
                    headline-tests
                    parse-tests
                    planet-tests
+                   resettable-alarm-tests
                    sandboxes-tests
                    spelled-out-time-tests
-                   tinyurl-tests))
+                   tinyurl-tests
+                   ))
 
 (define (run-and-exit)
 
