@@ -182,6 +182,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                          "'s jaw slackens"
                          "checks his eyelids for pinholes"
                          "fantasizes about Rita Hayworth"
+                         "feels a sudden urge to tell the world about http://www.belgianfries.com/"
                          "idly leafs through an old copy of \"Time\" magazine"
                          "imagines a sunny summer scene"
                          "is at a loss for words, as usual"
