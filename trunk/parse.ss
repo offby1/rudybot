@@ -205,7 +205,16 @@
   (let ((t (text-for-us message sess)))
     ;; trim trailing non-command stuff
     (and t
-         (regexp-replace #px"^([[:alpha:]]+).*$" (car t) "\\1"))))
+         ;;(regexp-replace #px"^([[:alpha:]]+).*$" (car t) "\\1")
+         (let ((thing (read
+                       ;; TODO -- not sure if I want open-input-string
+                       ;; or open-input-bytes here.
+                       (open-input-string
+                        (car t)))))
+           (and (symbol? thing)
+                (symbol->string thing))
+           )
+         )))
 
 (define (gist-equal? str message sess)
   (check-type 'gist-equal? message? message)
@@ -228,6 +237,13 @@
     (check-equal? (prefix-nick p) (first  expected-pieces) (format "nick of ~s" input))
     (check-equal? (prefix-user p) (second expected-pieces) (format "user of ~s" input))
     (check-equal? (prefix-host p) (third  expected-pieces) (format "host of ~s" input))))
+
+(define-shortcut (test-gist-equal message sess expected)
+  (let* ((m (if (string? message)
+                (parse-irc-message message)
+                message))
+         (g (gist-for-us m sess)))
+    (check-equal? g expected)))
 
 (define parse-tests
 
@@ -345,12 +361,14 @@
      (check-equal?
       (PRIVMSG-approximate-recipient
        (parse-irc-message ":X!X@Y PRIVMSG sam :well, I think you smell"))
-      "well"))
+      "well")))
 
-    )
    (let* ((sess (make-irc-session
                  (open-output-string)))
           (nick (irc-session-nick sess)))
+     (define (hmm str)
+       (format ":x!y@z PRIVMSG #ch-ch-ch-changes :~a: ~a" nick str))
+
      (test-suite
       "gists"
       (test-not-false "for-us"  (for-us? (parse-irc-message (format ":x!y@z PRIVMSG ~a :yow" nick))                sess))
@@ -358,36 +376,25 @@
       (test-false     "for-us"  (for-us? (parse-irc-message (format ":x!y@z PRIVMSG x~ax :yow" nick))              sess))
       (test-false     "for-us"  (for-us? (parse-irc-message (format ":x!y@z PRIVMSG #some-chan :x~ax: yow" nick))  sess))
 
-      (test-not-false
+      (test-gist-equal
        "gist-equal?"
-       (gist-equal?
-        "yow"
-        (parse-irc-message (format ":x!y@z PRIVMSG ~a :yow" nick))
-        sess))
+       (format ":x!y@z PRIVMSG ~a :yow" nick)
+       sess
+       "yow")
 
-      (test-not-false
+      (test-gist-equal
        "gist-equal?"
-       (gist-equal?
-        "yow"
-        (parse-irc-message (format ":x!y@z PRIVMSG #ch-ch-ch-changes :~a, yow" nick))
-        sess))
-      (test-case
-       "eval"
-       (let* ((sess (make-irc-session (open-output-string)))
-              (nick (irc-session-nick sess)))
-         (define (hmm str)
-           (gist-equal?
-            "eval"
-            (parse-irc-message
-             (format ":x!y@z PRIVMSG #ch-ch-ch-changes :~a: ~a" nick str))
-            sess))
+       (format ":x!y@z PRIVMSG #ch-ch-ch-changes :~a, yow" nick)
+       sess
+       "yow")
 
-         (check-not-false  (hmm "eval ((+ 1 2))"))
-         (check-not-false  (hmm "eval((+ 1 2))"))
-         (check-not-false  (hmm "eval.1 2"))
-         (check-not-false  (hmm "eval.x 2"))
-         ))
-      ))
+      (test-gist-equal "eval"  (hmm "eval ((+ 1 2))") sess "eval")
+      (test-gist-equal "eval"  (hmm "eval((+ 1 2))")  sess "eval")
+      (test-gist-equal "eval"  (hmm "eval.1 2")       sess "eval.1")
+      (test-gist-equal "eval"  (hmm "eval.x 2")       sess "eval.x")
+      (test-gist-equal ">"     (hmm ">(+ 1 2)")       sess ">")
+      (test-gist-equal ">"     (hmm "> (+ 1 2)")      sess ">")))
+
    (test-suite
     "prefix"
     (test-prefix-pieces "nick only"        ":nick foo bar baz"             '("nick" #f #f))

@@ -2,6 +2,13 @@
 
 -- High priority
 
+* single-character attention sequence
+  * offby1 wonders if he should create a single-character prefix to get the bot's attention, like
+    maybe the comma, so people don't have to spell out "rudybot" all the time
+  <eli> offby1: Use `>'!
+  <offby1> eli: I was just thinking <.  Weird.
+  <eli> No no -- `>'.  Much more better.
+
 * one-click startup
   For people who have never seen it before, provide a shell script
   that connects to freenode with a random nick.  This, of course,
