@@ -28,22 +28,35 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
               (make-parse-result (reverse exprs) #f)
               (loop (cons one-expr exprs))))))))
 
+(define-shortcut (test-parse-result input expected-sexprs expected-trailing-junk)
+  (let ((r (parse input)))
+    (check-equal? (parse-result-sexprs r)           expected-sexprs)
+    (check-equal? (parse-result-trailing-garbage r) expected-trailing-junk)))
+
 (define new-parse-tests
 
   (test-suite
    "new-parse"
-   (test-case
-    "trailing junk"
-    (let ((r (parse "a b c 123 ) junk")))
-      (check-equal? (parse-result-sexprs r)
-                    '(a b c 123))
-      (check-equal? (parse-result-trailing-garbage r)
-                    ") junk")))
 
-   (test-equal?
+   (test-parse-result
+    "trailing junk"
+    "a b c 123 ) junk"
+    '(a b c 123)
+    ") junk")
+
+   (test-parse-result
     "clean"
-    (parse-result-sexprs (parse "a b c 123 ( not-junk-at-all )"))
-    '(a b c 123 (not-junk-at-all)))))
+    "a b c 123 ( not-junk-at-all )"
+    '(a b c 123 (not-junk-at-all))
+    #f
+    )
+
+   (test-parse-result
+    "empty"
+    ""
+    '()
+    #f)
+   ))
 
 (provide (all-defined))
 )
