@@ -205,16 +205,7 @@
   (let ((t (text-for-us message sess)))
     ;; trim trailing non-command stuff
     (and t
-         ;;(regexp-replace #px"^([[:alpha:]]+).*$" (car t) "\\1")
-         (let ((thing (read
-                       ;; TODO -- not sure if I want open-input-string
-                       ;; or open-input-bytes here.
-                       (open-input-string
-                        (car t)))))
-           (and (symbol? thing)
-                (symbol->string thing))
-           )
-         )))
+         (regexp-replace #px"^([[:alpha:]]+).*$" (car t) "\\1"))))
 
 (define (gist-equal? str message sess)
   (check-type 'gist-equal? message? message)
@@ -390,9 +381,8 @@
 
       (test-gist-equal "eval"  (hmm "eval ((+ 1 2))") sess "eval")
       (test-gist-equal "eval"  (hmm "eval((+ 1 2))")  sess "eval")
-      (test-gist-equal "eval"  (hmm "eval.1 2")       sess "eval.1")
-      (test-gist-equal "eval"  (hmm "eval.x 2")       sess "eval.x")
-      (test-gist-equal ">"     (hmm ">(+ 1 2)")       sess ">")
+      (test-gist-equal "eval"  (hmm "eval.1 2")       sess "eval")
+      (test-gist-equal "eval"  (hmm "eval.x 2")       sess "eval")
       (test-gist-equal ">"     (hmm "> (+ 1 2)")      sess ">")))
 
    (test-suite
