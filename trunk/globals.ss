@@ -13,6 +13,8 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
 
 (include "version.ss")
 
+(define *sightings-database-file-name* "sightings.db")
+
 (define *desired-nick* (make-parameter "rudybot"))
 
 (define *client-name* "Eric Hanchrow (aka offby1)'s bot")

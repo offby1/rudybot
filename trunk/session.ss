@@ -4,7 +4,8 @@
 exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0" -p "text-ui.ss" "schematics" "schemeunit.plt" -e "(exit (test/text-ui session-tests 'verbose))"
 |#
 (module session mzscheme
-(require (lib "kw.ss")
+(require (lib "serialize.ss")
+         (lib "kw.ss")
          (lib "trace.ss")
          (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
          (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
@@ -54,10 +55,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
   (letrec ((sess
             (make-irc-session
 
-             ;; find some PLT equivalent of Perl's tied hashes, so that this
-             ;; table will persist to disk.  Name the disk file after the IRC
-             ;; server.  Put it in /var/something on *nix, and %APPDATA%\rudybot
-             ;; on Winders.
              (make-hash-table 'equal)
 
              (make-hash-table 'equal)
@@ -70,6 +67,21 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 
              (*desired-nick*)
              )))
+    (when (file-exists? *sightings-database-file-name*)
+      (call-with-input-file *sightings-database-file-name*
+        (lambda (ip)
+          (for-each
+           (lambda (pair)
+             (hash-table-put!
+              (irc-session-appearances-by-nick sess)
+              (car pair)
+              (deserialize (cdr pair))))
+           (read ip))))
+      (parameterize ((print-hash-table #t))
+        (fprintf (current-error-port)
+                 "Initialized \"seen\" database with ~s~%"
+                 (irc-session-appearances-by-nick sess))))
+
     sess))
 
 (define (public-set-irc-session-async-for-news! sess thing)

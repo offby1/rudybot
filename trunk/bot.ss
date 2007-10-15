@@ -4,7 +4,8 @@
 exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot-tests.ss -p "text-ui.ss" "schematics" "schemeunit.plt" -e "(exit (test/text-ui bot-tests 'verbose))"
 |#
 (module bot mzscheme
-(require (lib "sandbox.ss")
+(require (lib "serialize.ss")
+         (lib "sandbox.ss")
          (lib "kw.ss")
          (only (lib "etc.ss") this-expression-source-directory)
          (only (lib "1.ss" "srfi")
@@ -218,7 +219,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 ;; global.
 (define *sandboxes-by-nick* (make-hash-table 'equal))
 
-(define-struct sighting (who where when was-action? words))
+(define-serializable-struct sighting (who where when was-action? words) #f)
 
 (define (register-usual-services! session)
 
@@ -460,16 +461,26 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
        ;; note who did what, when, where, how, and wearing what kind
        ;; of skirt; so that later we can respond to "seen Ted?"
-       (let ((who (PRIVMSG-speaker m)))
+       (let* ((who (PRIVMSG-speaker m))
+              (sighting (make-sighting
+                         who
+                         (car (PRIVMSG-receivers m))
+                         (current-seconds)
+                         (ACTION? m)
+                         (PRIVMSG-text m))))
          (hash-table-put!
           (irc-session-appearances-by-nick session)
           who
-          (make-sighting
-           who
-           (car (PRIVMSG-receivers m))
-           (current-seconds)
-           (ACTION? m)
-           (PRIVMSG-text m)))))
+          sighting)
+
+         (call-with-output-file *sightings-database-file-name*
+           (lambda (op)
+             (write (hash-table-map
+                     (irc-session-appearances-by-nick session)
+                     (lambda (nick sighting)
+                       (cons nick (serialize sighting)))) op))
+           'truncate/replace)
+         ))
 
      #:descr "fingerprint file")
 
