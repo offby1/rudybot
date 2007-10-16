@@ -9,11 +9,13 @@
 (define update-server
   (thread
    (lambda ()
-     (let loop ((write-me (async-channel-get *the-channel*)))
-       (call-with-output-file *sightings-database-file-name*
-         (lambda (op)
-           (write write-me op))
-         'truncate/replace)))))
+     (let loop ()
+       (let ((write-me (async-channel-get *the-channel*)))
+         (call-with-output-file *sightings-database-file-name*
+           (lambda (op)
+             (write write-me op))
+           'truncate/replace))
+       (loop)))))
 
 (define (enqueue-sightings-update value)
   (async-channel-put *the-channel* value))
