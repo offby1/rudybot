@@ -68,20 +68,20 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 
              (*desired-nick*)
              )))
-    (when (file-exists? *sightings-database-file-name*)
-      (call-with-input-file *sightings-database-file-name*
-        (lambda (ip)
-          (for-each
-           (lambda (pair)
-             (hash-table-put!
-              (irc-session-appearances-by-nick sess)
-              (car pair)
-              (deserialize (cdr pair))))
-           (read ip))))
-      (parameterize ((print-hash-table #t))
-        (fprintf (current-error-port)
-                 "Initialized \"seen\" database with ~s~%"
-                 (irc-session-appearances-by-nick sess))))
+
+    (maybe-call-with-sighting-data
+     (lambda (sightings)
+       (for-each
+        (lambda (pair)
+          (hash-table-put!
+           (irc-session-appearances-by-nick sess)
+           (car pair)
+           (deserialize (cdr pair))))
+        sightings)
+       (parameterize ((print-hash-table #t))
+         (fprintf (current-error-port)
+                  "Initialized \"seen\" database with ~s~%"
+                  (irc-session-appearances-by-nick sess)))))
 
     sess))
 

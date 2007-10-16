@@ -472,13 +472,11 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
           who
           sighting)
 
-         (call-with-output-file *sightings-database-file-name*
-           (lambda (op)
-             (write (hash-table-map
-                     (irc-session-appearances-by-nick session)
-                     (lambda (nick sighting)
-                       (cons nick (serialize sighting)))) op))
-           'truncate/replace)
+         (enqueue-sightings-update
+          (hash-table-map
+           (irc-session-appearances-by-nick session)
+           (lambda (nick sighting)
+             (cons nick (serialize sighting)))))
          ))
 
      #:descr "fingerprint file")

@@ -258,6 +258,12 @@ essentially a full-blown IRC client with a scheme syntax.
 
 * "seen" command
 
+** name db after the IRC server
+   Or better yet, after the IRC _network_.  So instead of
+   "sightings.db", it'd be "freenode-sightings.db"; that way the bot
+   could (in theory) be connected to two networks at once, without the
+   two dbs interfering with each other.
+
 ** truncate output
    because it can be annoyingly long, if the last thing they said was
    annoyingly long.
