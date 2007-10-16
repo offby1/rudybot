@@ -535,14 +535,16 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                      (sighting-where s)
                      (if (sighting-was-action? s)
                          " was at"
-                       "")
+                         "")
 
                      (spelled-out-time (- (current-seconds)
                                           (sighting-when s)))
 
                      (if (sighting-was-action? s)
+                         ;; BUGBUG -- parse the interesting text out
+                         ;; of, e.g., "\u0001ACTION yawns\u0001"
                          (format ": ~a ~a" who (sighting-words s))
-                       (format ", saying \"~a\"" (sighting-words s)))
+                         (format ", saying \"~a\"" (sighting-words s)))
 
                      who)
                   (format "I haven't seen ~a" who))
