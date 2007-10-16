@@ -27,6 +27,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
          (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
          (only (planet "zdate.ss" ("offby1" "offby1.plt")) zdate)
          (planet "assert.ss" ("offby1" "offby1.plt"))
+         (only (planet "numspell.ss" ("neil" "numspell.plt")) number->english)
          "resettable-alarm.ss"
          "cached-channel.ss"
          "channel-events.ss"
@@ -655,13 +656,24 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                    (cdr (text-for-us m session))
                    " ")))
              (lambda values
-               (for-each (lambda (value)
-                           (when (not (void? value))
-                             (reply
-                              session
-                              m
-                              (format "; Value: ~s" value))))
-                         values))))
+               (let loop ((values values)
+                          (displayed 0))
+                 (if (= displayed *max-values-to-display*)
+                     (reply
+                      session
+                      m
+                      (format "~a values is enough for anybody; here's the rest in a list: ~s"
+                              (number->english *max-values-to-display*)
+                              values))
+                     (when (not (null? values))
+                       (when (not (void? (car values)))
+                         (reply
+                          session
+                          m
+                          (format "; Value: ~s"
+                                  (car values))))
+                       (loop (cdr values)
+                             (add1 displayed))))))))
 
          (let ((stdout (sandbox-get-stdout s))
                (stderr (sandbox-get-stderr s)))

@@ -15,6 +15,8 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
 
 (define *desired-nick* (make-parameter "rudybot"))
 
+(define *max-values-to-display* 3)      ;for the "eval" command
+
 (define *client-name* "Eric Hanchrow (aka offby1)'s bot")
 
 (define version-strings #f)
