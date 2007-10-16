@@ -50,7 +50,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                (custodian-shutdown-all test-cust)
                (fprintf (current-error-port)
                         "Creating a fresh session~%")
-               (*minimum-delay-for-periodic-spew* 1/5)
+               (*minimum-delay-for-periodic-spew* 2/5)
                (*planet-poll-interval* 2)
                (reliably-put-pref #f)
                (reset-prefs-file-semaphore!)
@@ -81,6 +81,17 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                                ip
                                (format ":a!b@c PRIVMSG #d :~a: eval (+ 1 2)" (irc-session-nick sess))
                                #rx"PRIVMSG #d :; Value: 3")))
+            (test-with-setup
+             "multiple values"
+             (respond
+              (parse-irc-message
+               (format
+                ":a!b@c PRIVMSG #d :~a: eval (values 1 2 3)"
+                (irc-session-nick sess)))
+              sess)
+             (check-not-false (expect/timeout ip #rx"PRIVMSG #d :; Value: 1" 2))
+             (check-not-false (expect/timeout ip #rx"PRIVMSG #d :; Value: 2" 2))
+             (check-not-false (expect/timeout ip #rx"PRIVMSG #d :; Value: 3" 2)))
             (test-with-setup
              "proper display of output"
              (check-not-false (got-response?
