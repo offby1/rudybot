@@ -1,7 +1,12 @@
+#! /bin/sh
+#| Hey Emacs, this is -*-scheme-*- code!
+#$Id$
+|#
 (module sighting mzscheme
 (require (lib "serialize.ss")
-         (lib "async-channel.ss"))
-
+         (lib "async-channel.ss")
+         "globals.ss")
+(register-version-string "$Id$")
 (define *sightings-database-file-name* "sightings.db")
 
 (define *the-channel* (make-async-channel))
