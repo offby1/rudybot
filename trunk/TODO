@@ -170,25 +170,6 @@ should be hosted on an FTP server, which I don't care to run, so ...
   but I should at least work around it.  (elibarzilay says it can't be
   done but I don't believe him)
 
-* persistence
-  It'd be nice to save stuff to disk.  Currently I save the date of
-  the last planet.emacsen.org headline that we spewed in the the PLT
-  "preferences" file ...  But I dunno if simply "write"ing an
-  sexpression will suffice for more complex data ... it'd be nice to
-  have bindings to Berkeley DB.
-
-  On the other hand, I can't think of much that I need to persist
-  ... maybe the appearances-by-nick data for the "seen" command.  That
-  seems a perfect application for sqlite, which I seem to have an urge
-  to play with ...
-
-  http://www.elemental-programming.org/Bigloo%20SQLI.html and
-  http://planet.plt-scheme.org/package-source/jaymccarthy/sqlite.plt/3/1/doc.txt
-  both seem like they might do it; the former seems slightly more
-  up-to-date.
-  http://planet.plt-scheme.org/package-source/dfisher/sql-table.plt/1/1/doc.txt
-  looks particularly pleasant.
-
 * Find some way to deal with exceptions in threads
   e.g., "procedure internal-entries-newer-than: expects 3 arguments,
   given 2 ...".  That procedure application is happening in a thread

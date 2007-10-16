@@ -39,6 +39,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
          "sandboxes.ss"
          "session.ss"
          "shuffle.ss"
+         "sighting.ss"
          "spelled-out-time.ss"
          "thread.ss"
          "tinyurl.ss"
@@ -218,8 +219,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 ;; TODO -- as usual, this should really be in the session, not a
 ;; global.
 (define *sandboxes-by-nick* (make-hash-table 'equal))
-
-(define-serializable-struct sighting (who where when was-action? words) #f)
 
 (define (register-usual-services! session)
 
