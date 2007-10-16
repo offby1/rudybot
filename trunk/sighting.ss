@@ -11,6 +11,15 @@
 
 (define *the-channel* (make-async-channel))
 
+;; Rather than let our clients (who may be in lots of different
+;; threads) call us willy-nilly, we force them all to call this
+;; function, which is atomic.  That way there's no risk that multiple
+;; concurrent writers will interfere with each other.
+(define (enqueue-sightings-update value)
+  (async-channel-put *the-channel* value))
+
+;; Since our clients are stuffing values onto *the-channel*, we have
+;; to retrieve them and save them.
 (define update-server
   (thread
    (lambda ()
@@ -18,13 +27,9 @@
        (let ((write-me (async-channel-get *the-channel*)))
          (call-with-output-file *sightings-database-file-name*
            (lambda (op)
-             ;; maybe use "pretty-print" instead of "write"
              (write write-me op))
            'truncate/replace))
        (loop)))))
-
-(define (enqueue-sightings-update value)
-  (async-channel-put *the-channel* value))
 
 (define (maybe-call-with-sighting-data proc)
   (when (file-exists? *sightings-database-file-name*)

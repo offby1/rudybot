@@ -80,8 +80,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
         sightings)
        (parameterize ((print-hash-table #t))
          (fprintf (current-error-port)
-                  "Initialized \"seen\" database with ~s~%"
-                  (irc-session-appearances-by-nick sess)))))
+                  "Initialized \"seen\" database; hash table now has ~a entries~%"
+                  (hash-table-count (irc-session-appearances-by-nick sess))))))
 
     sess))
 
