@@ -460,7 +460,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
        ;; note who did what, when, where, how, and wearing what kind
        ;; of skirt; so that later we can respond to "seen Ted?"
-       (let* ((who (PRIVMSG-speaker m))
+       (let* ((ht (irc-session-appearances-by-nick session))
+              (who (PRIVMSG-speaker m))
               (sighting (make-sighting
                          who
                          (car (PRIVMSG-receivers m))
@@ -469,17 +470,21 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                          (if (ACTION? m)
                              (ACTION-text m)
                              (PRIVMSG-text m)))))
+         (when (not (hash-table-get ht
+                                    who #f))
+           (vtprintf "~a joins ~a existing sightings~%"
+                     who
+                     (hash-table-count ht)))
          (hash-table-put!
-          (irc-session-appearances-by-nick session)
+          ht
           who
           sighting)
 
          (enqueue-sightings-update
           (hash-table-map
-           (irc-session-appearances-by-nick session)
+           ht
            (lambda (nick sighting)
-             (cons nick (serialize sighting)))))
-         ))
+             (cons nick (serialize sighting)))))))
 
      #:descr "fingerprint file")
 

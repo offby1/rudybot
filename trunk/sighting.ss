@@ -13,6 +13,7 @@
        (let ((write-me (async-channel-get *the-channel*)))
          (call-with-output-file *sightings-database-file-name*
            (lambda (op)
+             ;; maybe use "pretty-print" instead of "write"
              (write write-me op))
            'truncate/replace))
        (loop)))))
@@ -27,7 +28,16 @@
         (proc (read ip))))))
 
 (define-serializable-struct sighting (who where when was-action? words) #f)
+
+;; For reasons I don't understand, if we say (provide (all-defined))
+;; here, we get an error.  See
+;; http://groups.google.com/group/plt-scheme/browse_thread/thread/2feae94cca6a8bd8
+;; for a discussion.
+
+;; (Actually I don't want to provide *sightings-database-file-name* or
+;; *the-channel* anyway.)
 (provide enqueue-sightings-update
          maybe-call-with-sighting-data
-         (struct sighting (who where when was-action? words)))
+         (struct sighting (who where when was-action? words))
+         )
 )

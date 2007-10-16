@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+rm -f sightings.db
+
 (
 
     echo -e ":localhost. 001 rudybot :Welcome to the faked-up shell script rudybot \\r"
