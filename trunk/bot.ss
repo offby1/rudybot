@@ -539,7 +539,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
                      (sighting-where s)
                      (if (sighting-was-action? s)
-                         " was at"
+                         " was"
                          "")
 
                      (spelled-out-time (- (current-seconds)
