@@ -9,7 +9,7 @@
     echo -e ":a!b@c PRIVMSG #scheme-bots :hey buddy\\r"
     echo -e ":b!b@c PRIVMSG #scheme-bots :rudybot: hey buddy\\r"
     echo -e ":c!b@c PRIVMSG rudybot :hey buddy\\r"
-    echo -e ":d!b@c PRIVMSG #scheme :\001ACTION yawns\001\\r"
+    echo -e ":a!b@c PRIVMSG #scheme :\001ACTION yawns\001\\r"
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: seen a?\\r"
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: uptime\\r"
 

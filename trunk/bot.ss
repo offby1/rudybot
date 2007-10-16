@@ -466,7 +466,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                          (car (PRIVMSG-receivers m))
                          (current-seconds)
                          (ACTION? m)
-                         (PRIVMSG-text m))))
+                         (if (ACTION? m)
+                             (ACTION-text m)
+                             (PRIVMSG-text m)))))
          (hash-table-put!
           (irc-session-appearances-by-nick session)
           who
@@ -539,8 +541,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                                           (sighting-when s)))
 
                      (if (sighting-was-action? s)
-                         ;; BUGBUG -- parse the interesting text out
-                         ;; of, e.g., "\u0001ACTION yawns\u0001"
                          (format ": ~a ~a" who (sighting-words s))
                          (format ", saying \"~a\"" (sighting-words s)))
 
