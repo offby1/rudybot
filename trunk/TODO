@@ -16,6 +16,20 @@
 
 * bugs
 
+** eval thread dies, or hangs, or something (r78)
+   Now, this is interesting.  Eli (annoyingly quickly) found a way to
+   DOS the bot via "eval":
+
+   rudybot: eval (let ([x (make-string 1000 #\X)]) (values x x x x))
+
+   Not surprisingly, this causes the server to hang up on the bot, and
+   complain about an excess flood.  More interestingly, though: when
+   the bot automatically reconnects, "eval" no longer works: we tell
+   it to eval something, and it simply doesn't respond.  Other threads
+   seem OK, and the log does contain a message about some procedure
+   claiming the "eval" command .... but we don't see any output.
+   Weird.
+
 ** deal with this properly
    thread 0: 2007-10-12T21:26:31-0400: Can't parse string from server: ":irc.freenode.net MODE #bots +o ChanServ "
 
