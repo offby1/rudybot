@@ -30,6 +30,8 @@
    claiming the "eval" command .... but we don't see any output.
    Weird.
 
+   You can repro this with bugs/flood.sh.
+
 ** deal with this properly
    thread 0: 2007-10-12T21:26:31-0400: Can't parse string from server: ":irc.freenode.net MODE #bots +o ChanServ "
 
