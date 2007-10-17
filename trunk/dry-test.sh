@@ -9,7 +9,7 @@ rm -f sightings.db
     echo -e ":localhost 366 rudybot #emacs :what's up, homes? \\r"
 
     echo -e ":a!b@c PRIVMSG #scheme-bots :hey buddy\\r"
-    echo -e ":b!b@c PRIVMSG #scheme-bots :rudybot: hey buddy\\r"
+    echo -e ":b!b@c PRIVMSG #scheme-bots :rudybot: eval (values 1 2 3 4)\\r"
     echo -e ":c!b@c PRIVMSG rudybot :hey buddy\\r"
     echo -e ":a!b@c PRIVMSG #scheme :\001ACTION yawns\001\\r"
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: seen a?\\r"
