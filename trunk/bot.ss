@@ -75,6 +75,10 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
        (regexp-replace #rx"(\n|\r).*" trimmed "")
 
        (irc-session-op s))
+
+      ;; perhaps wait, say, one millisecond for each character that we
+      ;; just output, to prevent flooding.
+
       (newline (irc-session-op s))
       (vtprintf " => ~s~%" trimmed))))
 

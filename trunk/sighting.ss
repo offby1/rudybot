@@ -31,6 +31,8 @@
            'truncate/replace))
        (loop)))))
 
+;; This function basically prevents our callers from knowing the name
+;; of the sightings file ...
 (define (maybe-call-with-sighting-data proc)
   (when (file-exists? *sightings-database-file-name*)
     (call-with-input-file *sightings-database-file-name*
