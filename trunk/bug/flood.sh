@@ -20,7 +20,7 @@ sleep 10
     do
         # if rudybot fails to respond to this, then the bug is present.
         echo -e "PRIVMSG #yo :rudybot: eval 'everything-is-ok\\r"
-        sleep 20
+        sleep 5
     done
 
     ) | nc localhost 6667 
