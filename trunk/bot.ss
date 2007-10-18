@@ -53,34 +53,34 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
   (and (PRIVMSG? m)
        (member c (PRIVMSG-receivers m))))
 
-(define out
-  (lambda (s . args)
-    ;; ensure the output doesn't exceed around 500 characters, lest
-    ;; the IRC server kick us for flooding.
-    (let* ((full-length (apply format args))
-           (l (string-length full-length))
-           (trimmed (substring full-length 0 (min 500 l))))
-      (when  (equal? #\newline (string-ref trimmed (sub1 (string-length trimmed))))
-        (fprintf (current-error-port)
-                 "Warning: someone sent 'out' a string that was terminated with a newline~%")
-        (fprintf (current-error-port)
-                 "~s"
-                 (continuation-mark-set->context (current-continuation-marks))))
-
-      (display
-
-       ;; only display the first line, to prevent people from
-       ;; embedding an end-of-line character followed by an IRC
-       ;; protocol command ...
-       (regexp-replace #rx"(\n|\r).*" trimmed "")
-
-       (irc-session-op s))
-
+(define max-output-line 500)
+(define (out s fmt . args)
+  ;; ensure the output doesn't exceed 500 characters, lest the IRC
+  ;; server kick us for flooding, and dont display newlines to avoid
+  ;; hacking IRC commands.
+  (let* ([msg (apply format fmt args)]
+         [msg (regexp-replace* #rx"[\n\r]" msg " <NEWLINE> ")]
+         [msg (if (> (string-length msg) max-output-line)
+                (string-append (substring msg 0 (- max-output-line 4)) " ...")
+                msg)]
+         [o (irc-session-op s)]
+         [main (current-thread)])
+    (define killer
+      (thread (lambda ()
+                (sleep 3)
+                (break-thread main))))
+    (with-handlers ([void (lambda (e)
+                            (vtprintf "While writing: ~a~%"
+                                      (if (exn? e)
+                                        (exn-message e)
+                                        e)))])
+      (display msg o)
       ;; perhaps wait, say, one millisecond for each character that we
       ;; just output, to prevent flooding.
+      (newline o)
+      (kill-thread killer))
+    (vtprintf " => ~s~%" msg)))
 
-      (newline (irc-session-op s))
-      (vtprintf " => ~s~%" trimmed))))
 
 (define pm
   (lambda (s target msg)
@@ -626,7 +626,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
        (equal? 'PING (message-command m)))
      (lambda (m)
        (out session "PONG :~a" (car (message-params m)))))
-
+
     (add!
      (lambda (m)
        (gist-equal? "eval" m session))
@@ -636,61 +636,46 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
        (let ((s (get-sandbox-by-name
                  (PRIVMSG-speaker m))))
 
-         (with-handlers
-             ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
-             ;; killing this thread.
-             ([void
-               (lambda (v)
-                 (let ((whine (if (exn? v)
-                                  (exn-message v)
-                                (format "~s" v))))
+         (call-with-values
+             (lambda ()
+               (if (regexp-match #rx"values" (PRIVMSG-text m))
+                   (let ([x (make-string 1000 #\X)])
+                     (values x x x x))
+                   "burp."))
+           (lambda values
+             (let loop ((values values)
+                        (displayed 0))
+               (if (= displayed *max-values-to-display*)
                    (reply
                     session
                     m
-                    ;; make sure our error message begins with "error: ".
-                    (if (regexp-match #rx"^error: " whine)
-                        whine
-                      (format "error: ~a" whine)))))])
+                    (format "~a values is enough for anybody; here's the rest in a list: ~s"
+                            (number->english *max-values-to-display*)
+                            values))
+                   (when (not (null? values))
+                     (when (not (void? (car values)))
+                       (reply
+                        session
+                        m
+                        (format "; Value: ~s"
+                                (car values))))
+                     (loop (cdr values)
+                           (add1 displayed)))))))
 
-           (call-with-values
-               (lambda ()
-                 (sandbox-eval
-                  s
-                  (string-join
-                   (cdr (text-for-us m session))
-                   " ")))
-             (lambda values
-               (let loop ((values values)
-                          (displayed 0))
-                 (if (= displayed *max-values-to-display*)
-                     (reply
-                      session
-                      m
-                      (format "~a values is enough for anybody; here's the rest in a list: ~s"
-                              (number->english *max-values-to-display*)
-                              values))
-                     (when (not (null? values))
-                       (when (not (void? (car values)))
-                         (reply
-                          session
-                          m
-                          (format "; Value: ~s"
-                                  (car values))))
-                       (loop (cdr values)
-                             (add1 displayed))))))))
-
-         (let ((stdout (sandbox-get-stdout s))
-               (stderr (sandbox-get-stderr s)))
-           (when (and (string? stdout)
-                      (positive? (string-length stdout)))
-             (reply session m (format "; stdout: ~s" stdout)))
-           (when (and (string? stderr)
-                      (positive? (string-length stderr)))
-             (reply session m (format "; stderr: ~s" stderr)))
-           )))
+         (when #f
+           (let ((stdout (sandbox-get-stdout s))
+                 (stderr (sandbox-get-stderr s)))
+             (when (and (string? stdout)
+                        (positive? (string-length stdout)))
+               (reply session m (format "; stdout: ~s" stdout)))
+             (when (and (string? stderr)
+                        (positive? (string-length stderr)))
+               (reply session m (format "; stderr: ~s" stderr)))
+             ))))
 
 
      #:responds? #t)
+
     (add!
      (lambda (m) (gist-equal? "uptime" m session))
      (lambda (m)
@@ -727,9 +712,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
           (start))])
 
     (when *sess*
-      (custodian-shutdown-all (irc-session-custodian *sess*))
       (when (not (terminal-port? (irc-session-op *sess*)))
-        (maybe-close-output-port (irc-session-op *sess*))))
+        (maybe-close-output-port (irc-session-op *sess*)))
+      (custodian-shutdown-all (irc-session-custodian *sess*)))
 
     ;; if we're gonna twiddle the nick, we need to do it before we
     ;; start any threads, so that the new threads get the same value
