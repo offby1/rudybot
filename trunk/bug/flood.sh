@@ -1,5 +1,9 @@
 #!/bin/bash -x
 
+# Make sure, of course, that you have dancer-ircd running and
+# listening on port 6667.  If you're on Debian, you can simply do
+# "sudo aptitude install dancer-ircd".
+
 rm -f sightings.db
 
 ./run-bot.ss -c '#yo' -n rudybot -s localhost &
