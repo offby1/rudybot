@@ -1,0 +1,134 @@
+X-From-Line: ryanc@ccs.neu.edu Thu Aug 16 14:55:37 2007
+Return-path: <ryanc@ccs.neu.edu>
+Envelope-to: erich@localhost
+Delivery-date: Thu, 16 Aug 2007 14:55:37 -0700
+Received: from localhost ([127.0.0.1] helo=offby1.atm01.sea.blarg.net)
+	by offby1.atm01.sea.blarg.net with esmtp (Exim 4.60)
+	(envelope-from <ryanc@ccs.neu.edu>)
+	id 1ILnJZ-00073S-C5
+	for erich@localhost; Thu, 16 Aug 2007 14:55:37 -0700
+X-Spam-Checker-Version: SpamAssassin 3.1.8 (2007-02-13) on pops.p.blarg.net
+X-Spam-Level: 
+X-Spam-Status: No, score=0.0 required=5.0 tests=none autolearn=disabled
+	version=3.1.8
+X-Original-To: offby1@blarg.net
+Delivered-To: offby1@blarg.net
+Received: from mail.avvanta.com [206.124.128.85]
+	by offby1.atm01.sea.blarg.net with IMAP (fetchmail-6.3.2)
+	for <erich@localhost> (single-drop); Thu, 16 Aug 2007 14:55:37 -0700 (PDT)
+Received: from mail.avvanta.com (pops.p.blarg.net [127.0.0.1])
+	by mail.avvanta.com (Postfix) with ESMTP id 80C73276FDD
+	for <offby1@blarg.net>; Thu, 16 Aug 2007 14:52:19 -0700 (PDT)
+Received: from amber.ccs.neu.edu (amber.ccs.neu.edu [129.10.116.51])
+	by mail.avvanta.com (Postfix) with ESMTP id 55E3D276FE6
+	for <offby1@blarg.net>; Thu, 16 Aug 2007 14:52:16 -0700 (PDT)
+Received: from burundi.ccs.neu.edu ([129.10.110.164] helo=[10.0.0.164])
+	by amber.ccs.neu.edu with esmtpsa (TLSv1:RC4-SHA:128)
+	(Exim 4.50)
+	id 1ILnGF-0001Fq-9a; Thu, 16 Aug 2007 17:52:11 -0400
+In-Reply-To: <87mywrs1kw.fsf@offby1.atm01.sea.blarg.net>
+References: <87mywrs1kw.fsf@offby1.atm01.sea.blarg.net>
+Mime-Version: 1.0 (Apple Message framework v624)
+Content-Type: text/plain; charset=US-ASCII; delsp=yes; format=flowed
+X-Gnus-Mail-Source: file:/var/mail/erich
+Message-Id: <3be57a50de3289aae1cd2145db5233ac@ccs.neu.edu>
+Content-Transfer-Encoding: 7bit
+Cc: schematics-development@lists.sourceforge.net
+From: Ryan Culpepper <ryanc@ccs.neu.edu>
+Subject: Re: [Schematics-development] schemeunit: How best to discover exceptions in child threads?
+Date: Thu, 16 Aug 2007 17:52:11 -0400
+To: Eric Hanchrow <offby1@blarg.net>
+X-Mailer: Apple Mail (2.624)
+X-BlargAV-Status: No viruses detected, BlargAV v1.1 on localhost.pops.p.blarg.net
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.0.1
+Lines: 90
+Xref: offby1.atm01.sea.blarg.net mail.misc:18231
+
+On Aug 16, 2007, at 3:48 PM, Eric Hanchrow wrote:
+
+> Here's a problem which I've already solved, but I'm not in love with
+> the solution, and am wondering if there's a better way.
+>
+> I have some functions that create threads, and sometimes those threads
+> raise uncaught exceptions.  And sometimes, alas, my tests don't notice
+> (because the dead thread didn't directly contribute to the result my
+> tests are looking for).  And sometimes I don't notice the exception,
+> since its only evidence is a few lines of output, which tend to get
+> lost amongst all the other output.
+>
+> So I'd like a way for the tests to fail when a child thread raises an
+> uncaught exception.  Attached is the way I've found to do it, but it
+> just seems clunky.  Can someone suggest a better way?
+> <thread-trouble.ss>
+
+I would combine the check of the result with the check that no child  
+thread threw an exception into one test, because they are part of the  
+same overall computation. As a rule, I try to keep my test cases  
+totally independent. In your example, the execution of the second test  
+depends on the state left by the first test.
+
+Here's a procedure that might help. It's similar to your code, but it's  
+designed to be used locally within a test-case. It also checks that any  
+auxiliary threads are no longer running when the main computation  
+finishes. You may have to customize it to get what you want.
+
+;; check-threads : (-> any) -> any
+;; Runs thunk; raises error if any subthreads created by thunk raise
+;; errors, or if a subthread outlives thunk's computation.
+(define (check-threads thunk)
+   (let* ([main-cust (current-custodian)]
+          [sub-cust (make-custodian main-cust)]
+          [sub-exns null]
+          [old-uncaught-exception-handler (uncaught-exception-handler)])
+     (parameterize ((current-custodian sub-cust)
+                    (uncaught-exception-handler
+                     (lambda (exn)
+                       (set! sub-exns (cons exn sub-exns))
+                       (old-uncaught-exception-handler exn))))
+       (let ([result (thunk)])
+         ;; Check that sub-custodian has no living threads.
+         (let ([threads-still-going?
+                (ormap thread-running?
+                       (filter thread? (custodian-managed-list sub-cust  
+main-cust)))])
+           (when (pair? sub-exns)
+             (error 'nice-threads "child thread raised exception"))
+           (when threads-still-going?
+             (error 'nice-threads "child thread left still running"))
+           result)))))
+
+;; error: child thread left still running
+(check-threads
+  (lambda ()
+    (thread (lambda () (sleep 1) 17))
+    1))
+
+;; error: child thread raised exception
+(check-threads
+  (lambda ()
+    (thread (lambda () (error "whoops")))
+    1))
+
+;; okay
+(check-threads
+  (lambda ()
+    (let ([t (thread (lambda () (sleep 1) 17))])
+      (thread-wait t)
+      18)))
+
+Ryan
+
+
+> --  
+> A bad analogy is like a leaky screwdriver.
+>         -- Richard Braakman
+> ----------------------------------------------------------------------- 
+> --
+> This SF.net email is sponsored by: Splunk Inc.
+> Still grepping through log files to find problems?  Stop.
+> Now Search log events and configuration files using AJAX and a browser.
+> Download your FREE copy of Splunk now >>   
+> http://get.splunk.com/_______________________________________________
+> Schematics-development mailing list
+> Schematics-development@lists.sourceforge.net
+> https://lists.sourceforge.net/lists/listinfo/schematics-development
