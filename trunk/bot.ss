@@ -630,6 +630,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
      (lambda (m)
 
        (let ((s (get-sandbox-by-name
+                 (irc-session-sandboxes-by-nick session)
                  (PRIVMSG-speaker m))))
 
          (with-handlers
@@ -726,8 +727,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
       (custodian-shutdown-all (irc-session-custodian *sess*))
       (when (not (terminal-port? (irc-session-op *sess*)))
         (maybe-close-output-port (irc-session-op *sess*))))
-
-    (horrible-fucking-kludge-hack-reset-sandboxes!)
 
     ;; if we're gonna twiddle the nick, we need to do it before we
     ;; start any threads, so that the new threads get the same value

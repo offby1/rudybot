@@ -18,6 +18,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
   (
    appearances-by-nick
 
+   sandboxes-by-nick
+
    ;; Procedures who want to be called whenever a new message arrives.
    ;; They're likely channel-idle-events.  It's a hash table whose
    ;; keys are the procedures, and whose values are ignored.  (I can't
@@ -57,8 +59,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
             (make-irc-session
 
              (make-hash-table 'equal)
-
              (make-hash-table 'equal)
+             (make-hash-table 'equal)
+
              newsfeed
              (make-cached-channel)
              op
