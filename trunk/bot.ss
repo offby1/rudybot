@@ -76,9 +76,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
        (irc-session-op s))
 
-      ;; perhaps wait, say, one millisecond for each character that we
-      ;; just output, to prevent flooding.
-
       (newline (irc-session-op s))
       (vtprintf " => ~s~%" trimmed))))
 
@@ -667,6 +664,11 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                               (number->english *max-values-to-display*)
                               values))
                      (when (not (null? values))
+
+                       ;; prevent flooding
+                       (when (positive? displayed)
+                         (sleep 1))
+
                        (when (not (void? (car values)))
                          (reply
                           session
