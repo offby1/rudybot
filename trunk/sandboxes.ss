@@ -78,6 +78,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
   (get-error-output (sandbox-evaluator s)))
 
 (define *sandboxes-by-nick* (make-hash-table 'equal))
+(define (horrible-fucking-kludge-hack-reset-sandboxes!)
+  (set! *sandboxes-by-nick* (make-hash-table 'equal)))
 
 (define *max-sandboxes* (make-parameter 3))
 
@@ -191,6 +193,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 
 (provide *max-sandboxes*
          get-sandbox-by-name
+         horrible-fucking-kludge-hack-reset-sandboxes!
          sandbox-eval
          sandbox-get-stderr
          sandbox-get-stdout

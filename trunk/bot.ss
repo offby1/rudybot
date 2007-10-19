@@ -221,10 +221,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
 ;(trace unsubscribe-proc-to-server-messages!)
 
-;; TODO -- as usual, this should really be in the session, not a
-;; global.
-(define *sandboxes-by-nick* (make-hash-table 'equal))
-
 (define (register-usual-services! session)
 
   ;; so that these threads will be easily killable
@@ -730,6 +726,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
       (custodian-shutdown-all (irc-session-custodian *sess*))
       (when (not (terminal-port? (irc-session-op *sess*)))
         (maybe-close-output-port (irc-session-op *sess*))))
+
+    (horrible-fucking-kludge-hack-reset-sandboxes!)
 
     ;; if we're gonna twiddle the nick, we need to do it before we
     ;; start any threads, so that the new threads get the same value
