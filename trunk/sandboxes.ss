@@ -4,8 +4,7 @@
 exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0" -p "text-ui.ss" "schematics" "schemeunit.plt" -e "(exit (test/text-ui sandboxes-tests 'verbose))"
 |#
 (module sandboxes mzscheme
-(require (lib "trace.ss")
-         (only (lib "misc.ss" "swindle") with-output-to-string)
+(require (only (lib "misc.ss" "swindle") with-output-to-string)
          (lib "sandbox.ss")
          (only (lib "list.ss") sort)
          (only (lib "1.ss" "srfi") iota)
@@ -74,11 +73,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 
 (define (sandbox-get-stdout s)
   (get-output (sandbox-evaluator s)))
-(trace sandbox-get-stdout)
 
 (define (sandbox-get-stderr s)
   (get-error-output (sandbox-evaluator s)))
-(trace sandbox-get-stderr)
 
 (define *sandboxes-by-nick* (make-hash-table 'equal))
 
