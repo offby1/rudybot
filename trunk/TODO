@@ -16,16 +16,6 @@
 
 * bugs
 
-** eval allows us to be DOS'd
-   Eli (annoyingly quickly) found a way to DOS the bot via "eval":
-
-   rudybot: eval (let ([x (make-string 1000 #\X)]) (values x x x x))
-
-   Not surprisingly, this causes the server to hang up on the bot, and
-   complain about an excess flood.
-
-   You can repro this with bugs/flood.sh.
-
 ** deal with this properly
    thread 0: 2007-10-12T21:26:31-0400: Can't parse string from server: ":irc.freenode.net MODE #bots +o ChanServ "
 
@@ -68,13 +58,6 @@
    See the file in bug/.
 
 -- Low priority
-
-* shuffle, rather than random-choice
-  There are a few places that pick items at random from a list.
-  However, there's the risk that we'll pick the same item twice in a
-  row, or at least twice in rapid succession.  So, just as an mp3
-  player shuffles tracks, and then plays the shuffled list straight
-  through; we should do likewise.
 
 * dynamically load verbs
   <eli> offby1: Now make verbs like `eval' and `uptime' come from files under the same name in a

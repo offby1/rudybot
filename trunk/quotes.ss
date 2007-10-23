@@ -7,14 +7,19 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
 (module quotes mzscheme
 (require (only (planet "memoize.ss" ("dherman" "memoize.plt" )) define/memo*)
          "globals.ss"
-         "vprintf.ss"
-         "quote-of-the-day.ss")
+         "quote-of-the-day.ss"
+         "shuffle.ss"
+         "vprintf.ss")
+
 (register-version-string "$Id$")
 
 (provide one-quote
          random-choice)
 
-;; no need to memoize this, but what the hell.
+;; Strictly speaking, there's no need to memoize this, but it's
+;; painful to imagine us hitting the disk every time someone asks for
+;; a quote.  (Never mind that a decent file system will probably cache
+;; the file anyway ...)
 (define/memo* (all-quotes)
   (call-with-input-file (*quotes-file-name*) read))
 
@@ -30,8 +35,24 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
       0
     (apply random args)))
 
-(define (random-choice seq)
-  (list-ref seq (rnd (length seq))))
+;; rather than just choosing an element of a list at random, we'll
+;; shuffle the list the first time we're called, and then we'll just
+;; return subsequent elements, reshuffling when needed.  This makes it
+;; less likely that we'll return the same thing twice in a row.
+(define random-choice
+  (let ((the-lists (make-hash-table 'equal)))
+    (lambda (seq)
+      (let ((this-list (hash-table-get the-lists seq '())))
+
+        (when (null? this-list)
+          (vtprintf "Shuffling a list whose first element is ~s~%"
+                    (car seq))
+          (set! this-list (shuffle-list seq))
+          (hash-table-put! the-lists seq this-list))
+
+        (begin0
+            (car this-list)
+          (hash-table-put! the-lists seq (cdr this-list)))))))
 
 (define (one-quote)
   (let try-again ()
