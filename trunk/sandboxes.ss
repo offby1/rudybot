@@ -25,7 +25,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
      (make-evaluator '(begin
                         ;; these functions are dangerous, so we
                         ;; disable them.
-                        (set! getenv  (lambda args "Oh no, you don't."))
+                        (set! getenv  (lambda args "Oh, no, you don't."))
                         (set! putenv getenv))
                      '()))
    0))
