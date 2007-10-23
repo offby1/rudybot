@@ -622,6 +622,27 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
     (add!
      (lambda (m)
+       (gist-equal? "slogan" m session))
+     (lambda (m)
+       (reply
+        session
+        m
+        (random-choice
+         (list
+          "Change and Experience."
+          "Courageous Service.  Experienced Leadership.  Bold Solutions."
+          "Faith. Family. Freedom."
+          "For A Secure America!"
+          "Hope for America."
+          "Security. Unity. Prosperity."
+          "Strength through Peace."
+          "Strong Leadership. Proven Results."
+          "True Strength for America's Future."
+          ))))
+     #:responds? #t)
+
+    (add!
+     (lambda (m)
        (gist-equal? "eval" m session))
 
      (lambda (m)

@@ -69,6 +69,13 @@
 
 -- Low priority
 
+* shuffle, rather than random-choice
+  There are a few places that pick items at random from a list.
+  However, there's the risk that we'll pick the same item twice in a
+  row, or at least twice in rapid succession.  So, just as an mp3
+  player shuffles tracks, and then plays the shuffled list straight
+  through; we should do likewise.
+
 * dynamically load verbs
   <eli> offby1: Now make verbs like `eval' and `uptime' come from files under the same name in a
         "verb" directory,
