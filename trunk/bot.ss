@@ -53,31 +53,26 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
   (and (PRIVMSG? m)
        (member c (PRIVMSG-receivers m))))
 
-(define out
-  (lambda (s . args)
-    ;; ensure the output doesn't exceed around 500 characters, lest
-    ;; the IRC server kick us for flooding.
-    (let* ((full-length (apply format args))
-           (l (string-length full-length))
-           (trimmed (substring full-length 0 (min 500 l))))
-      (when  (equal? #\newline (string-ref trimmed (sub1 (string-length trimmed))))
-        (fprintf (current-error-port)
-                 "Warning: someone sent 'out' a string that was terminated with a newline~%")
-        (fprintf (current-error-port)
-                 "~s"
-                 (continuation-mark-set->context (current-continuation-marks))))
-
-      (display
-
-       ;; only display the first line, to prevent people from
-       ;; embedding an end-of-line character followed by an IRC
-       ;; protocol command ...
-       (regexp-replace #rx"(\n|\r).*" trimmed "")
-
-       (irc-session-op s))
-
-      (newline (irc-session-op s))
-      (vtprintf " => ~s~%" trimmed))))
+(define max-output-line 500)
+(define (out s fmt . args)
+  ;; ensure the output doesn't exceed 500 characters, lest the IRC
+  ;; server kick us for flooding, and dont display newlines to avoid
+  ;; hacking IRC commands.
+  (let* ([msg (apply format fmt args)]
+         [msg (regexp-replace* #rx"[\n\r]" msg " <NEWLINE> ")]
+         [msg (if (> (string-length msg) max-output-line)
+                  (string-append (substring msg 0 (- max-output-line 4)) " ...")
+                  msg)]
+         [o (irc-session-op s)]
+         [main (current-thread)])
+    (with-handlers ([void (lambda (e)
+                            (vtprintf "While writing: ~a~%"
+                                      (if (exn? e)
+                                          (exn-message e)
+                                          e)))])
+      (display msg o)
+      (newline o))
+    (vtprintf " => ~s~%" msg)))
 
 (define pm
   (lambda (s target msg)
