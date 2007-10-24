@@ -672,27 +672,28 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
              (lambda values
                (let loop ((values values)
                           (displayed 0))
-                 (if (= displayed *max-values-to-display*)
-                     (reply
-                      session
-                      m
-                      (format "~a values is enough for anybody; here's the rest in a list: ~s"
-                              (number->english *max-values-to-display*)
-                              values))
-                     (when (not (null? values))
+                 (when (not (null? values))
 
-                       ;; prevent flooding
-                       (when (positive? displayed)
-                         (sleep 1))
+                   ;; prevent flooding
+                   (if (= displayed *max-values-to-display*)
+                       (reply
+                        session
+                        m
+                        (format "~a values is enough for anybody; here's the rest in a list: ~s"
+                                (number->english *max-values-to-display*)
+                                values))
 
-                       (when (not (void? (car values)))
-                         (reply
-                          session
-                          m
-                          (format "; Value: ~s"
-                                  (car values))))
-                       (loop (cdr values)
-                             (add1 displayed))))))))
+                       (begin
+                         (when (not (void? (car values)))
+                           (when (positive? displayed)
+                             (sleep 1))
+                           (reply
+                            session
+                            m
+                            (format "; Value: ~s"
+                                    (car values))))
+                         (loop (cdr values)
+                               (add1 displayed)))))))))
 
          (let ((stdout (sandbox-get-stdout s))
                (stderr (sandbox-get-stderr s)))
