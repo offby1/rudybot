@@ -34,19 +34,11 @@
    should only create one such task per session, and have it handle
    all PRIVMSGs, be they directed to channels or to the bot.
 
-** eval ignoring parens?
-   <offby1> rudybot: eval ((+ 1 2))
-   <rudybot> procedure application: expected procedure, given: 3 (no arguments)
-   <offby1> rudybot: eval((+ 1 2))
-   <rudybot> 1:""
-   <offby1> weird.
-
-   probably related:
-
+** eval oddities
    <eli> rudybot: eval.1 2
-   <rudybot> 2:""
+   <rudybot> ; Value: 2
    <eli> rudybot: eval.x 2
-   * rudybot stares vacantly
+   <rudybot> error: reference to undefined identifier: .x
 
 ** sporadic test failure
    "channel doesn't go idle when we are yammering at it".  No idea

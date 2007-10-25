@@ -635,7 +635,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
           "True Strength for America's Future."
           ))))
      #:responds? #t)
-
+
     (add!
      (lambda (m)
        (gist-equal? "eval" m session))
@@ -666,9 +666,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                (lambda ()
                  (sandbox-eval
                   s
-                  (string-join
-                   (cdr (text-for-us m session))
-                   " ")))
+                  (substring
+                   (string-join (text-for-us m session) " ")
+                   (string-length "eval"))))
              (lambda values
                (let loop ((values values)
                           (displayed 0))
@@ -707,6 +707,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
 
      #:responds? #t)
+
     (add!
      (lambda (m) (gist-equal? "uptime" m session))
      (lambda (m)
