@@ -37,7 +37,9 @@
   (when (file-exists? *sightings-database-file-name*)
     (call-with-input-file *sightings-database-file-name*
       (lambda (ip)
-        (proc (read ip))))))
+        (let ((datum (read ip)))
+          (when (not (eof-object? datum))
+            (proc datum)))))))
 
 (define-serializable-struct sighting (who where when was-action? words) #f)
 
