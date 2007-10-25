@@ -20,7 +20,7 @@
 
 
 here=$(cd $(dirname $0); pwd)
-pidfile=$here/k5start.pid
+pidfile="$here"/k5start.pid
 
 if [ -f "$pidfile" ]
 then
@@ -28,8 +28,7 @@ then
     rm -f "$pidfile"
 fi
 
-/usr/bin/k5start -U -b -K 300 -t                \
+/usr/bin/k5start -U -K 300 -t                   \
     -p "$pidfile"                               \
-    -f /etc/keytabs/user.daemon/$USER
-
-$here/go "$@"
+    -f /etc/keytabs/user.daemon/$USER           \
+    "$here"/go "$@"
