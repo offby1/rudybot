@@ -1,19 +1,32 @@
 (require (lib "serialize.ss")
          (lib "date.ss")
+         (lib "etc.ss")
          (only (lib "1.ss" "srfi") fold)
-         "sighting.ss")
-(let* ((all (map deserialize (map cdr (with-input-from-file "sightings.db" read))))
+         "../sighting.ss"
+         "../spelled-out-time.ss")
+
+(let* ((all (map
+             deserialize
+             (map
+              cdr
+              (with-input-from-file
+                  (build-path
+                   (this-expression-source-directory)
+                   ".."
+                   "sightings.db")
+                read))))
        (oldest
-       (car
-        (fold
-         (lambda (s seq)
-           (if (< (sighting-when s)
-                  (sighting-when (car seq)))
-               (list s)
-               seq))
-         (list (car all))
-         all))))
-  (format "~a at ~a: ~a"
+        (car
+         (fold
+          (lambda (s seq)
+            (if (< (sighting-when s)
+                   (sighting-when (car seq)))
+                (list s)
+                seq))
+          (list (car all))
+          all))))
+  (printf "~a, ~a ago: ~s~%"
           (sighting-who oldest)
-          (date->string (seconds->date (sighting-when oldest)) #t)
+          (spelled-out-time (- (current-seconds )
+                               (sighting-when oldest)))
           (sighting-words oldest)))
