@@ -101,6 +101,13 @@ exec mzscheme --no-init-file --mute-banner --version --load "$0"
  1234
  (lambda (ip op)
    (file-stream-buffer-mode op 'line)
+   (thread
+    (lambda ()
+      (let loop ()
+        (let ((line (read-line ip)))
+          (when (not (eof-object? line))
+            (put-on-all-channels line)
+            (loop))))))
    (let ((ch (new-channel)))
      (let loop ()
        (with-handlers
