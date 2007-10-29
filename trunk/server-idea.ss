@@ -101,23 +101,25 @@ exec mzscheme --no-init-file --mute-banner --version --load "$0"
  1234
  (lambda (ip op)
    (file-stream-buffer-mode op 'line)
-   (thread
-    (lambda ()
-      (let loop ()
-        (let ((line (read-line ip)))
-          (when (not (eof-object? line))
-            (put-on-all-channels line)
-            (loop))))))
-   (let ((ch (new-channel)))
-     (let loop ()
-       (with-handlers
-           ([exn:fail:network?
-             (lambda (e)
-               ;; assume that the client has died, and that the
-               ;; exception we got was, more or less, "Broken pipe".
-               (unregister-channel ch))])
-         (display (async-channel-get ch) op)
-         (loop)))))
+   (let ((reader
+          (thread
+           (lambda ()
+             (let loop ()
+               (let ((line (read-line ip)))
+                 (when (not (eof-object? line))
+                   (put-on-all-channels line)
+                   (loop))))))))
+     (let ((ch (new-channel)))
+       (let loop ()
+         (with-handlers
+             ([exn:fail:network?
+               (lambda (e)
+                 ;; assume that the client has died, and that the
+                 ;; exception we got was, more or less, "Broken pipe".
+                 (unregister-channel ch)
+                 (kill-thread reader))])
+           (display (async-channel-get ch) op)
+           (loop))))))
  #f)
 
 )
