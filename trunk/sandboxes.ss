@@ -76,15 +76,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
         (check-equal? (sandbox-eval s "3") 3)))
 
      (test-case
-      "Gacks on empty input"
-      (check-exn
-       exn:fail:read:eof?
-       (lambda ()
-         (sandbox-eval
-          (get-sandbox-by-name *sandboxes-by-nick*"huh?")
-          ""))))
-
-     (test-case
       "output"
       (let ((s  (get-sandbox-by-name *sandboxes-by-nick*"charlie")))
         (sandbox-eval s "(display \"You bet!\")")
