@@ -7,6 +7,9 @@ exec mzscheme --no-init-file --mute-banner --version --load "$0"
 ;; An idea for a server.  "Cin" on #scheme asked how to write a server
 ;; that can broadcast a message to every client; this is my response.
 
+;; You might find some earlier versions of this at
+;; http://paste.lisp.org/display/49964, if it hasn't been
+;; garbage-collected.
 
 ;; this module manages a collection of channels.  The problem that it
 ;; solves: our server wants to send a message to each of its clients.
@@ -38,14 +41,9 @@ exec mzscheme --no-init-file --mute-banner --version --load "$0"
 ;; the channel has gotten unregistered when we put the message onto it
 ;; ... it'll get gc'd eventually.  I hope.
 (define (put-on-all-channels message)
-  (let ((l  (length *the-channels*)))
-    (when (positive? l)
-      (fprintf (current-error-port)
-               "put-on-all-channels: sending message ~s to ~a channels~%"
-               message l)))
-  (for-each (lambda (ch) (async-channel-put ch message))
-            *the-channels*)
-  'done)
+  (for-each
+   (lambda (ch) (async-channel-put ch message))
+   *the-channels*))
 
 (define (new-channel)
   (call-with-semaphore
@@ -87,17 +85,17 @@ exec mzscheme --no-init-file --mute-banner --version --load "$0"
 ;; clients ... and, every few seconds, sends each client the same
 ;; "broadcast message".
 
+(thread
+ (lambda ()
+   (let loop ((times-run 0))
+     (put-on-all-channels
+      (format
+       "Broadcast message ~a~%"
+       times-run))
+     (sleep 1)
+     (loop (add1 times-run)))))
+
 (fprintf (current-error-port) "Server starting!~%")
-(define *broadcast-thread*
-  (thread
-   (lambda ()
-     (let loop ((times-run 0))
-       (put-on-all-channels
-        (format
-         "Broadcast message ~a~%"
-         times-run))
-       (sleep 1)
-       (loop (add1 times-run))))))
 
 (run-server
  1234
@@ -108,9 +106,8 @@ exec mzscheme --no-init-file --mute-banner --version --load "$0"
        (with-handlers
            ([exn:fail:network?
              (lambda (e)
-               (fprintf (current-error-port)
-                        "Oops -- writing to a TCP client, we got an exception: ~s~%"
-                        e)
+               ;; assume that the client has died, and that the
+               ;; exception we got was, more or less, "Broken pipe".
                (unregister-channel ch))])
          (display (async-channel-get ch) op)
          (loop)))))
