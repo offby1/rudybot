@@ -184,6 +184,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                          "checks his eyelids for pinholes"
                          "fantasizes about Rita Hayworth"
                          "feels a sudden urge to tell the world about http://www.belgianfries.com/"
+                         "hums an old Top-10 hit from high school"
                          "idly leafs through an old copy of \"Time\" magazine"
                          "imagines a sunny summer scene"
                          "is at a loss for words, as usual"
@@ -553,24 +554,22 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
          (reply session
                 m
                 (if s
-                    (format
-                     "~a~a in ~a~a ~a ago~a (also try \"/msg nickserv info ~a\")"
-                     who
-                     (if (sighting-was-action? s ) "'s last action" " last spoke")
+                    (if (sighting-was-action? s )
+                        (format
+                         "~a's last action was in ~a, ~a ago: ~a ~a"
+                         who
+                         (sighting-where s)
+                         (spelled-out-time (- (current-seconds)
+                                              (sighting-when s)))
 
-                     (sighting-where s)
-                     (if (sighting-was-action? s)
-                         " was"
-                         "")
-
-                     (spelled-out-time (- (current-seconds)
-                                          (sighting-when s)))
-
-                     (if (sighting-was-action? s)
-                         (format ": ~a ~a" who (sighting-words s))
-                         (format ", saying \"~a\"" (sighting-words s)))
-
-                     who)
+                         who (sighting-words s))
+                        (format
+                         "~a last spoke in ~a, ~a ago, saying ~s"
+                         who
+                         (sighting-where s)
+                         (spelled-out-time (- (current-seconds)
+                                              (sighting-when s)))
+                         (sighting-words s)))
                   (format "I haven't seen ~a" who))
                 )))
      #:responds? #t
