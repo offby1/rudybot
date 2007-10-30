@@ -45,14 +45,11 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
       (let ((this-list (hash-table-get the-lists seq '())))
 
         (when (null? this-list)
-          (vtprintf "Shuffling a list whose first element is ~s~%"
-                    (car seq))
           (set! this-list (shuffle-list seq))
           (hash-table-put! the-lists seq this-list))
 
-        (begin0
-            (car this-list)
-          (hash-table-put! the-lists seq (cdr this-list)))))))
+        (hash-table-put! the-lists seq (cdr this-list))
+        (car this-list)))))
 
 (define (one-quote)
   (let try-again ()
