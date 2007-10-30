@@ -20,7 +20,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                current-date)
          (only (lib "url.ss" "net")
                get-pure-port
-               string->url)
+               string->url
+               url-exception?)
          (lib "trace.ss")
          (only (planet "delicious.ss" ("untyped" "delicious.plt" 1 1))
                exn:fail:delicious?)
@@ -350,7 +351,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                   (with-handlers
                       ([(lambda (e)
                           (or (exn:delicious:auth? e)
-                              (exn:fail:network? e)))
+                              (exn:fail:network? e)
+                              (url-exception? e)))
                         void]
                        )
                     (let ((relevant-posts (snarf-some-recent-posts #:url (key->url-string query))))
