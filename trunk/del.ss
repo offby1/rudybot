@@ -22,6 +22,14 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                take)
          (lib "pretty.ss")
          (lib "trace.ss")
+         (only (lib "url.ss" "net")
+               combine-url/relative
+               path/param-path
+               string->url
+               url-fragment
+               url-path
+               url-query
+               url->string)
          "globals.ss"
          "headline.ss"
          "vprintf.ss")
@@ -40,12 +48,12 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 ;; it'd sure be nice if I could use keywords with a memoized function,
 ;; but ...
 (define/kw (snarf-some-recent-posts
-            #:key [tag "moviestowatchfor"])
+            #:key
+            [tag "moviestowatchfor"]
+            [url #f])
 
   (parameterize
-      ((dump-request-urls? #t)
-       (dump-sxml-responses? #t)
-       (current-password *del.icio.us-password*)
+      ((current-password *del.icio.us-password*)
        (current-username "tucumcari"))
 
     (map (lambda (post)
@@ -53,8 +61,28 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                        (post-description post)
                        (post-url post)
                        (or (post-extended post) "")))
-         (recent-posts tag))))
+         (if url
+             (get-posts empty empty url)
+             (recent-posts tag)))))
 
+(define (key->url-string key)
+  (url->string (combine-url/relative (string->url "http://svnfaqs.for.rudybot/") key)))
+
+(define (url-string->key url-string)
+  (let* ((u (string->url url-string))
+         (frag (url-fragment u)))
+    (string-append
+     (car (map path/param-path (url-path u)))
+     (apply
+      string-append
+      (map
+       (lambda (query)
+         (string-append (symbol->string (car query))
+                        (or (cdr query) "")))
+
+       (url-query u)))
+     (if frag (string-append "#" frag)
+         ""))))
 
 (define del.icio.us-tests
 

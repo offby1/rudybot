@@ -344,7 +344,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
             (lambda (m)
               (let ((query (regexp-case
                             (PRIVMSG-text m)
-                            ((#px"^(\\S+)\\?\\s*$" query) query)
+                            ((#px"^(.+)\\?\\s*$" query) query)
                             (else #f))))
                 (when query
                   (with-handlers
@@ -353,14 +353,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                               (exn:fail:network? e)))
                         void]
                        )
-                    (let* ( ;; TODO -- ignore those posts that don't
-                           ;; also have the tag "svnfaq"
-                           (svnfaq-posts (snarf-some-recent-posts
-                                          #:tag query))
-                           (relevant-posts (filter
-                                            (lambda (p)
-                                              (equal? (entry-title p) query))
-                                            svnfaq-posts)))
+                    (let ((relevant-posts (snarf-some-recent-posts #:url (key->url-string query))))
                       (when  (not (null? relevant-posts))
                         (reply session m
                                (format "~s is ~a"

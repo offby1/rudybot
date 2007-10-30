@@ -1,0 +1,22 @@
+-*-text-*-
+
+How to store key-data pairs in delicious?
+
+A post is: 
+  url : string                                       
+  description : string                               
+  extended : (U string #f)                           
+  tags : (list-of string)                            
+  date : (U srfi-19:date #f)                         
+
+The URL must be unique -- i.e., you can't have two posts with the same
+URL.
+
+We can retrieve posts by tag, date, or URL.
+
+Clearly the URL should be the key.
+"extended" should be the value.
+
+We'll decorate each post with some redundant data:
+description will also be the key.
+tags will just be "svnfaq".

@@ -10,12 +10,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                current-date)(lib "trace.ss")
          (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
          (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
-         (planet "delicious.ss" ("untyped" "delicious.plt" 1 3))
-         (only (lib "url.ss" "net")
-               combine-url/relative
-               get-pure-port
-               string->url
-               url->string))
+         (planet "delicious.ss" ("untyped" "delicious.plt" 1))
+         (lib "url.ss" "net")
+         (all-except "../del.ss" exn:delicious:auth?))
 
 (define *factoids*
   (let ((ip (get-pure-port (string->url "http://svn.borg.ch/mirror/factoids-200710.svn"))))
@@ -27,23 +24,27 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 (dump-sxml-responses? #t)
 
 (parameterize ((current-username "tucumcari")
-               (current-password (or (getenv "DELICIOUS_PASSWORD") "no delicious password specified.")))
+               (current-password
+                ;; We can't use DELICIOUS_PASSWORD for the environment
+                ;; variable here, because globals.ss will probably
+                ;; have clobbered it, to prevent it from leaking into
+                ;; the sandboxes.
+                (or (getenv "PASSWORD")
+                    "no delicious password specified.")))
   (for-each
    (lambda (factoid)
      (let ((key (car (first factoid)))
            (value (car (second factoid))))
-      (printf "~a ..." key)
-      ;; TODO -- if the description is just a URL, use that instead of
-      ;; a bogus URL.
-     (add-post/raw!
-      (url->string (combine-url/relative (string->url "http://bogus.url/") key))
-      key
-      value
-      (list "svnfaq" key)
-      (current-date)
-      #t
-      #t)
-     (printf "~%")))
+       (printf "~a ..." key)
+       (add-post/raw!
+        (key->url-string key)
+        key
+        value
+        (list "svnfaq")
+        (current-date)
+        #t
+        #t)
+       (printf "~%")))
    *factoids*))
 
 )
