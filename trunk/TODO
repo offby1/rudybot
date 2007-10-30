@@ -1,6 +1,13 @@
 -*-outline-*-
 
 -- High priority
+* replace ayita?!
+  That means coming up with a simple factoid UI.
+
+  I've created a few del.icio.us links tagged with "svnfaq".  Perhaps
+  he could:  Hang out in #svn; look for messages that are a single
+  word plus a question mark; search for a link of that title,
+  belonging to me, with the svnfaq tag.
 
 * single-character attention sequence
   * offby1 wonders if he should create a single-character prefix to get the bot's attention, like
@@ -33,12 +40,6 @@
    should handle PRIVMSGs directed to the bot.  Or (more sensibly) I
    should only create one such task per session, and have it handle
    all PRIVMSGs, be they directed to channels or to the bot.
-
-** eval oddities
-   <eli> rudybot: eval.1 2
-   <rudybot> ; Value: 2
-   <eli> rudybot: eval.x 2
-   <rudybot> error: reference to undefined identifier: .x
 
 ** sporadic test failure
    "channel doesn't go idle when we are yammering at it".  No idea

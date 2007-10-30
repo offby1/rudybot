@@ -4,7 +4,8 @@
 exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot-tests.ss -p "text-ui.ss" "schematics" "schemeunit.plt" -e "(exit (test/text-ui bot-tests 'verbose))"
 |#
 (module bot mzscheme
-(require (lib "serialize.ss")
+(require (only (lib  "misc.ss" "swindle") regexp-case)
+         (lib "serialize.ss")
          (lib "sandbox.ss")
          (lib "kw.ss")
          (only (lib "etc.ss") this-expression-source-directory)
@@ -334,6 +335,30 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
           (lambda (m)
             (reply session m (one-quote)))
           #:responds? #t)
+
+         (when (member ch '("#svn"))
+           (add!
+            (lambda (m)
+              (and (PRIVMSG? m)
+                   (on-channel? ch m)))
+            (lambda (m)
+              (let ((query (regexp-case
+                            (PRIVMSG-text m)
+                            ((#px"^(\\S+)\\?\\s*$" query) query)
+                            (else #f))))
+                (when query
+                  (let* ((svnfaq-posts (snarf-some-recent-posts
+                                        #:tag "svnfaq"))
+                         (relevant-posts (filter
+                                          (lambda (p)
+                                            (equal? (entry-title p) query))
+                                          svnfaq-posts)))
+                    (when  (not (null? relevant-posts))
+                      (reply session m
+                             (format "~s is ~a"
+                                     query
+                                     (string-join (map entry-link relevant-posts) ", "))))
+                    ))))))
 
          (when (member ch '("#emacs" "#bots" "#scheme-bots"))
            (let ((quote-channel (make-channel)))

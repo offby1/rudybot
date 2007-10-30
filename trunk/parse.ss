@@ -45,7 +45,7 @@
 (define (parse-prefix str)
   (regexp-case
    str
-   ((pregexp "^(.*?)(?:!(.*?))?(?:@(.*?))?$")
+   (#px"^(.*?)(?:!(.*?))?(?:@(.*?))?$"
     => (lambda args (apply make-prefix (cdr args))))))
 
 ;; turn "NOTICE", e.g., into 'NOTICE
