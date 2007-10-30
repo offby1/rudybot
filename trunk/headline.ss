@@ -4,7 +4,8 @@
 exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0" -p "text-ui.ss" "schematics" "schemeunit.plt" -e "(exit (test/text-ui headline-tests 'verbose))"
 |#
 (module headline mzscheme
-(require (only (lib "file.ss")
+(require (lib "kw.ss")
+         (only (lib "file.ss")
                get-preference
                put-preferences)
          (lib "trace.ss")
@@ -29,12 +30,13 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 (register-version-string "$Id$")
 
 ;; this is what our queue returns.
-(define-struct entry (timestamp title link) (make-inspector))
-(define (public-make-entry time title link)
+(define-struct entry (timestamp title link extended) (make-inspector))
+(define/kw (public-make-entry time title link #:optional (extended ""))
   (check-type 'make-entry time? time)
   (check-type 'make-entry string? title)
   (check-type 'make-entry string? link)
-  (make-entry time title link))
+  (check-type 'make-entry string? extended)
+  (make-entry time title link extended))
 
 ;; This is memoized so that we don't hit tinyurl.com more than we have to.
 (define/memo* (maybe-make-URL-tiny e)
@@ -106,8 +108,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 
 (define headline-tests
 
-  (let ((short (make-entry 'irrelevant "irrelevant" "http://short.com"))
-        (long  (make-entry 'irrelevant "irrelevant" long-url)))
+  (let ((short (make-entry 'irrelevant "irrelevant" "http://short.com" ""))
+        (long  (make-entry 'irrelevant "irrelevant" long-url "")))
     (test-suite
      "headline"
      (test-case
@@ -138,10 +140,10 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
               (a-while-ago (subtract-duration now (make-time time-duration 0 (* 24 3600))))
               (e1 (make-entry now
                               "What time is it?"
-                              "http://its.howdy.doody/time"))
+                              "http://its.howdy.doody/time" ""))
               (e2 (make-entry now
                               "Your mother wears .."
-                              "http://army.mil/boots")))
+                              "http://army.mil/boots" "")))
 
          (note-spewed! e1)
          (check-not-false (already-spewed? e1))

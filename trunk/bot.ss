@@ -347,18 +347,26 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                             ((#px"^(\\S+)\\?\\s*$" query) query)
                             (else #f))))
                 (when query
-                  (let* ((svnfaq-posts (snarf-some-recent-posts
-                                        #:tag "svnfaq"))
-                         (relevant-posts (filter
-                                          (lambda (p)
-                                            (equal? (entry-title p) query))
-                                          svnfaq-posts)))
-                    (when  (not (null? relevant-posts))
-                      (reply session m
-                             (format "~s is ~a"
-                                     query
-                                     (string-join (map entry-link relevant-posts) ", "))))
-                    ))))))
+                  (with-handlers
+                      ([(lambda (e)
+                          (or (exn:delicious:auth? e)
+                              (exn:fail:network? e)))
+                        void]
+                       )
+                    (let* ( ;; TODO -- ignore those posts that don't
+                           ;; also have the tag "svnfaq"
+                           (svnfaq-posts (snarf-some-recent-posts
+                                          #:tag query))
+                           (relevant-posts (filter
+                                            (lambda (p)
+                                              (equal? (entry-title p) query))
+                                            svnfaq-posts)))
+                      (when  (not (null? relevant-posts))
+                        (reply session m
+                               (format "~s is ~a"
+                                       query
+                                       (string-join (map entry-extended relevant-posts) ", "))))
+                      )))))))
 
          (when (member ch '("#emacs" "#bots" "#scheme-bots"))
            (let ((quote-channel (make-channel)))

@@ -43,13 +43,16 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
             #:key [tag "moviestowatchfor"])
 
   (parameterize
-      ((current-password *del.icio.us-password*)
+      ((dump-request-urls? #t)
+       (dump-sxml-responses? #t)
+       (current-password *del.icio.us-password*)
        (current-username "tucumcari"))
 
     (map (lambda (post)
            (make-entry (date->time-utc (post-date post))
                        (post-description post)
-                       (post-url post)))
+                       (post-url post)
+                       (or (post-extended post) "")))
          (recent-posts tag))))
 
 
