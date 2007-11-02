@@ -31,7 +31,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
 
 ;; this might break, if it gets called at the same time as some other
 ;; process (namely, the IRC bot) is writing the file.
-(define *sightings*
+(define (*sightings*)
   (map (lambda (p )
          (cons (car p)
                (deserialize (cdr p))))
@@ -55,7 +55,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
   (let ((requested-sort-column
          (let ((datum (cond
                        ((assq 'column (request-bindings initial-request)) => cdr)
-                       (else 'when))))
+                       (else 'who))))
            (cond
             ((string? datum) (string->symbol datum))
             (else datum)))))
@@ -85,7 +85,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                          (td ,(format "~a" (zdate  (sighting-when (cdr p)))))
                          (td ,(format "~a" (sighting-words (cdr p))))))
                      (sort
-                      *sightings*
+                      (*sightings*)
                       (lambda (p1 p2)
                         (case requested-sort-column
                           ((who)
