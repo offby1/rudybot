@@ -47,9 +47,10 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
 
   (fprintf
    (current-error-port)
-   "Request uri: ~s; bindings: ~s~%"
-   (url->string (request-uri initial-request))
-   (request-bindings initial-request))
+   "~a ~a ~s~%"
+   (zdate)
+   (request-client-ip initial-request)
+   (url->string (request-uri initial-request)))
 
   (let ((requested-sort-column
          (let ((datum (cond
@@ -99,10 +100,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                           (else
                            (string<? (sighting-words (cdr p1))
                                      (sighting-words (cdr p2)))))))))))))
-      (fprintf
-       (current-error-port)
-       "Sending response ~s~%"
-       (generate-response))
+
     (with-errors-to-browser send/finish generate-response))
   )
 )
