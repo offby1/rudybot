@@ -38,8 +38,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
   (with-input-from-file *sightings-file-path* read)))
 
 (define (make-button column-name)
-  `(th (input ([type "button"]
-               [name ,(symbol->string column-name)]
+  `(th (input ([name "column"]
                [value ,(symbol->string column-name)]
                [type "submit"])
                )))
