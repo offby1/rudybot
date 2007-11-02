@@ -39,10 +39,12 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
 (define (start initial-request)
 
   (let ((requested-sort-column
-         (string->symbol
-          (cond
-           ((assq 'column (request-bindings initial-request)) => cdr)
-           (else 'when)))))
+         (let ((datum (cond
+                       ((assq 'column (request-bindings initial-request)) => cdr)
+                       (else 'when))))
+           (cond
+            ((string? datum) (string->symbol datum))
+            (else datum)))))
     (with-errors-to-browser
      send/finish
      (lambda ()
