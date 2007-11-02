@@ -76,8 +76,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
     (if (not last-spewed)
         (reliably-put-pref (list (time-second (entry-timestamp e)) title-link))
 
-      (begin
-
         ;; what we're noting has the same timestamp as what we'd
         ;; previously noted, so append the title-link info to what's
         ;; already there.
@@ -86,10 +84,10 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
             (begin
               (assert (not (member title-link last-spewed)))
               (reliably-put-pref (append last-spewed (list title-link))))
-          ;; what we're noting is newer than what we'd previously noted,
-          ;; so just clobber what's there.
-          (reliably-put-pref (list (time-second (entry-timestamp e)) title-link))))
-      )
+            ;; what we're noting is newer than what we'd previously noted,
+            ;; so just clobber what's there.
+            (reliably-put-pref (list (time-second (entry-timestamp e)) title-link)))
+        )
     ))
 ;(trace note-spewed!)
 

@@ -265,6 +265,10 @@ essentially a full-blown IRC client with a scheme syntax.
    because it can be annoyingly long, if the last thing they said was
    annoyingly long.
 
+** prune it
+   If it has lots of entries, maybe delete those whose last-seen date
+   was a long time ago.
+
 * respond to jordanb
   <fledermaus> every time jordanb chips in with a "Let's..."
   statement, rudebot should reciprocate.
