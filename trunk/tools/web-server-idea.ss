@@ -8,6 +8,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
          (lib "etc.ss")
          (lib "servlet.ss" "web-server")
          (lib "serialize.ss")
+         (lib "list.ss")
          "../sighting.ss")
 
 (provide interface-version timeout start)
@@ -37,29 +38,50 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
 
 (define (start initial-request)
 
-  (with-errors-to-browser
-   send/finish
-   (lambda ()
-     `(html
-       (body
-        (h3
-         ,(format
-           "Sightings as of ~a"
-           (zdate (file-or-directory-modify-seconds *sightings-file-path*))))
-        (table ((rules "all"))
-         (tr
-          (th "who")
-          (th "where")
-          (th "when")
-          (th "what"))
+  (let ((requested-sort-column
+         (string->symbol
+          (cond
+           ((assq 'column (request-bindings initial-request)) => cdr)
+           (else 'when)))))
+    (with-errors-to-browser
+     send/finish
+     (lambda ()
+       `(html
+         (body
+          (h3
+           ,(format
+             "Sightings as of ~a, sorted by ~s"
+             (zdate (file-or-directory-modify-seconds *sightings-file-path*))
+             requested-sort-column))
+          (table ((rules "all"))
+                 (tr
+                  (th "who")
+                  (th "where")
+                  (th "when")
+                  (th "what"))
 
-         ,@(map
-            (lambda (p)
-              `(tr
-                (td ,(format "~a" (car p)))
-                (td ,(format "~a" (sighting-where (cdr p))))
-                (td ,(format "~a" (zdate  (sighting-when (cdr p)))))
-                (td ,(format "~a" (sighting-words (cdr p))))))
-            *sightings*)))))))
+                 ,@(map
+                    (lambda (p)
+                      `(tr
+                        (td ,(format "~a" (car p)))
+                        (td ,(format "~a" (sighting-where (cdr p))))
+                        (td ,(format "~a" (zdate  (sighting-when (cdr p)))))
+                        (td ,(format "~a" (sighting-words (cdr p))))))
+                    (sort
+                     *sightings*
+                     (lambda (p1 p2)
+                       (case requested-sort-column
+                         ((who)
+                          (string<? (car p1)
+                                    (car p2)))
+                         ((where)
+                          (string<? (sighting-where (cdr p1))
+                                    (sighting-where (cdr p2))))
+                         ((when)
+                          (< (sighting-when (cdr p1))
+                             (sighting-when (cdr p2))))
+                         (else
+                          (string<? (sighting-words (cdr p1))
+                                    (sighting-words (cdr p2)))))))))))))))
 
 )
