@@ -9,6 +9,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
          (lib "servlet.ss" "web-server")
          (lib "serialize.ss")
          (lib "list.ss")
+         (lib "url.ss" "net")
          "../sighting.ss")
 
 (provide interface-version timeout start)
@@ -36,7 +37,20 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                (deserialize (cdr p))))
   (with-input-from-file *sightings-file-path* read)))
 
+(define (make-button column-name)
+  `(th (input ([type "button"]
+               [name ,(symbol->string column-name)]
+               [value ,(symbol->string column-name)]
+               [type "submit"])
+               )))
+
 (define (start initial-request)
+
+  (fprintf
+   (current-error-port)
+   "Request uri: ~s; bindings: ~s~%"
+   (url->string (request-uri initial-request))
+   (request-bindings initial-request))
 
   (let ((requested-sort-column
          (let ((datum (cond
@@ -45,45 +59,51 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
            (cond
             ((string? datum) (string->symbol datum))
             (else datum)))))
-    (with-errors-to-browser
-     send/finish
-     (lambda ()
-       `(html
-         (body
-          (h3
-           ,(format
-             "Sightings as of ~a, sorted by ~s"
-             (zdate (file-or-directory-modify-seconds *sightings-file-path*))
-             requested-sort-column))
-          (table ((rules "all"))
-                 (tr
-                  (th "who")
-                  (th "where")
-                  (th "when")
-                  (th "what"))
 
-                 ,@(map
-                    (lambda (p)
-                      `(tr
-                        (td ,(format "~a" (car p)))
-                        (td ,(format "~a" (sighting-where (cdr p))))
-                        (td ,(format "~a" (zdate  (sighting-when (cdr p)))))
-                        (td ,(format "~a" (sighting-words (cdr p))))))
-                    (sort
-                     *sightings*
-                     (lambda (p1 p2)
-                       (case requested-sort-column
-                         ((who)
-                          (string<? (car p1)
-                                    (car p2)))
-                         ((where)
-                          (string<? (sighting-where (cdr p1))
-                                    (sighting-where (cdr p2))))
-                         ((when)
-                          (< (sighting-when (cdr p1))
-                             (sighting-when (cdr p2))))
-                         (else
-                          (string<? (sighting-words (cdr p1))
-                                    (sighting-words (cdr p2)))))))))))))))
+    (define generate-response
+      (lambda ()
+        `(html
+          (body
+           (h3
+            ,(format
+              "Sightings as of ~a, sorted by ~s"
+              (zdate (file-or-directory-modify-seconds *sightings-file-path*))
+              requested-sort-column))
 
+           (table ((rules "all"))
+
+                  (tr
+                   (form ([method "get"]
+                          [action ,(url->string (request-uri initial-request))])
+                         ,@(map make-button (list 'who 'where 'when 'what))))
+
+                  ,@(map
+                     (lambda (p)
+                       `(tr
+                         (td ,(format "~a" (car p)))
+                         (td ,(format "~a" (sighting-where (cdr p))))
+                         (td ,(format "~a" (zdate  (sighting-when (cdr p)))))
+                         (td ,(format "~a" (sighting-words (cdr p))))))
+                     (sort
+                      *sightings*
+                      (lambda (p1 p2)
+                        (case requested-sort-column
+                          ((who)
+                           (string<? (car p1)
+                                     (car p2)))
+                          ((where)
+                           (string<? (sighting-where (cdr p1))
+                                     (sighting-where (cdr p2))))
+                          ((when)
+                           (< (sighting-when (cdr p1))
+                              (sighting-when (cdr p2))))
+                          (else
+                           (string<? (sighting-words (cdr p1))
+                                     (sighting-words (cdr p2)))))))))))))
+      (fprintf
+       (current-error-port)
+       "Sending response ~s~%"
+       (generate-response))
+    (with-errors-to-browser send/finish generate-response))
+  )
 )
