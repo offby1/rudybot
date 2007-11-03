@@ -33,15 +33,16 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
       (subprocess-kill spobj #t))))
 
 
-(for-each (lambda (s)
-            (printf "~a => ~a~%"
-                    s
-                    (get-megahal-response s)))
-          (list
-            "hey, megahal, how are things?"
-            "oh really?  you don't say."
-            "what time is it?")
-)
+(when #f
+  (for-each (lambda (s)
+              (printf "~a => ~a~%"
+                      s
+                      (get-megahal-response s)))
+            (list
+             "hey, megahal, how are things?"
+             "oh really?  you don't say."
+             "what time is it?"
+             "Say, do newlines\n\nfool\nyou at all?")))
 
-(provide (all-defined))
+(provide get-megahal-response)
 )

@@ -36,6 +36,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
          "del.ss"
          "globals.ss"
          "headline.ss"
+         "megahal-client.ss"
          "parse.ss"
          "planet-emacsen.ss"
          "quotes.ss"
@@ -176,26 +177,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                  (entry->string (random-choice posts)))))
        (else
         (reply s message
-               (format "\u0001ACTION ~a\u0001"
-                       (random-choice
-                        (list
-                         "'s attention wanders"
-                         "'s jaw slackens"
-                         "checks his eyelids for pinholes"
-                         "fantasizes about Rita Hayworth"
-                         "feels a sudden urge to tell the world about http://www.belgianfries.com/"
-                         "hums an old Top-10 hit from high school"
-                         "idly leafs through an old copy of \"Time\" magazine"
-                         "imagines a sunny summer scene"
-                         "is at a loss for words, as usual"
-                         "mumbles incoherently"
-                         "picks his teeth with a matchbook cover"
-                         "pretends to pay attention"
-                         "rubs his eyes"
-                         "stares vacantly"
-                         "studies his nails"
-                         "talks about mining" ;'nethack' joke
-                         )))))))))
+                (get-megahal-response (PRIVMSG-text message))))))))
 
 ;;(trace respond)
 
