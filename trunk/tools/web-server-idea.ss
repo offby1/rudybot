@@ -94,9 +94,12 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                           ((where)
                            (string<? (sighting-where (cdr p1))
                                      (sighting-where (cdr p2))))
+
+                          ;; newest first
                           ((when)
-                           (< (sighting-when (cdr p1))
+                           (> (sighting-when (cdr p1))
                               (sighting-when (cdr p2))))
+
                           (else
                            (string<? (sighting-words (cdr p1))
                                      (sighting-words (cdr p2)))))))))))))
