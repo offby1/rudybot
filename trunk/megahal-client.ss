@@ -1,7 +1,7 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id$
-exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0"
+exec mzscheme --no-init-file --mute-banner --version --require "$0"
 |#
 (module megahal-client mzscheme
 (require (lib "trace.ss")
@@ -9,36 +9,28 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 
 ;; I don't really know what to do with this.
 
-(define *the-subprocess* #f)
+(define *program-full-name* "/usr/bin/megahal")
 
-(define *program-full-name* "/usr/bin/megahal!!")
+(define (get-megahal-response text)
+  (let-values (((spobj stdout-ip input-op stderr-ip)
+                (subprocess #f #f #f
+                            *program-full-name*
+                            "--no-prompt"
+                            "--no-wrap"
+                            "--no-banner")))
 
-(define get-megahal-response
-  (with-handlers
-      ([void
-        (lambda (e)
-          (vtprintf "Couldn't start megahal: ~a~%"
-                    (exn-message e))
-          (lambda (text)
-            (format "Uh oh, can't talk to megahal: ~a"
-                    (exn-message e))))])
+    (let ((status (subprocess-status spobj)))
+      (when (not (eq? 'running status))
+        (error 'get-megahal-response "Couldn't start program: status is ~s" status)))
 
-    (let-values (((spobj stdout-ip input-op stderr-ip)
-                  (subprocess #f #f #f
-                              *program-full-name*
-                              "--no-prompt"
-                              "--no-wrap"
-                              "--no-banner")))
-      (when (not (eq? 'running (subprocess-status spobj)))
-        (error "Couldn't start program"))
-
-      (set! *the-subprocess* spobj)
-      (lambda (text)
-        (display (regexp-replace* #rx"[\n\r]" text " ") input-op)
-        (newline input-op)
-        (newline input-op)
-        (flush-output input-op)
-        (read-line stdout-ip)))))
+    (display (regexp-replace* #rx"[\n\r]" text " ") input-op)
+    (newline input-op)
+    (newline input-op)
+    (flush-output input-op)
+    (begin0
+        (read-line stdout-ip)
+      (close-output-port input-op)
+      (subprocess-kill spobj #t))))
 
 
 (for-each (lambda (s)
@@ -50,7 +42,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
             "oh really?  you don't say."
             "what time is it?")
 )
-(when (subprocess? *the-subprocess*)
-  (subprocess-kill *the-subprocess* #t))
+
 (provide (all-defined))
 )
