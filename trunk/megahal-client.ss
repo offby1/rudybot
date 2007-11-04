@@ -20,20 +20,35 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                             "--no-banner")))
 
     (let ((status (subprocess-status spobj)))
-      (when (not (eq? 'running status))
-        (error 'get-megahal-response "Couldn't start program: status is ~s" status)))
+      (if (eq? 'running status)
+          (begin
+            (display (regexp-replace* #rx"[\n\r]" text " ") input-op)
+            (newline input-op)
+            (newline input-op)
+            (flush-output input-op)
+            (begin0
+                (read-line stdout-ip)
+              (close-output-port input-op)
+              (subprocess-kill spobj #t)))
 
-    (display (regexp-replace* #rx"[\n\r]" text " ") input-op)
-    (newline input-op)
-    (newline input-op)
-    (flush-output input-op)
-    (begin0
-        (read-line stdout-ip)
-      (close-output-port input-op)
-      (subprocess-kill spobj #t))))
+          (begin
+            (vtprintf
+             "Couldn't start program: status is ~s (~s) ~%"
+             status
+             (let loop ((chars '()))
+               (let ((ready (char-ready? stderr-ip)))
+                 (if ready
+                     (let ((ch (read-char stderr-ip)))
+                       (if (eof-object? ch)
+                           (list->string (reverse chars))
+                           (loop (cons ch chars))))
+                     (list->string (reverse chars)))
+                 )))
+
+            #f)))))
 
 
-(when #f
+(when #t
   (for-each (lambda (s)
               (printf "~a => ~a~%"
                       s
