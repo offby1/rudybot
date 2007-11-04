@@ -62,11 +62,13 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
 
     (define generate-response
       (lambda ()
+        (let ((s (*sightings*)))
         `(html
           (body
            (h3
             ,(format
-              "Sightings as of ~a, sorted by ~s"
+              "~a sightings as of ~a, sorted by ~s"
+              (length s)
               (zdate (file-or-directory-modify-seconds *sightings-file-path*))
               requested-sort-column))
 
@@ -85,7 +87,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                          (td ,(format "~a" (zdate  (sighting-when (cdr p)))))
                          (td ,(format "~a" (sighting-words (cdr p))))))
                      (sort
-                      (*sightings*)
+                      s
                       (lambda (p1 p2)
                         (case requested-sort-column
                           ((who)
@@ -102,7 +104,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
 
                           (else
                            (string<? (sighting-words (cdr p1))
-                                     (sighting-words (cdr p2)))))))))))))
+                                     (sighting-words (cdr p2))))))))))))))
 
     (with-errors-to-browser send/finish generate-response))
   )
