@@ -782,7 +782,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
     ;; start any threads, so that the new threads get the same value
     ;; we have here.
     (when nick-suffix
-      (set-irc-session-nick! (format "~a~a" (*desired-nick*) nick-suffix)))
+      (set-irc-session-nick!
+       *sess*
+       (format "~a~a" (*desired-nick*) nick-suffix)))
 
     (let-values (((ip op)
                   (if (*irc-server-name*)
