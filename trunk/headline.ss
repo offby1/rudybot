@@ -30,7 +30,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 (register-version-string "$Id$")
 
 ;; this is what our queue returns.
-(define-struct entry (timestamp title link extended) (make-inspector))
+(define-struct entry (timestamp title link extended) #f)
 (define/kw (public-make-entry time title link #:optional (extended ""))
   (check-type 'make-entry time? time)
   (check-type 'make-entry string? title)

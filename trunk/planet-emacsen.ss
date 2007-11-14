@@ -85,6 +85,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
 
      ;; Hitmill to Shitmill / Port to String / I can debug / Anything
      ;; / ... Burma Shave
+
+     ;; I wonder why I'm using html->shtml here ... I'd have thought
+     ;; the feed would be proper XML, and thus I could use ssax.
      (html->shtml
       (begin0
           (port->string/close ip)

@@ -1,6 +1,10 @@
 -*-outline-*-
 
 -- High priority
+* Split planet-emacsen.ss into a generic feed reader ...
+  ... and a bit that's specific to just Planet Emacsen, so that we can
+  easily add new feeds.
+
 * remove case-sensitivity from "for-us?"
   <Black_Dog> Rudybot: check the mirror, silly
   <offby1> ooh, he's case-sensitive.  bummer
