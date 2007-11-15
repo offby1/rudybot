@@ -56,11 +56,12 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
   (and (PRIVMSG? m)
        (member c (PRIVMSG-receivers m))))
 
+;; Lines much longer than this will cause the server to kick us for
+;; flooding.
 (define max-output-line 500)
 (define (out s fmt . args)
-  ;; ensure the output doesn't exceed 500 characters, lest the IRC
-  ;; server kick us for flooding, and dont display newlines to avoid
-  ;; hacking IRC commands.
+  ;; don't display newlines, so that Bad Guys won't be able to inject
+  ;; IRC commands into our output.
   (let* ([msg (apply format fmt args)]
          [msg (regexp-replace* #rx"[\n\r]" msg " <NEWLINE> ")]
          [msg (if (> (string-length msg) max-output-line)
@@ -341,32 +342,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
           (lambda (m)
             (reply session m (one-quote)))
           #:responds? #t)
-
-         (when (member ch '("#svn"))
-           (add!
-            (lambda (m)
-              (and (PRIVMSG? m)
-                   (on-channel? ch m)))
-            (lambda (m)
-              (let ((query (regexp-case
-                            (PRIVMSG-text m)
-                            ((#px"^(.+)\\?\\s*$" query) query)
-                            (else #f))))
-                (when query
-                  (with-handlers
-                      ([(lambda (e)
-                          (or (exn:delicious:auth? e)
-                              (exn:fail:network? e)
-                              (url-exception? e)))
-                        void]
-                       )
-                    (let ((relevant-posts (snarf-some-recent-posts #:url (key->url-string query))))
-                      (when  (not (null? relevant-posts))
-                        (reply session m
-                               (format "~s is ~a"
-                                       query
-                                       (string-join (map entry-extended relevant-posts) ", "))))
-                      )))))))
 
          (when (member ch '("#emacs" "#bots" "#scheme-bots"))
            (let ((quote-channel (make-channel)))
