@@ -15,7 +15,9 @@ Some tests:
 You'll need mzscheme 371.3, which hasn't yet been released.  (Most of
 this code will work fine with 370.6, but the "sandbox-eval" function
 can hang due to a bug that was only fixed on the PLT trunk at revision
-7445.)
+7445.)  If you're getting the code for mzscheme from their Subversion
+repository, use the "v3" branch:
+http://svn.plt-scheme.org/plt/branches/v3
 
 I tested it against the dancer-ircd package that I found in Ubuntu
 Ubuntu 7.04 "feisty": 1.0.36-7, and against irc.freenode.org, which is
