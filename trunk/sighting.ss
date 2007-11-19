@@ -28,7 +28,7 @@
          (call-with-output-file *sightings-database-file-name*
            (lambda (op)
              (write write-me op))
-           'truncate/replace))
+           'replace))
        (loop)))))
 
 ;; This function basically prevents our callers from knowing the name
