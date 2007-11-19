@@ -45,8 +45,7 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0" -p "text-ui.
 
 ;; string? -> string?
 (define/kw (make-tiny-url url #:key [user-agent #f])
-  (car
-   ((sxpath '(html body (table 2) tr (td 2) p blockquote small a @ href *text*))
+  (let ((tiny ((sxpath '(html body (table 2) tr (td 2) p blockquote small a @ href *text*))
     (html->shtml
      (port->string/close
       (post-pure-port
@@ -70,8 +69,12 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0" -p "text-ui.
        (cons "Content-Type: application/x-www-form-urlencoded"
              (if user-agent
                  (list (format "User-Agent: ~a" user-agent ))
-               '()))
-       ))))))
+               '()))))))))
+    (when (null? tiny)
+      (raise (make-exn:fail:network
+              "tinyurl returned something I cannot parse"
+              (current-continuation-marks))))
+    (car tiny)))
 
 (define tinyurl-tests
 

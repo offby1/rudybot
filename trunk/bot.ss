@@ -506,10 +506,15 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
            ;; I used to send these out as NOTICEs, since the RFC says
            ;; to do so, but people complained.
-           (reply session
-                  m
-                  (make-tiny-url url #:user-agent (long-version-string))
-                  #:proc notice))))
+           (with-handlers
+               ([exn:fail:network?
+                 (lambda (e)
+                   (vtprintf "Can't contact tinyurl: ~a~%"
+                             (exn-message e)))])
+             (reply session
+                    m
+                    (make-tiny-url url #:user-agent (long-version-string))
+                    #:proc notice)))))
      #:descr "tinyurl")
 
     (add!
