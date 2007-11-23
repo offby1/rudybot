@@ -82,10 +82,10 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                   ,@(map
                      (lambda (p)
                        `(tr
-                         (td ,(format "~a" (car p)))
-                         (td ,(format "~a" (sighting-where (cdr p))))
-                         (td ,(format "~a" (zdate  (sighting-when (cdr p)))))
-                         (td ,(format "~a" (sighting-words (cdr p))))))
+                         (td (small (tt ,(format "~a" (car p)))))
+                         (td (small (tt ,(format "~a" (sighting-where (cdr p))))))
+                         (td (small (tt ,(format "~a" (zdate  (sighting-when (cdr p)))))))
+                         (td (small (tt ,(format "~a" (sighting-words (cdr p))))))))
                      (sort
                       s
                       (lambda (p1 p2)
