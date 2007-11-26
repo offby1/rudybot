@@ -25,3 +25,6 @@ of:
 
 * "wayita": http://repos.borg.ch/svn/wayita/trunk/src/
   "Sabor"'s replacement of ayita on #svn
+
+* Eli Barzilay slapped together a bot, mostly as an example for me; it
+  was last seen on, I think, http://something.barzilay.org
