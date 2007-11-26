@@ -44,12 +44,12 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
           ((current-custodian test-cust))
         (let ((sess #f))
 
-          (define (call-with-setup thunk)
+          (define (call-with-setup name thunk)
             (around
              (begin
                (custodian-shutdown-all test-cust)
                (fprintf (current-error-port)
-                        "Creating a fresh session~%")
+                        "Creating a fresh session for ~s~%" name)
                (*minimum-delay-for-periodic-spew* 2/5)
                (*planet-poll-interval* 2)
                (reliably-put-pref #f)
@@ -64,7 +64,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
           (define-syntax test-with-setup
             (syntax-rules ()
               [(test-with-setup name body ...)
-               (test-case name (call-with-setup (lambda () body ...)))]))
+               (test-case name (call-with-setup name (lambda () body ...)))]))
 
           (test-suite
            "crap"
@@ -101,6 +101,27 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                                 ":a!b@c PRIVMSG #d :~a: eval (display \"fred\")"
                                 (irc-session-nick sess))
                                #rx"PRIVMSG #d :; stdout: \"fred\"")))
+            (test-with-setup
+             "truncates long output"
+             (check-not-false
+              (got-response?
+               sess
+               ip
+               (format
+                ;; I've seen this "eval" string kill the bot in the
+                ;;  field, even though this test passes just fine
+                ;;  here.  I think that the bot uses a large amount of
+                ;;  memory to evaluate the string, and I run the bot
+                ;;  "in the field" with a small ulimit, so that kills
+                ;;  it.  I haven't figured out how to easily monitor
+                ;;  the memory use, nor have I figured out -what- is
+                ;;  using all the memory.  I assume it's something
+                ;;  that I am doing with the value that is returned
+                ;;  from the sandbox.
+                ":a!b@c PRIVMSG #d :~a: eval (begin (require (lib \"1.ss\" \"srfi\")) (make-list 100000))"
+                (irc-session-nick sess))
+               #rx"^PRIVMSG #d :; Value: \\(#f #f #f")))
+
             (test-with-setup
              "works in \"/QUERY\""
              (check-not-false (got-response?
