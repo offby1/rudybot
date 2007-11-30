@@ -9,4 +9,7 @@ install: seen.ss
 seen.ss:
 	code=$$(pwd)/web-server-idea.ss; echo "(module seen mzscheme (require (file \"$$code\")) (provide (all-from  (file \"$$code\"))))" > $@
 
+../quotes.cookies: ../quotes
+	mzscheme -qr make-cookie-file.ss
+
 .PHONY: install servlet
