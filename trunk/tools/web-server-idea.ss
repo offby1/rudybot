@@ -94,8 +94,8 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                            (string-ci<? (car p1)
                                         (car p2)))
                           ((where)
-                           (string<? (sighting-where (cdr p1))
-                                     (sighting-where (cdr p2))))
+                           (string-ci<? (sighting-where (cdr p1))
+                                        (sighting-where (cdr p2))))
 
                           ;; newest first
                           ((when)
@@ -103,8 +103,8 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                               (sighting-when (cdr p2))))
 
                           (else
-                           (string<? (sighting-words (cdr p1))
-                                     (sighting-words (cdr p2))))))))))))))
+                           (string-ci<? (sighting-words (cdr p1))
+                                        (sighting-words (cdr p2))))))))))))))
 
     (with-errors-to-browser send/finish generate-response))
   )
