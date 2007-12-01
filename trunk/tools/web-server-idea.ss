@@ -91,8 +91,8 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0"
                       (lambda (p1 p2)
                         (case requested-sort-column
                           ((who)
-                           (string<? (car p1)
-                                     (car p2)))
+                           (string-ci<? (car p1)
+                                        (car p2)))
                           ((where)
                            (string<? (sighting-where (cdr p1))
                                      (sighting-where (cdr p2))))
