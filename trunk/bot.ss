@@ -62,6 +62,21 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 (define (out s fmt . args)
   ;; don't display newlines, so that Bad Guys won't be able to inject
   ;; IRC commands into our output.
+
+  ;; I think we've got a problem right here: if the "args" represent a
+  ;; value that prints as a very long string, we may consume a lot of
+  ;; memory in the call to 'format', and Bad Guys can exploit that
+  ;; memory consumption to kill the bot -- especially if it's running
+  ;; with a restrictive "ulimit", as it indeed does run "in the
+  ;; field".  I don't know what to do about that.  This will
+  ;; presumably only happen if what we're formatting is a value that
+  ;; came from a sandbox.
+
+  ;; Here's a crazy idea: contrive, somehow, to do the formatting
+  ;; inside the sandbox, instead of outside it.  That way its own
+  ;; memory limit should prevent us from using lots of memory.  Or if
+  ;; not the original sandbox, then another one that we keep around
+  ;; for just this purpose.
   (let* ([msg (apply format fmt args)]
          [msg (regexp-replace* #rx"[\n\r]" msg " <NEWLINE> ")]
          [msg (if (> (string-length msg) max-output-line)
@@ -664,14 +679,14 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                (lambda (v)
                  (let ((whine (if (exn? v)
                                   (exn-message v)
-                                (format "~s" v))))
+                                  (format "~s" v))))
                    (reply
                     session
                     m
                     ;; make sure our error message begins with "error: ".
                     (if (regexp-match #rx"^error: " whine)
                         whine
-                      (format "error: ~a" whine)))))])
+                        (format "error: ~a" whine)))))])
 
            (call-with-values
                (lambda ()
