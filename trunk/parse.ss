@@ -53,7 +53,7 @@
   (read-from-string (message-command x)))
 
 (define-struct (PRIVMSG message)
-  (speaker receivers approximate-recipient text text-words)
+  (speaker-nick receivers approximate-recipient text text-words)
   #f)
 ;(trace PRIVMSG-approximate-recipient)
 ;(trace PRIVMSG-text-words)
@@ -305,7 +305,7 @@
                    '("poo"))
      (check-equal? (PRIVMSG-text (parse-irc-message ":X!X@Y PRIVMSG poopoo :platter puss"))
                    "platter puss")
-     (check-equal? (PRIVMSG-speaker (parse-irc-message ":fsbot!n=user@batfish.pepperfish.net PRIVMSG #emacs :yow!"))
+     (check-equal? (PRIVMSG-speaker-nick (parse-irc-message ":fsbot!n=user@batfish.pepperfish.net PRIVMSG #emacs :yow!"))
                    "fsbot"))
 
     (test-suite

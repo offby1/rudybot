@@ -117,7 +117,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
      (if (PRIVMSG-is-for-channel? message)
          (PRIVMSG-receivers message)
-       (list (PRIVMSG-speaker message))))))
+       (list (PRIVMSG-speaker-nick message))))))
 
 (define (respond message s)
 
@@ -168,9 +168,9 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                                 "scratches his ear with his hind leg"
                                 "yawns and stretches"
                                 (format "twines around ~a's feet"
-                                        (PRIVMSG-speaker message))
+                                        (PRIVMSG-speaker-nick message))
                                 (format "bats at ~a's shoelaces"
-                                        (PRIVMSG-speaker message)))))))
+                                        (PRIVMSG-speaker-nick message)))))))
        ((with-handlers
             ([(lambda (e)
                 (or (exn:delicious:auth? e)
@@ -477,7 +477,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
        ;; note who did what, when, where, how, and wearing what kind
        ;; of skirt; so that later we can respond to "seen Ted?"
        (let* ((ht (irc-session-appearances-by-nick session))
-              (who (PRIVMSG-speaker m))
+              (who (PRIVMSG-speaker-nick m))
               (sighting (make-sighting
                          who
                          (car (PRIVMSG-receivers m))
@@ -508,7 +508,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
      (lambda (m)
        (and
         (PRIVMSG? m)
-        (not (regexp-match #rx"bot$" (PRIVMSG-speaker m)))
+        (not (regexp-match #rx"bot$" (PRIVMSG-speaker-nick m)))
         (regexp-match url-regexp (PRIVMSG-text m))))
      (lambda (m)
        ;; if someone other than a bot uttered a long URL, run it
@@ -602,7 +602,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
      (lambda (m)
        (if (VERSION? m)
            (out session "NOTICE ~a :\u0001VERSION ~a\0001"
-                (PRIVMSG-speaker m)
+                (PRIVMSG-speaker-nick m)
                 (long-version-string))
          (reply session m (long-version-string))))
      #:responds? #t)
@@ -617,7 +617,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
              (source-file-names "trunk"))
          (if (SOURCE? m)
              (out session "NOTICE ~a :\u0001SOURCE ~a:~a:~a\0001"
-                  (PRIVMSG-speaker m)
+                  (PRIVMSG-speaker-nick m)
                   source-host
                   source-directory
                   source-file-names)
@@ -670,7 +670,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
 
        (let ((s (get-sandbox-by-name
                  (irc-session-sandboxes-by-nick session)
-                 (PRIVMSG-speaker m))))
+                 (PRIVMSG-speaker-nick m))))
 
          (with-handlers
              ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
