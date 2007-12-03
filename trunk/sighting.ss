@@ -41,7 +41,7 @@
           (when (not (eof-object? datum))
             (proc datum)))))))
 
-(define-serializable-struct sighting (who where when was-action? words) #f)
+(define-serializable-struct sighting (who where when was-action? words host-info-pair) #f)
 
 ;; For reasons I don't understand, if we say (provide (all-defined))
 ;; here, we get an error.  See

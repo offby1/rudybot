@@ -1,7 +1,7 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id$
-exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot-tests.ss -p "text-ui.ss" "schematics" "schemeunit.plt" -e "(exit (test/text-ui bot-tests 'verbose))"
+exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "text-ui.ss" "schematics" "schemeunit.plt" -e "(exit (test/text-ui bot-tests 'verbose))"
 |#
 (module bot mzscheme
 (require (only (lib  "misc.ss" "swindle") regexp-case)
@@ -28,6 +28,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
          (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
          (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
          (only (planet "zdate.ss" ("offby1" "offby1.plt")) zdate)
+         (planet "hostinfo.ss" ("offby1" "offby1.plt"))
          (planet "assert.ss" ("offby1" "offby1.plt"))
          (only (planet "numspell.ss" ("neil" "numspell.plt")) number->english)
          "resettable-alarm.ss"
@@ -467,43 +468,58 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
                   ch
                   (entry->string post)))
             #:descr "periodic moviestowatchfor")))))
-
+
     (add!
-     (lambda (m)
-       (and (PRIVMSG? m)
-            (PRIVMSG-is-for-channel? m)))
+     void
      (lambda (m)
 
-       ;; note who did what, when, where, how, and wearing what kind
-       ;; of skirt; so that later we can respond to "seen Ted?"
-       (let* ((ht (irc-session-appearances-by-nick session))
-              (who (PRIVMSG-speaker-nick m))
-              (sighting (make-sighting
-                         who
-                         (car (PRIVMSG-receivers m))
-                         (current-seconds)
-                         (ACTION? m)
-                         (if (ACTION? m)
-                             (ACTION-text m)
-                             (PRIVMSG-text m)))))
-         (when (not (hash-table-get ht
-                                    who #f))
-           (vtprintf "~a joins ~a existing sightings~%"
-                     who
-                     (hash-table-count ht)))
-         (hash-table-put!
-          ht
-          who
-          sighting)
+       ;; update the nick-to-hostinfo table
+       (when (message-prefix m)
+         (let ((ht (irc-session-host-info-by-nick session)))
+           (when (not (hash-table-get
+                       ht
+                       (prefix-nick (message-prefix m))
+                       #f))
+             (let-values (((host country)
+                           (get-info (prefix-host (message-prefix m)))))
+               (hash-table-put! ht (prefix-nick (message-prefix m))
+                                (cons host country))))))
 
-         (enqueue-sightings-update
-          (hash-table-map
-           ht
-           (lambda (nick sighting)
-             (cons nick (serialize sighting)))))))
+       (when (and (PRIVMSG? m)
+                  (PRIVMSG-is-for-channel? m))
+         ;; note who did what, when, where, how, and wearing what kind
+         ;; of skirt; so that later we can respond to "seen Ted?"
+         (let* ((ht (irc-session-appearances-by-nick session))
+                (who (PRIVMSG-speaker-nick m))
+                (sighting (make-sighting
+                           who
+                           (car (PRIVMSG-receivers m))
+                           (current-seconds)
+                           (ACTION? m)
+                           (if (ACTION? m)
+                               (ACTION-text m)
+                               (PRIVMSG-text m))
+                           (hash-table-get
+                            (irc-session-host-info-by-nick session)
+                            who))))
+           (when (not (hash-table-get ht
+                                      who #f))
+             (vtprintf "~a joins ~a existing sightings~%"
+                       who
+                       (hash-table-count ht)))
+           (hash-table-put!
+            ht
+            who
+            sighting)
+
+           (enqueue-sightings-update
+            (hash-table-map
+             ht
+             (lambda (nick sighting)
+               (cons nick (serialize sighting))))))))
 
      #:descr "fingerprint file")
-
+
     (add!
      (lambda (m)
        (and
@@ -869,7 +885,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require bot
          (let get-one-line-impatiently ()
            ;; irc.freenode.org, at least, sends "PING" messages about
            ;; every 200 seconds.  So if we don't hear _anything_ from
-           ;; the servr for, say, 240 seconds, it's probably safe to
+           ;; the server for, say, 240 seconds, it's probably safe to
            ;; assume that something is all wonky, and that we should
            ;; try again.
            (let ((port-or-false

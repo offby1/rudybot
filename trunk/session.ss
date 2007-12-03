@@ -18,6 +18,8 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
   (
    appearances-by-nick
 
+   host-info-by-nick
+
    sandboxes-by-nick
 
    ;; Procedures who want to be called whenever a new message arrives.
@@ -58,6 +60,7 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
   (letrec ((sess
             (make-irc-session
 
+             (make-hash-table 'equal)
              (make-hash-table 'equal)
              (make-hash-table 'equal)
              (make-hash-table 'equal)
