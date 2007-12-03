@@ -590,6 +590,28 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
      #:responds? #t
      #:descr "'seen' command")
 
+    (add!
+     (lambda (m)
+       (and (gist-equal? "whois" m session)
+            (= 2 (length (text-for-us m session)))))
+     (lambda (m)
+       (let* ((who (regexp-replace #rx"\\?+$" (second (text-for-us m session)) ""))
+              (hi (hash-table-get (irc-session-host-info-by-nick session) who #f)))
+         (reply session
+                m
+                (if hi
+                    (format
+                     "~a is at host ~a, in country ~a"
+                     who
+                     (car hi)
+                     (cdr hi))
+                    (format
+                     "No idea who ~a is"
+                     who))
+                )))
+     #:responds? #t
+     #:descr "'whois' command")
+
      (add!
        (lambda (m)
          (and (VERSION? m)
