@@ -473,6 +473,9 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
      (lambda (m)
 
        ;; update the nick-to-hostinfo table
+
+       ;; TODO -- if it's a NICK message, store the new nick, not the
+       ;; old one.
        (when (and (not (memq (message-command m) '(QUIT PART)))
                   (message-prefix m)
                   (prefix-host (message-prefix m)))
