@@ -479,11 +479,11 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
          (let ((ht (irc-session-host-info-by-nick session)))
            (when (not (hash-table-get
                        ht
-                       (prefix-nick (message-prefix m))
+                       (string-downcase (prefix-nick (message-prefix m)))
                        #f))
              (let-values (((host country)
                            (get-info (prefix-host (message-prefix m)))))
-               (hash-table-put! ht (prefix-nick (message-prefix m))
+               (hash-table-put! ht (string-downcase (prefix-nick (message-prefix m)))
                                 (cons host country))))))
 
        (when (and (PRIVMSG? m)
@@ -595,7 +595,10 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
             (= 2 (length (text-for-us m session)))))
      (lambda (m)
        (let* ((who (regexp-replace #rx"\\?+$" (second (text-for-us m session)) ""))
-              (hi (hash-table-get (irc-session-host-info-by-nick session) who #f)))
+              (hi (hash-table-get
+                   (irc-session-host-info-by-nick session)
+                   (string-downcase who)
+                   #f)))
          (reply session
                 m
                 (if hi
