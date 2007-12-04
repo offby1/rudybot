@@ -65,6 +65,8 @@
 ;; aka 433
 (define-struct (ERR_NICKNAMEINUSE message) (channel-name) #f)
 
+(define-struct (NICK message) (new-nick) #f)
+
 ;; http://www.irchelp.org/irchelp/rfc/ctcpspec.html
 (define-struct (CTCP PRIVMSG) (req/extended-data) #f)
 (define-struct (ACTION CTCP) (text) #f)
@@ -116,6 +118,7 @@
 
     (or (maybe-make-RPL_ENDOFNAMES m)
         (maybe-make-ERR_NICKNAMEINUSE m)
+        (maybe-make-NICK m)
         (maybe-make-PRIVMSG m)
         m)))
 
@@ -133,6 +136,13 @@
         m
         make-ERR_NICKNAMEINUSE
         (second (message-params m)))))
+
+(define (maybe-make-NICK m)
+  (and (string=? "NICK" (message-command m))
+       (make-sub-struct
+        m
+        make-NICK
+        (first (message-params m)))))
 
 (define (maybe-make-PRIVMSG m)
   (and (string=? "PRIVMSG" (message-command m))
@@ -235,7 +245,7 @@
                 message))
          (g (gist-for-us m sess)))
     (check-equal? g expected)))
-
+
 (define parse-tests
 
   (test-suite
@@ -271,6 +281,19 @@
     (parse-prefix "ChanServ!ChanServ@services.")
     "MODE"
     '("#cinema" "+tc"))
+   (test-parse
+    "NICK"
+    ":foo!foo@localhost. NICK :freddy"
+    (parse-prefix "foo!foo@localhost.")
+    "NICK"
+    '("freddy"))
+   (test-not-false
+    "NICK2"
+    (NICK? (parse-irc-message ":foo!foo@localhost. NICK :freddy")))
+   (test-equal?
+    "NICK3"
+    (NICK-new-nick (parse-irc-message ":foo!foo@localhost. NICK :freddy"))
+    "freddy")
    (test-equal?
     "prefix"
     (message-prefix (parse-irc-message ":zip zap zop :snot"))
@@ -393,7 +416,7 @@
     (test-prefix-pieces "nick and user"    ":nick!knack@night foo bar baz" '("nick" "knack" "night"))
     (test-prefix-pieces "goofy"            ":fsbot!n=user@batfish.pepperfish.net a b c"
                         '("fsbot" "n=user" "batfish.pepperfish.net")))))
-
+
 (provide (all-defined-except
           message-command
 

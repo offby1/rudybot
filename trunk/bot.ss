@@ -474,26 +474,32 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
 
        ;; update the nick-to-hostinfo table
 
-       ;; TODO -- if it's a NICK message, store the new nick, not the
-       ;; old one.
-       (when (and (not (memq (message-command m) '(QUIT PART)))
-                  (message-prefix m)
+       (when (and (message-prefix m)
                   (prefix-host (message-prefix m)))
-         (let ((who (string-downcase (prefix-nick (message-prefix m))))
+         (let ((who (string-downcase
+                     (if (NICK? m)
+                         (NICK-new-nick m)
+                         (prefix-nick (message-prefix m)))))
                (ht (irc-session-host-info-by-nick session)))
            (when (not (hash-table-get
                        ht
                        who
                        #f))
-             (let-values (((host country)
-                           (get-info (prefix-host (message-prefix m)))))
-               (hash-table-put! ht who (cons host country))
-               (pm session "offby1"
-                   (format
-                    "~a is at host ~a, in country ~a"
-                    who
-                    host country)
-                   )))))
+             (cond
+              ((memq (message-command m) '(QUIT PART))
+               'nuttin)
+
+              (else
+               (let-values (((host country)
+                             (get-info (prefix-host (message-prefix m)))))
+                 (hash-table-put! ht who (cons host country))
+                 (pm session "offby1"
+                     (format
+                      "~a is at host ~a, in country ~a"
+                      who
+                      host country)
+                     )))))))
+
 
        (when (and (PRIVMSG? m)
                   (PRIVMSG-is-for-channel? m))
