@@ -474,7 +474,8 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
      (lambda (m)
 
        ;; update the nick-to-hostinfo table
-       (when (message-prefix m)
+       (when (and (message-prefix m)
+                  (prefix-host (message-prefix m)))
          (let ((ht (irc-session-host-info-by-nick session)))
            (when (not (hash-table-get
                        ht
@@ -498,10 +499,8 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
                            (ACTION? m)
                            (if (ACTION? m)
                                (ACTION-text m)
-                               (PRIVMSG-text m))
-                           (hash-table-get
-                            (irc-session-host-info-by-nick session)
-                            who))))
+                               (PRIVMSG-text m)))))
+
            (when (not (hash-table-get ht
                                       who #f))
              (vtprintf "~a joins ~a existing sightings~%"
