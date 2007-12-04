@@ -475,7 +475,12 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
        ;; update the nick-to-hostinfo table
 
        (when (and (message-prefix m)
-                  (prefix-host (message-prefix m)))
+                  (prefix-host (message-prefix m))
+
+                  ;; some "hosts" look like "foo/bar"; these will
+                  ;; never resolve, so don't even bother.
+                  (not (regexp-match #rx"/" (prefix-host (message-prefix m))))
+                  )
          (let ((who (string-downcase
                      (if (NICK? m)
                          (NICK-new-nick m)
@@ -493,12 +498,21 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
                (let-values (((host country)
                              (get-info (prefix-host (message-prefix m)))))
                  (hash-table-put! ht who (cons host country))
+
+                 ;; hey, why not?
                  (pm session "offby1"
                      (format
-                      "~a is at host ~a, in country ~a"
+                      "~a~a is at host ~a, in country ~a"
                       who
-                      host country)
-                     )))))))
+                      (if (PRIVMSG? m)
+                          (format
+                           " (in ~a)"
+                           (string-join (PRIVMSG-receivers m) ", ")
+                           )
+                          "")
+                      host country))
+
+                 ))))))
 
 
        (when (and (PRIVMSG? m)
