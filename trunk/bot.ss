@@ -94,11 +94,10 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
       (newline o))
     (vtprintf " => ~s~%" msg)))
 
-(define pm
-  (lambda (s target msg)
-    (check-type 'pm string? msg)
-    (check-type 'pm string? target)
-    (out  s "PRIVMSG ~a :~a" target msg)))
+(define (pm s target msg)
+  (check-type 'pm string? msg)
+  (check-type 'pm string? target)
+  (out  s "PRIVMSG ~a :~a" target msg))
 
 (define notice
   (lambda (s target msg)
@@ -476,15 +475,21 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
        ;; update the nick-to-hostinfo table
        (when (and (message-prefix m)
                   (prefix-host (message-prefix m)))
-         (let ((ht (irc-session-host-info-by-nick session)))
+         (let ((who (string-downcase (prefix-nick (message-prefix m))))
+               (ht (irc-session-host-info-by-nick session)))
            (when (not (hash-table-get
                        ht
-                       (string-downcase (prefix-nick (message-prefix m)))
+                       who
                        #f))
              (let-values (((host country)
                            (get-info (prefix-host (message-prefix m)))))
-               (hash-table-put! ht (string-downcase (prefix-nick (message-prefix m)))
-                                (cons host country))))))
+               (hash-table-put! ht who (cons host country))
+               (pm session "offby1"
+                   (format
+                    "~a is at host ~a, in country ~a"
+                    who
+                    host country)
+                   )))))
 
        (when (and (PRIVMSG? m)
                   (PRIVMSG-is-for-channel? m))
