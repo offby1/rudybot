@@ -473,7 +473,8 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
      (lambda (m)
 
        ;; update the nick-to-hostinfo table
-       (when (and (message-prefix m)
+       (when (and (not (eq? (message-command m) 'PART))
+                  (message-prefix m)
                   (prefix-host (message-prefix m)))
          (let ((who (string-downcase (prefix-nick (message-prefix m))))
                (ht (irc-session-host-info-by-nick session)))

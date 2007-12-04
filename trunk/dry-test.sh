@@ -15,6 +15,8 @@ rm -f sightings.db
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: seen a?\\r"
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: whois a\\r"
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: whois A\\r"
+    echo -e ":d!d@c PART #scheme-bots :\\r"
+    echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: whois d\\r"
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: whois sam\\r"
     echo -e ":a!b@c PRIVMSG #scheme-bots :rudybot: uptime\\r"
 
