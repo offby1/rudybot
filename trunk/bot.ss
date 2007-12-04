@@ -474,7 +474,8 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
 
        ;; update the nick-to-hostinfo table
 
-       (when (and (message-prefix m)
+       (when (and (PRIVMSG? m)
+                  (message-prefix m)
                   (prefix-host (message-prefix m))
 
                   ;; some "hosts" look like "foo/bar"; these will
@@ -482,37 +483,25 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
                   (not (regexp-match #rx"/" (prefix-host (message-prefix m))))
                   )
          (let ((who (string-downcase
-                     (if (NICK? m)
-                         (NICK-new-nick m)
-                         (prefix-nick (message-prefix m)))))
+                     (prefix-nick (message-prefix m))))
                (ht (irc-session-host-info-by-nick session)))
            (when (not (hash-table-get
                        ht
                        who
                        #f))
-             (cond
-              ((memq (message-command m) '(QUIT PART))
-               'nuttin)
+             (let-values (((host country)
+                           (get-info (prefix-host (message-prefix m)))))
+               (hash-table-put! ht who (cons host country))
 
-              (else
-               (let-values (((host country)
-                             (get-info (prefix-host (message-prefix m)))))
-                 (hash-table-put! ht who (cons host country))
+               ;; hey, why not?
+               (pm session "offby1"
+                   (format
+                    "~a (in ~a) is at host ~a, in country ~a"
+                    who
+                    (string-join (PRIVMSG-receivers m) ", ")
+                    host country))
 
-                 ;; hey, why not?
-                 (pm session "offby1"
-                     (format
-                      "~a~a is at host ~a, in country ~a"
-                      who
-                      (if (PRIVMSG? m)
-                          (format
-                           " (in ~a)"
-                           (string-join (PRIVMSG-receivers m) ", ")
-                           )
-                          "")
-                      host country))
-
-                 ))))))
+               ))))
 
 
        (when (and (PRIVMSG? m)
