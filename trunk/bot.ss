@@ -731,9 +731,10 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
                  (PRIVMSG-speaker-nick m))))
 
          (with-handlers
-             ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
-             ;; killing this thread.
-             ([void
+             (
+              ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
+              ;; killing this thread.
+              [void
                (lambda (v)
                  (let ((whine (if (exn? v)
                                   (exn-message v)
@@ -767,17 +768,27 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
                                 (number->english *max-values-to-display*)
                                 values))
 
-                       (begin
-                         (when (not (void? (car values)))
-                           (when (positive? displayed)
-                             (sleep 1))
-                           (reply
-                            session
-                            m
-                            (format "; Value: ~s"
-                                    (car values))))
-                         (loop (cdr values)
-                               (add1 displayed)))))))))
+                       ;; Even though the sandbox runs with strict
+                       ;; memory and time limits, we use
+                       ;; call-with-limits here anyway, because it's
+                       ;; possible that the sandbox can, without
+                       ;; exceeding its limits, return a value that
+                       ;; will require a lot of time and memory to
+                       ;; convert into a string!  (make-list 100000)
+                       ;; is an example.
+                       (call-with-limits
+                        2 20
+                        (lambda ()
+                          (when (not (void? (car values)))
+                            (when (positive? displayed)
+                              (sleep 1))
+                            (reply
+                             session
+                             m
+                             (format "; Value: ~s"
+                                     (car values))))
+                          (loop (cdr values)
+                                (add1 displayed))))))))))
 
          (let ((stdout (sandbox-get-stdout s))
                (stderr (sandbox-get-stderr s)))

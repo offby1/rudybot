@@ -108,16 +108,6 @@ exec mzscheme -M errortrace --no-init-file --mute-banner --version --require "$0
                sess
                ip
                (format
-                ;; I've seen this "eval" string kill the bot in the
-                ;;  field, even though this test passes just fine
-                ;;  here.  I think that the bot uses a large amount of
-                ;;  memory to evaluate the string, and I run the bot
-                ;;  "in the field" with a small ulimit, so that kills
-                ;;  it.  I haven't figured out how to easily monitor
-                ;;  the memory use, nor have I figured out -what- is
-                ;;  using all the memory.  I assume it's something
-                ;;  that I am doing with the value that is returned
-                ;;  from the sandbox.
                 ":a!b@c PRIVMSG #d :~a: eval (begin (require (lib \"1.ss\" \"srfi\")) (make-list 100000))"
                 (irc-session-nick sess))
                #rx"^PRIVMSG #d :; Value: \\(#f #f #f")))
