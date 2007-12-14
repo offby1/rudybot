@@ -60,6 +60,10 @@
 
 -- Low priority
 
+* Have the bot alert someone when their sandbox expires
+  So they're not later surprised that all their definitions have
+  vanished.
+
 * dynamically load verbs
   <eli> offby1: Now make verbs like `eval' and `uptime' come from files under the same name in a
         "verb" directory,
