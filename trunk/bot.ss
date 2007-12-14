@@ -526,7 +526,7 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
                        (hash-table-count ht)))
            (hash-table-put!
             ht
-            who
+            (string-downcase who)
             sighting)
 
            (enqueue-sightings-update
@@ -582,7 +582,9 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
             (= 2 (length (text-for-us m session)))))
      (lambda (m)
        (let* ((who (regexp-replace #rx"\\?+$" (second (text-for-us m session)) ""))
-              (s (hash-table-get (irc-session-appearances-by-nick session) who #f)))
+              (s (hash-table-get (irc-session-appearances-by-nick session)
+                                 (string-downcase who)
+                                 #f)))
          (reply session
                 m
                 (if s
