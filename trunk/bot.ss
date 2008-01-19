@@ -493,16 +493,16 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
                            (get-info (prefix-host (message-prefix m)))))
                (hash-table-put! ht who (cons host country))
 
-               ;; hey, why not?
-               (pm session "offby1"
-                   (format
-                    "~a (in ~a) is at host ~a, in country ~a"
-                    who
-                    (string-join (PRIVMSG-receivers m) ", ")
-                    host country))
+               (when (*send-me-hostinfo*)
+                 ;; hey, why not?
+                 (pm session "offby1"
+                     (format
+                      "~a (in ~a) is at host ~a, in country ~a"
+                      who
+                      (string-join (PRIVMSG-receivers m) ", ")
+                      host country)))
 
                ))))
-
 
        (when (and (PRIVMSG? m)
                   (PRIVMSG-is-for-channel? m))

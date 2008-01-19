@@ -263,6 +263,9 @@ essentially a full-blown IRC client with a scheme syntax.
 
 * "seen" command
 
+** maybe note JOINs as well as PRIVMSGs
+   Ditto for the nick-to-hostname database
+
 ** name db after the IRC server
    Or better yet, after the IRC _network_.  So instead of
    "sightings.db", it'd be "freenode-sightings.db"; that way the bot

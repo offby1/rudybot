@@ -69,8 +69,11 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
 
 ;; The bot will "tiny-ify" URLs longer than this.  Tiny URLs are about
 ;; 25 characters, so it seems reasonable to ignore URLs that are
-;; shorter than triple that.
+;; shorter than triple that (plus, I got a lot of flack from IRC
+;; denizens when this number was too short).
 (define *tinyurl-url-length-threshold* (make-parameter 75))
+
+(define *send-me-hostinfo* (make-parameter #t))
 
 (define *del.icio.us-password*
   (begin0
