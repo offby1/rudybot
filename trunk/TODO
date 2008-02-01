@@ -1,6 +1,25 @@
 -*-outline-*-
 
 -- High priority
+* It fell over:
+
+  Logging to
+  #<path:/var/log/irc-bot/irc.freenode.org-2008-02-01T01:18:39-0500>
+  Initialized "seen" database; hash table now has 2265 entries
+  display: output port is closed
+
+   === context ===
+  /home/erich/irc-bot/bot.ss:925:13: with-handlers-handler44
+  select-handler/no-breaks
+
+  The logs show the server hanging up on us, and then (after we
+  reconnect) telling us our nick is in use, a bunch of times.  So
+  perhaps the code that handles that case is at fault.
+
+  So: stub up an IRC server that hangs up on us a lot, and/or tells us
+  our nick is in use a lot, and run that in a loop and see if that
+  repros this.
+
 * Split planet-emacsen.ss into a generic feed reader ...
   ... and a bit that's specific to just Planet Emacsen, so that we can
   easily add new feeds.
