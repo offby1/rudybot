@@ -73,7 +73,7 @@ exec mzscheme -M errortrace -qu "$0" ${1+"$@"}
 ;; denizens when this number was too short).
 (define *tinyurl-url-length-threshold* (make-parameter 75))
 
-(define *send-me-hostinfo* (make-parameter #t))
+(define *send-me-hostinfo* (make-parameter #f))
 
 (define *del.icio.us-password*
   (begin0
