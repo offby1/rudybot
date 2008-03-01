@@ -1,6 +1,8 @@
 -*-outline-*-
 
 -- High priority
+* Port to PLT v4
+
 * It fell over:
 
   Logging to
@@ -27,14 +29,6 @@
 * remove case-sensitivity from "for-us?"
   <Black_Dog> Rudybot: check the mirror, silly
   <offby1> ooh, he's case-sensitive.  bummer
-
-* replace ayita?!
-  That means coming up with a simple factoid UI.
-
-  I've created a few del.icio.us links tagged with "svnfaq".  Perhaps
-  he could:  Hang out in #svn; look for messages that are a single
-  word plus a question mark; search for a link of that title,
-  belonging to me, with the svnfaq tag.
 
 * single-character attention sequence
   * offby1 wonders if he should create a single-character prefix to get the bot's attention, like
