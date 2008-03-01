@@ -1,13 +1,6 @@
 -*-outline-*-
 
 -- High priority
-* Some thread died:
-> context (lexical binding) expected 2 values, received 1 value: #f
-
- === context ===
-/home/erich/irc-bot/bot.ss:473:5
-/home/erich/irc-bot/channel-events.ss:116:7: loop
-
 * It fell over:
 
   Logging to
