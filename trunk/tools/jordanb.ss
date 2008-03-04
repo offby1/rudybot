@@ -26,8 +26,7 @@ exec mzscheme -qu "$0" ${1+"$@"}
                )
          (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
          (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
-         (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
-         (all-except (planet "fmt.ss"       ("ashinn"      "fmt.plt")) cat))
+         (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2)))
 
 (define *pipe-max-bytes* (make-parameter #f))
 
@@ -107,8 +106,8 @@ exec mzscheme -qu "$0" ${1+"$@"}
               (fprintf
                (current-error-port)
                "Pipe has ~a bytes in it; about to copy ~a bytes from ~s.~%"
-               (fmt #f (num/comma (pipe-content-length op)))
-               (fmt #f (num/comma (file-size fn)))
+               (pipe-content-length op)
+               (file-size fn)
                fn)
               (copy-port file-ip op)))))
       filenames)
