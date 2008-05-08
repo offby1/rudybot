@@ -25,6 +25,13 @@
    (lambda ()
      (let loop ()
        (let ((write-me (async-channel-get *the-channel*)))
+
+         ;; TODO: I'm pretty sure I've seen the output file get
+         ;; corrupted, which suggests that this "write" was
+         ;; interrupted partway through.  I suppose the fix is to
+         ;; write to a temporary file instead, and then atomically
+         ;; rename the temporary file to
+         ;; *sightings-database-file-name*.
          (call-with-output-file *sightings-database-file-name*
            (lambda (op)
              (write write-me op))
