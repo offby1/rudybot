@@ -32,6 +32,10 @@
          ;; write to a temporary file instead, and then atomically
          ;; rename the temporary file to
          ;; *sightings-database-file-name*.
+
+         ;; I wonder if that sort of atomicity should be built into
+         ;; call-with-output-file; that might be a nice feature for
+         ;; PLT to add.
          (call-with-output-file *sightings-database-file-name*
            (lambda (op)
              (write write-me op))
