@@ -10,23 +10,28 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
          (planet "util.ss"    ("schematics" "schemeunit.plt" )))
 
 (define (loop ip op proc)
-  (display (proc (read-line ip)) op))
+  (for ((line (in-lines ip)))
+    (display (proc line) op)))
+
 
 (define loop-tests
 
   (test-suite
    "loop"
-   (test-case
-    "yow"
-    (let ((from-server (string-join (list "Welcome to freenode, douchebag") (string #\return)))
-          (minimal-processor (lambda (line)
-                               (format "OK, I read ~s.  Now what?~%" line))))
-      (let ((magical-input-port (open-input-string  from-server))
-            (output-from-bot (open-output-string)))
-        (loop magical-input-port output-from-bot minimal-processor)
+   (let ((from-server (string-join (list "Welcome to freenode, douchebag") (string #\return)))
+         (minimal-processor (lambda (line)
+                              (format "OK, I read ~s.  Now what?~%" line))))
+     (let ((magical-input-port (open-input-string  from-server))
+           (output-from-bot (open-output-string)))
+       (loop magical-input-port output-from-bot minimal-processor)
+
+       (test-case
+        "yow"
+
         (check-regexp-match
          (regexp (regexp-quote (minimal-processor from-server)))
-         (get-output-string output-from-bot)))))))
+         (get-output-string output-from-bot))))
+     )))
 
 (define (main . args)
   (exit (test/text-ui loop-tests 'verbose)))
