@@ -6,12 +6,13 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 #lang scheme
 
 (require scheme/date
+         scheme/port
          (lib "trace.ss")
          (planet "test.ss"    ("schematics" "schemeunit.plt" ))
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
          (planet "util.ss"    ("schematics" "schemeunit.plt" )))
 
-(define *bot-gives-up-after-this-many-silent-seconds* 1)
+(define *bot-gives-up-after-this-many-silent-seconds* 1/4)
 
 (define (retry-somehow server-maker (consecutive-failed-connections 0))
   (when (positive? consecutive-failed-connections)
@@ -47,19 +48,24 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          consecutive-failed-connections)
   (let ((ch (make-channel)))
     (let loop ((consecutive-failed-connections consecutive-failed-connections))
-      (thread (lambda ()
-                (let ((line (read-line ip)))
-                  (channel-put ch line))))
-      (let ((line (sync/timeout timeout-seconds ch)))
+      (let ((reader (thread (lambda ()
+                              (let ((line (read-line ip)))
+                                (channel-put ch line)))))
+            (line (sync/timeout timeout-seconds ch)))
+        (define (retry)
+          (kill-thread reader)
+          (close-input-port ip)
+          (close-output-port op)
+          (retry-somehow server-maker (add1 consecutive-failed-connections)))
         (cond
          ((not line)
           (fprintf (current-error-port)
                    "Bummer: ~a seconds passed with no news from the server~%" timeout-seconds)
-          (retry-somehow server-maker (add1 consecutive-failed-connections)))
+          (retry))
          ((eof-object? line)
           (fprintf (current-error-port)
                    "Uh oh, server hung up on us~%")
-          (retry-somehow server-maker (add1 consecutive-failed-connections)))
+          (retry))
          ((string? line)
           (display (line-proc line) op)
           (newline op)
@@ -69,7 +75,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 
 (define (make-flaky-server)
-  (when (zero? (random 2))
+  (when (zero? (random 10))
     (raise (make-exn:fail:network
             "de network, she be broke"
             (current-continuation-marks))))
@@ -85,11 +91,20 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
            (fprintf op "KAPOW~%")
            (sleep (/ *bot-gives-up-after-this-many-silent-seconds* 2))
            (fprintf op "SNORKULOSITY~%")
-           (when (zero? (random 2)) (sleep (* *bot-gives-up-after-this-many-silent-seconds* 2)))
+           (sleep (* *bot-gives-up-after-this-many-silent-seconds*
+                     (if (zero? (random 10))
+                         2
+                         1/2)))
+
            (fprintf op "Thought I was a goner, eh?~%")
-           (when (zero? (random 2)) (close-output-port op))))))
+           (sleep (/ *bot-gives-up-after-this-many-silent-seconds* 2))
+           (when (zero? (random 10)) (close-output-port op))
+           (loop)))))
     (values ip
-            (current-output-port))))
+            (relocate-output-port
+             (current-output-port)
+             #f #f 1 #f)
+            )))
 
 
 (define (main . args)
