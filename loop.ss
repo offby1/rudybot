@@ -27,7 +27,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                   (cons (line-proc line) results)))))))
 
 
-(define-struct connection (events) #:transparent)
 
 (define loop-tests
 
