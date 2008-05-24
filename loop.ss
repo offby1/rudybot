@@ -18,17 +18,15 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
    "loop"
    (test-case
     "yow"
-    (let ((from-server (list "Welcome to freenode, douchebag"))
+    (let ((from-server (string-join (list "Welcome to freenode, douchebag") (string #\return)))
           (minimal-processor (lambda (line)
                                (format "OK, I read ~s.  Now what?~%" line))))
-      (let ((magical-input-port (open-input-string (string-join from-server (string #\return))))
+      (let ((magical-input-port (open-input-string  from-server))
             (output-from-bot (open-output-string)))
         (loop magical-input-port output-from-bot minimal-processor)
         (check-regexp-match
-         #rx"OK, I read .*Welcome to freenode.*.  Now what?"
-         (get-output-string output-from-bot)))
-      )
-    )))
+         (regexp (regexp-quote (minimal-processor from-server)))
+         (get-output-string output-from-bot)))))))
 
 (define (main . args)
   (exit (test/text-ui loop-tests 'verbose)))
