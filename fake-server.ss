@@ -36,23 +36,17 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
         (set! buffer (subbytes buffer nbytes))
         (when (zero? (bytes-length buffer))
           (set! buffer #f)))
-      (trace maybe-refill-buffer!)
-      (trace shrink-buffer-by!)
       (make-input-port
        "Exceptional"
 
        ;; read
        (lambda (bytes)
-         (printf "port reader: gonna write into byte string ~s, length ~a~%"
-                 bytes (bytes-length bytes))
          (maybe-refill-buffer!)
          (if (eof-object? buffer)
              buffer
              (let ((nbytes (min (bytes-length bytes)
                                 (bytes-length buffer))))
                (for ((i (in-range nbytes)))
-                 (printf "port: setting slot ~a to ~s~%"
-                         i  (bytes-ref buffer i))
                  (bytes-set! bytes i (bytes-ref buffer i)))
                (shrink-buffer-by! nbytes)
                nbytes)))
@@ -80,8 +74,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
                               )))
     (for ((line (in-lines ip)))
-      (printf "Line: ~s~%" line)))
-
-)
+      (printf "Line: ~s~%" line))))
 
 (provide (all-defined-out))
