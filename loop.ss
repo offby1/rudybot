@@ -28,42 +28,39 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 
 
+(define (check-bot data-from-server expected-responses)
+  (let ((output-from-bot (open-output-string)))
+    (for ((actual (in-list
+                   (keep-trying
+                    (data->input-port data-from-server)
+                    (lambda (line)
+                      (format "OK, I read ~s.  Now what?~%" line)))))
+          (expected (in-list expected-responses)))
+      (check-regexp-match
+       (byte-regexp (regexp-quote expected))
+       actual))))
+
 (define loop-tests
+  (test-suite
+   "loop"
 
-  (let ((minimal-processor (lambda (line)
-                             (format "OK, I read ~s.  Now what?~%" line))))
-    (define (check-bot data-from-server expected-responses)
-      (let ((output-from-bot (open-output-string)))
-        (for ((actual (in-list
-                       (keep-trying
-                        (data->input-port data-from-server)
-                        minimal-processor)))
-              (expected (in-list expected-responses)))
-          (check-regexp-match
-           (byte-regexp (regexp-quote expected))
-           actual))))
+   (test-case
+    "no problem"
 
+    (check-bot
+     (list #"Welcome to freenode, douchebag"
+           #"Have a nice day")
+     (list #"Welcome to freenode, douchebag"
+           #"Have a nice day")))
 
-    (test-suite
-     "loop"
-
-     (test-case
-      "no problem"
-
-      (check-bot
-       (list #"Welcome to freenode, douchebag"
-             #"Have a nice day")
-       (list #"Welcome to freenode, douchebag"
-             #"Have a nice day")))
-
-     (test-case
-      "deals with exception"
-      (check-bot
-       (list #"OK, this is the second, buggier, connection.\n"
-             make-exn:fail:network
-             #"Time to go.")
-       (list #"OK, this is the second, buggier, connection."
-             #"Time to go."))))))
+   (test-case
+    "deals with exception"
+    (check-bot
+     (list #"OK, this is the second, buggier, connection.\n"
+           make-exn:fail:network
+           #"Time to go.")
+     (list #"OK, this is the second, buggier, connection."
+           #"Time to go.")))))
 
 (define (main . args)
   (exit (test/text-ui loop-tests 'verbose)))
