@@ -11,10 +11,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
          (planet "util.ss"    ("schematics" "schemeunit.plt" )))
 
-(define (all-lines-from-this-port ip proc)
-  (for/list ((line (in-lines ip)))
-    (proc line)))
-
 (define (keep-trying ip line-proc)
   (let loop ((retries 0)
              (results '()))
