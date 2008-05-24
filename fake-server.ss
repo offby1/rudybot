@@ -74,6 +74,25 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
                               )))
     (for ((line (in-lines ip)))
-      (printf "Line: ~s~%" line))))
+      (printf "Line: ~s~%" line)))
+
+  (let ((ip (data->input-port (list #"Three\n"
+                                    #"Two\n"
+                                    #"one\n"
+                                    #"boom"
+                                    make-exn:fail:network
+                                    #"Everyone OK?"))))
+
+    (let loop ()
+      (with-handlers ([exn:fail:network?
+                       (lambda (exn)
+                         (printf "Oh noes! ~s!~%" exn)
+                         (loop))])
+
+        (let ((line (read-line ip)))
+          (when (not (eof-object? line))
+            (printf "Line: ~s~%" line)
+            (loop))))
+      )))
 
 (provide (all-defined-out))
