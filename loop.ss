@@ -15,15 +15,20 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (for/list ((line (in-lines ip)))
     (proc line)))
 
-(define (keep-trying ip line-proc (tries 0))
-  (with-handlers ([exn:fail:network?
-                   (lambda (exn)
-                     (printf "Oh noes! ~s!~%" exn)
-                     (sleep (expt 2 tries))
-                     (keep-trying ip line-proc (add1 tries)))])
-    (all-lines-from-this-port
-     ip
-     line-proc)))
+(define (keep-trying ip line-proc)
+  (let loop ((retries 0)
+             (results '()))
+    (with-handlers ([exn:fail:network?
+                     (lambda (exn)
+                       (printf "Oh noes! ~s!~%" exn)
+                       (sleep (expt 2 retries))
+                       (loop (add1 retries)
+                             results))])
+      (let ((line (read-line ip)))
+        (if (eof-object? line)
+            (reverse results)
+            (loop 0
+                  (cons (line-proc line) results)))))))
 
 
 (define-struct connection (events) #:transparent)
@@ -59,7 +64,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
      (test-case
       "deals with exception"
       (check-bot
-       (list #"OK, this is the second, buggier, connection."
+       (list #"OK, this is the second, buggier, connection.\n"
              make-exn:fail:network
              #"Time to go.")
        (list #"OK, this is the second, buggier, connection."
