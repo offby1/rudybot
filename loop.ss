@@ -50,12 +50,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       (let ((reader (thread (lambda ()
                               (let ((line (read-line ip)))
                                 (channel-put ch line)))))
-            (line (sync/timeout timeout-seconds ch)))
-        (define (retry)
-          (kill-thread reader)
-          (close-input-port ip)
-          (close-output-port op)
-          (retry-somehow server-maker (add1 consecutive-failed-connections)))
+            (line (sync/timeout timeout-seconds ch))
+            (retry (lambda ()
+                     (close-input-port ip)
+                     (close-output-port op)
+                     (retry-somehow server-maker (add1 consecutive-failed-connections)))))
+
+        (kill-thread reader)
+
         (cond
          ((not line)
           (fprintf (current-error-port)
