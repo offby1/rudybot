@@ -1,9 +1,0 @@
-Here's what I think the _real_ model is:
-
-* Whenever we read from the server, we should set a timeout of ... I
-  dunno ... a couple minutes; the server is supposed to send PING
-  messages that often, and so if the timeout expires, we consider the
-  connection dead, and need to reconnect.
-
-* Whenever we attempt to connect, we should be prepared to deal with
-  exn:fail:network?, and try again.

@@ -8,11 +8,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (require scheme/date
          scheme/port
          (lib "trace.ss")
+         (lib "13.ss" "srfi")
          (planet "test.ss"    ("schematics" "schemeunit.plt" ))
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
          (planet "util.ss"    ("schematics" "schemeunit.plt" )))
 
 (define *bot-gives-up-after-this-many-silent-seconds* 1/4)
+
+(define slightly-more-sophisticated-line-proc string-tokenize)
 
 (define (retry-somehow server-maker (consecutive-failed-connections 0))
   (when (positive? consecutive-failed-connections)
@@ -30,11 +33,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       (do-the-bot-thing
        ip
        op
-       (lambda (line)
-         (format "~a: ~a"
-                 (parameterize ((date-display-format 'iso-8601))
-                   (date->string (seconds->date (current-seconds)) #t))
-                 line))
+       slightly-more-sophisticated-line-proc
        *bot-gives-up-after-this-many-silent-seconds*
        server-maker
        consecutive-failed-connections))))
@@ -84,22 +83,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                 (make-pipe)))
     (thread
      (lambda ()
-       (let loop ()
-         (when (not (port-closed? op))
-           (fprintf op "PING~%")
-           (sleep (/ *bot-gives-up-after-this-many-silent-seconds* 2))
-           (fprintf op "KAPOW~%")
-           (sleep (/ *bot-gives-up-after-this-many-silent-seconds* 2))
-           (fprintf op "SNORKULOSITY~%")
-           (sleep (* *bot-gives-up-after-this-many-silent-seconds*
-                     (if (zero? (random 10))
-                         2
-                         1/2)))
-
-           (fprintf op "Thought I was a goner, eh?~%")
-           (sleep (/ *bot-gives-up-after-this-many-silent-seconds* 2))
-           (when (zero? (random 10)) (close-output-port op))
-           (loop)))))
+       (when (not (port-closed? op))
+         (call-with-input-file
+          "example-login-sequence"
+          (lambda (ip)
+            (for ((line (in-lines ip)))
+              (display line op)
+              (newline op))))
+         )))
     (values ip
             (relocate-output-port
              (current-output-port)
