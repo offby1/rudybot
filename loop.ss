@@ -15,34 +15,32 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
-(define *desired-nick* "rudybot")
+(define *my-nick* "rudybot")
 
-(define log #f)
-(let ((log-ports (list (current-error-port)
-                       (open-output-file
-                        "big-log"
-                        #:mode 'text
-                        #:exists 'append))))
+(define *log-ports* (make-parameter (list (current-error-port)
+                                          (open-output-file
+                                           "big-log"
+                                           #:mode 'text
+                                           #:exists 'append))))
+(define (log . args)
+  (define (fresh-line op)
+    (let-values ([(line column pos)
+                  (port-next-location op)])
+      (unless (zero? column)
+        (newline op))))
 
-  (set! log
-        (lambda args
+  (for ((op (in-list (*log-ports*))))
+    (fresh-line op)
+    (apply fprintf op args)
+    (newline op)))
 
-          (define (fresh-line op)
-            (let-values ([(line column pos)
-                          (port-next-location op)])
-              (unless (zero? column)
-                (newline op))))
+(for ((op (in-list (*log-ports*))))
+  (fprintf (current-error-port)
+           "Whopping port ~a~%" op)
+  (port-count-lines! op)
+  (file-stream-buffer-mode op 'line))
 
-          (for ((op (in-list log-ports)))
-            (fresh-line op)
-            (apply fprintf op args)
-            (newline op))))
-
-  (for ((op (in-list log-ports)))
-    (port-count-lines! op)
-    (file-stream-buffer-mode op 'line)))
-
-(define *state* 'start)
+(define *authenticated?* #f)
 
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out format-string . args)
@@ -58,55 +56,61 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
        (log "Uh oh!")]
 
       ["NOTICE"
-       (case *state*
-         ((start)
-          (out "NICK ~a" *desired-nick*)
-          (out "USER luser unknown-host localhost :duh, version 0")
-          (set! *state* 'attempted-auth)))]
+       (unless *authenticated?*
+         (out "NICK ~a" *my-nick*)
+         (out "USER luser unknown-host localhost :duh, version 0")
+         (set! *authenticated?* #t))]
 
       ["PING"
        (out "PONG ~a" (cadr toks))]
 
       [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
-       (if (equal? nick *desired-nick*)
+       (define (leading-alnum str)
+         (match str
+           [(regexp #px"^([[:alnum:]]+)" (list _ alnum))
+            alnum]
+           [_ #f]))
+       (if (equal? nick *my-nick*)
            (log "I seem to have said ~s" toks)
            (match (cdr toks)
              [(list "JOIN" target)
               (log "~a joined ~a" nick target)]
-             [(list "PART" target sayonara ...)
-              (log "~a left ~a, saying ~a" nick target sayonara)]
-             [(list "PRIVMSG" target blather ...)
+             [(list "PART" target (regexp #px"^:(.*)" (list _ first-word )) rest ...)
+              (log "~a left ~a, saying ~a" nick target (string-join (cons first-word rest)))]
 
-              (define (leading-alnum str)
-                (match str
-                  [(regexp #px"^([[:alnum:]]+)" (list _ alnum))
-                   alnum]
-                  [_ #f]))
+             [(list "PRIVMSG"
+                    (regexp #px"^#.*"   (list channel))
+                    (regexp #px"^:(.*)" (list _ first-word ))
+                    rest ...)
+              (log "Message is ~s~%" (cons first-word rest))
+              (match first-word
+                [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
+                 (log "~a spake unto ~a in ~a, saying ~a"
+                      nick
+                      addressee
+                      channel
+                      (string-join rest))
+                 (when (equal? addressee *my-nick*)
+                   (out "PRIVMSG ~a :~a: Well, ~a to you too"
+                        channel
+                        nick
+                        (string-join rest)))]
+                [_
+                 (log "~a mumbled something uninteresting in ~a"
+                      nick
+                      channel)])]
 
-              (let ((blather (if (equal? #\: (string-ref (car blather) 0))
-                                 (cons (substring (car blather) 1)
-                                       (cdr blather))
-                                 blather)))
+             [(list "PRIVMSG"
+                    me
+                    (regexp #px"^:(.*)" (list _ first-word))
+                    rest-of-message ...)
+              (log "~a privately said ~a to me"
+                   nick
+                   (string-join (cons first-word rest-of-message)))
 
-                (log "~a said ~a to ~a" nick blather target)
-
-                (cond
-
-                 ;; They spoke directly to us -- i.e., with /query
-                 ((equal? (leading-alnum target)
-                          (leading-alnum *desired-nick*))
-                  (out "PRIVMSG ~a :Well, ~a to you too"
-                       nick
-                       (string-join blather)))
-
-                 ;; More common: they technically spoke to the
-                 ;; channel, but prefixed their message with our nick
-                 ((equal? (leading-alnum (car blather))
-                          (leading-alnum *desired-nick*))
-                  (out "PRIVMSG ~a :~a: Well, ~a to you too"
-                       target
-                       nick
-                       (string-join (cdr blather))))))]
+              (out "PRIVMSG ~a :Well, ~a to you too"
+                   nick
+                   (string-join (cons first-word rest-of-message)))]
 
              [_
               (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
@@ -117,16 +121,16 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
           (case (string->symbol digits)
             ((|001|)
              (log "Yay, we're in")
-             (set! *state* 'authenticated)
-             (out "JOIN #scheme"))
+             (set! *authenticated?* #t)
+             (out "JOIN #scheme!"))
             ((|366|)
              (log "I, ~a, seem to have joined channel ~a."
                   mynick
                   (car blather)))
             ((|433|)
              (log "Nuts, gotta try a different nick")
-             (set! *desired-nick* (string-append *desired-nick* "_"))
-             (out "NICK ~a" *desired-nick*)))])]
+             (set! *my-nick* (string-append *my-nick* "_"))
+             (out "NICK ~a" *my-nick*)))])]
       [_ (log "Duh?")])))
 
 (define (connect-and-run server-maker (consecutive-failed-connections 0))
@@ -221,13 +225,32 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
               ip)
             op)))
 
+(define (make-log-replaying-server log-file-name)
+  (lambda ()
+    (parameterize ((*log-ports* (list (current-error-port))))
+      (let-values (((ip op)
+                    (make-pipe)))
+        (thread
+         (lambda ()
+           (call-with-input-file log-file-name
+             (lambda (ip)
+               (for ((line (in-lines ip)))
+                 (let ((datum (read (open-input-string line))))
+                   (when (not (eof-object? datum))
+                     (display datum op)
+                     (newline op))))
+               (close-output-port op)))
+           ))
+        (values ip
+                (relocate-output-port
+                 (current-output-port)
+                 #f #f 1 #f))))))
+
 ;; (define (main . args)
 ;;   (random-seed 0)
-;;   (let ((op (open-output-string)))
-;;     (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4))
+;;   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4))
 ;;     (connect-and-run
-;;      (make-preloaded-server op)))
-;;     (printf "We emitted ~s~%" (get-output-string op))))
+;;      (make-log-replaying-server "inputs"))))
 
 (define (main . args)
   (random-seed 0)
