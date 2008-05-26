@@ -14,7 +14,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "util.ss"    ("schematics" "schemeunit.plt" )))
 
 ;; This value depends on the server; this seems to work for freenode
-(define *bot-gives-up-after-this-many-silent-seconds* 250)
+(define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
 (define *desired-nick* "rudybot")
 
 (define *log-port* (make-parameter (current-error-port)))
@@ -35,19 +35,19 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (define (out format-string . args)
     (let ((str (apply format format-string args)))
       (fresh-line (*log-port*))
-      (fprintf (*log-port*) "~s~%" str)
+      (log "~s" str)
       (fprintf op "~a~%" str)))
-  (fprintf (*log-port*) "~s~%" line)
+  (log "~s" line)
   (let ((toks (string-tokenize line)))
     (case (string->symbol (car toks))
-      ((ERROR)  (fprintf (current-error-port) "Uh oh!~%"))
+      ((ERROR)  (log "Uh oh!"))
       ((NOTICE)
        (case *state*
          ((start)
           (out "NICK ~a" *desired-nick*)
           (out "USER luser unknown-host localhost :duh, version 0")
           (set! *state* 'attempted-auth))))
-      ((PING)   (fprintf op "PONG!!!~%"))
+      ((PING)   (out "PONG ~a" (cadr toks)))
       (else
        ;; e.g. ":Chalain!n=chalain@216-74-233-198.res.logixcom.net"
        ;; but sometimes just ":kubrick.freenode.net"
@@ -93,7 +93,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
           (let ((reader (thread (lambda ()
                                   (let ((line (read-line ip)))
                                     (channel-put ch line)))))
-                (line (sync/timeout *bot-gives-up-after-this-many-silent-seconds* ch))
+                (line (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ch))
                 (retry (lambda ()
                          (close-input-port ip)
                          (close-output-port op)
@@ -104,7 +104,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
             (cond
              ((not line)
               (fprintf (current-error-port)
-                       "Bummer: ~a seconds passed with no news from the server~%" *bot-gives-up-after-this-many-silent-seconds*)
+                       "Bummer: ~a seconds passed with no news from the server~%"
+                       (*bot-gives-up-after-this-many-silent-seconds*))
                                         ;(retry)
               )
              ((eof-object? line)
@@ -150,9 +151,28 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       (file-stream-buffer-mode op 'line)
       (values ip op))))
 
+(define (make-preloaded-server op)
+  (lambda ()
+    (values (let-values (((ip op)
+                          (make-pipe)))
+              (thread
+               (lambda ()
+                 (display "foO!\r\n" op)
+                 (display "PING :localhost.\r\n" op)
+                 (display "bar\r\n" op)))
+              ip)
+            op)))
+
+;; (define (main . args)
+;;   (random-seed 0)
+;;   (let ((op (open-output-string)))
+;;     (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4))
+;;     (connect-and-run
+;;      (make-preloaded-server op)))
+;;     (printf "We emitted ~s~%" (get-output-string op))))
+
 (define (main . args)
   (random-seed 0)
-  (connect-and-run
-   real-server))
+  (connect-and-run real-server))
 
 (provide (all-defined-out))
