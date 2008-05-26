@@ -71,7 +71,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
             alnum]
            [_ #f]))
        (if (equal? nick *my-nick*)
-           (log "I seem to have said ~s" toks)
+           (log "I seem to have said ~s" (cdr toks))
            (match (cdr toks)
              [(list "JOIN" target)
               (log "~a joined ~a" nick target)]
@@ -79,38 +79,35 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
               (log "~a left ~a, saying ~a" nick target (string-join (cons first-word rest)))]
 
              [(list "PRIVMSG"
-                    (regexp #px"^#.*"   (list channel))
+                    target
                     (regexp #px"^:(.*)" (list _ first-word ))
                     rest ...)
-              (log "Message is ~s~%" (cons first-word rest))
-              (match first-word
-                [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
-                 (log "~a spake unto ~a in ~a, saying ~a"
-                      nick
-                      addressee
-                      channel
-                      (string-join rest))
-                 (when (equal? addressee *my-nick*)
-                   (out "PRIVMSG ~a :~a: Well, ~a to you too"
-                        channel
-                        nick
-                        (string-join rest)))]
-                [_
-                 (log "~a mumbled something uninteresting in ~a"
-                      nick
-                      channel)])]
+              (log "Message is ~s" (cons first-word rest))
+              (if (equal? target *my-nick*)
+                  (begin
+                    (log "~a privately said ~a to me"
+                         nick
+                         (string-join (cons first-word rest)))
 
-             [(list "PRIVMSG"
-                    me
-                    (regexp #px"^:(.*)" (list _ first-word))
-                    rest-of-message ...)
-              (log "~a privately said ~a to me"
-                   nick
-                   (string-join (cons first-word rest-of-message)))
-
-              (out "PRIVMSG ~a :Well, ~a to you too"
-                   nick
-                   (string-join (cons first-word rest-of-message)))]
+                    (out "PRIVMSG ~a :Well, ~a to you too"
+                         nick
+                         (string-join (cons first-word rest))))
+                  (match first-word
+                    [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
+                     (log "~a spake unto ~a in ~a, saying ~a"
+                          nick
+                          addressee
+                          target
+                          (string-join rest))
+                     (when (equal? addressee *my-nick*)
+                       (out "PRIVMSG ~a :~a: Well, ~a to you too"
+                            target
+                            nick
+                            (string-join rest)))]
+                    [_
+                     (log "~a mumbled something uninteresting in ~a"
+                          nick
+                          target)]))]
 
              [_
               (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
@@ -169,7 +166,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
              ((eof-object? line)
               (fprintf (current-error-port)
                        "Uh oh, server hung up on us~%")
-              (retry))
+              ;; (retry)
+              )
              ((string? line)
               (slightly-more-sophisticated-line-proc line op)
               (do-one-line 0))
@@ -198,9 +196,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                    (loop))))))
          )))
     (values ip
-            (relocate-output-port
-             (current-output-port)
-             #f #f 1 #f)
+            (open-output-nowhere)
             )))
 
 (define real-server
@@ -235,10 +231,11 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
            (call-with-input-file log-file-name
              (lambda (ip)
                (for ((line (in-lines ip)))
-                 (let ((datum (read (open-input-string line))))
-                   (when (not (eof-object? datum))
-                     (display datum op)
-                     (newline op))))
+                 (match line
+                   [(regexp #px"^<= (\".*\")" (list _ datum))
+                    (display (read (open-input-string datum)) op)
+                    (newline op)]
+                   [_ #f]))
                (close-output-port op)))
            ))
         (values ip
@@ -246,14 +243,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                  (current-output-port)
                  #f #f 1 #f))))))
 
-;; (define (main . args)
-;;   (random-seed 0)
-;;   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4))
-;;     (connect-and-run
-;;      (make-log-replaying-server "inputs"))))
-
 (define (main . args)
   (random-seed 0)
-  (connect-and-run real-server))
+  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4))
+    (connect-and-run
+     (make-log-replaying-server "big-log"))))
+
+;; (define (main . args)
+;;   (random-seed 0)
+;;   (connect-and-run real-server))
 
 (provide (all-defined-out))
