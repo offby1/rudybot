@@ -35,9 +35,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (define (out format-string . args)
     (let ((str (apply format format-string args)))
       (fresh-line (*log-port*))
-      (log "~s" str)
+      (log "=> ~s" str)
       (fprintf op "~a~%" str)))
-  (log "~s" line)
+  (log "<= ~s" line)
   (let ((toks (string-tokenize line)))
     (case (string->symbol (car toks))
       ((ERROR)  (log "Uh oh!"))
@@ -53,17 +53,15 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
        ;; but sometimes just ":kubrick.freenode.net"
        (match (car toks)
          [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
-          (log "~a at ~a sez ~a" nick host (cdr toks))]
+          'put-cute-stuff-here]
          [(regexp #rx"^:(.*)" (list _ host))
-          (log "Host ~a sez ~s" host (cdr toks))
           (match (cdr toks)
             [(list digits mynick blather ...)
-             (log "Oh, that's one o' those numeric coded things: ~a" digits)
              (case (string->symbol digits)
                ((|001|)
                 (log "Yay, we're in")
                 (set! *state* 'authenticated)
-                (out "JOIN #floozy"))
+                (out "JOIN #scheme"))
                ((|366|)
                 (log "I, ~a, seem to have joined channel ~a."
                      mynick
@@ -147,7 +145,11 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define real-server
   (lambda ()
-    (let-values (((ip op) (tcp-connect "localhost" 6667)))
+    (let-values (((ip op)
+                  (tcp-connect
+                   "localhost"
+                   ;; "irc.freenode.org"
+                   6667)))
       (file-stream-buffer-mode op 'line)
       (values ip op))))
 
