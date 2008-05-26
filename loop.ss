@@ -15,7 +15,23 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define *bot-gives-up-after-this-many-silent-seconds* 1/4)
 
-(define slightly-more-sophisticated-line-proc string-tokenize)
+(define (slightly-more-sophisticated-line-proc line op)
+    (let ((toks (string-tokenize line)))
+      (fprintf op "~a~%" toks )
+      (case (string->symbol (car toks))
+        ((ERROR)  (fprintf (current-error-port) "Uh oh!~%"))
+        ((NOTICE) (fprintf (current-error-port) "Mmm hmm~%"))
+        ((PING)   (fprintf op "PONG!!!~%"))
+        (else
+         ;; e.g. ":Chalain!n=chalain@216-74-233-198.res.logixcom.net"
+         ;; but sometimes just ":kubrick.freenode.net"
+         (match (car toks)
+           [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
+            (fprintf op "~a at ~a sez ~a~%" nick host (cdr toks))]
+           [(regexp #rx"^:(.*)$" (list _ host))
+            (fprintf op "Host ~a sez ~a" host (cdr toks))]
+           [_ (fprintf (current-error-port) "Duh? ~s~%" toks)])
+         ))))
 
 (define (retry-somehow server-maker (consecutive-failed-connections 0))
   (when (positive? consecutive-failed-connections)
@@ -62,14 +78,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          ((not line)
           (fprintf (current-error-port)
                    "Bummer: ~a seconds passed with no news from the server~%" timeout-seconds)
-          (retry))
+                                        ;(retry)
+          )
          ((eof-object? line)
           (fprintf (current-error-port)
                    "Uh oh, server hung up on us~%")
           (retry))
          ((string? line)
-          (display (line-proc line) op)
-          (newline op)
+          (line-proc line op)
           (loop 0))
          (else
           (error 'do-the-bot-thing "I don't know what to do with ~s" line)))))))
@@ -86,12 +102,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     (thread
      (lambda ()
        (when (not (port-closed? op))
-         (call-with-input-file
-          "example-login-sequence"
-          (lambda (ip)
-            (for ((line (in-lines ip)))
-              (display line op)
-              (newline op))))
+         (call-with-input-file "../irc/example input"
+           (lambda (ip)
+             (let loop ()
+               (let ((datum (read ip)))
+                 (when (not (eof-object? datum))
+                   (display datum op)
+                   (newline op)
+                   (loop))))))
          )))
     (values ip
             (relocate-output-port
