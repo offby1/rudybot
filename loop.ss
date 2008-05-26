@@ -13,7 +13,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
          (planet "util.ss"    ("schematics" "schemeunit.plt" )))
 
-(define *bot-gives-up-after-this-many-silent-seconds* 30)
+;; This value depends on the server; this seems to work for freenode
+(define *bot-gives-up-after-this-many-silent-seconds* 250)
+(define *desired-nick* "rudybot")
 
 (define *log-port* (make-parameter (current-error-port)))
 (port-count-lines! (*log-port*))
@@ -42,7 +44,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       ((NOTICE)
        (case *state*
          ((start)
-          (out "NICK nubybot")
+          (out "NICK ~a" *desired-nick*)
           (out "USER luser unknown-host localhost :duh, version 0")
           (set! *state* 'attempted-auth))))
       ((PING)   (fprintf op "PONG!!!~%"))
@@ -56,13 +58,21 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
           (log "Host ~a sez ~s" host (cdr toks))
           (match (cdr toks)
             [(list digits mynick blather ...)
-             (log "Oh, that's one o' those numeric coded things: ~a ~s" digits blather)
+             (log "Oh, that's one o' those numeric coded things: ~a" digits)
              (case (string->symbol digits)
                ((|001|)
                 (log "Yay, we're in")
                 (set! *state* 'authenticated)
-                (out "JOIN #floozy")))])]
-         [_ (log "Duh? ~s" toks)])
+                (out "JOIN #floozy"))
+               ((|366|)
+                (log "I, ~a, seem to have joined channel ~a."
+                     mynick
+                     (car blather)))
+               ((|433|)
+                (log "Nuts, gotta try a different nick")
+                (set! *desired-nick* (string-append *desired-nick* "_"))
+                (out "NICK ~a" *desired-nick*)))])]
+         [_ (log "Duh?")])
        ))))
 
 (define (connect-and-run server-maker (consecutive-failed-connections 0))
@@ -134,13 +144,15 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
              #f #f 1 #f)
             )))
 
+(define real-server
+  (lambda ()
+    (let-values (((ip op) (tcp-connect "localhost" 6667)))
+      (file-stream-buffer-mode op 'line)
+      (values ip op))))
 
 (define (main . args)
   (random-seed 0)
   (connect-and-run
-   (lambda ()
-     (let-values (((ip op) (tcp-connect "localhost" 6667)))
-       (file-stream-buffer-mode op 'line)
-       (values ip op)))))
+   real-server))
 
 (provide (all-defined-out))
