@@ -49,6 +49,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     (let ((str (apply format format-string args)))
       (log "=> ~s" str)
       (fprintf op "~a~%" str)))
+
   (log "<= ~s" line)
   (let ((toks (string-tokenize line)))
     (match (car toks)
@@ -75,8 +76,38 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
              [(list "PART" target sayonara ...)
               (log "~a left ~a, saying ~a" nick target sayonara)]
              [(list "PRIVMSG" target blather ...)
-              (log "~a said ~a to ~a" nick blather target)
-              (out "PRIVMSG ~a :Well, ~a to you too" target blather)]
+
+              (define (leading-alnum str)
+                (match str
+                  [(regexp #px"^([[:alnum:]]+)" (list _ alnum))
+                   alnum]
+                  [_ #f]))
+
+              (let ((blather (if (equal? #\: (string-ref (car blather) 0))
+                                 (cons (substring (car blather) 1)
+                                       (cdr blather))
+                                 blather)))
+
+                (log "~a said ~a to ~a" nick blather target)
+
+                (cond
+
+                 ;; They spoke directly to us -- i.e., with /query
+                 ((equal? (leading-alnum target)
+                          (leading-alnum *desired-nick*))
+                  (out "PRIVMSG ~a :Well, ~a to you too"
+                       nick
+                       (string-join blather)))
+
+                 ;; More common: they technically spoke to the
+                 ;; channel, but prefixed their message with our nick
+                 ((equal? (leading-alnum (car blather))
+                          (leading-alnum *desired-nick*))
+                  (out "PRIVMSG ~a :~a: Well, ~a to you too"
+                       target
+                       nick
+                       (string-join (cdr blather))))))]
+
              [_
               (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
 
