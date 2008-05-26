@@ -43,46 +43,39 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
             (reverse result)))))))
 
 ;; string? -> string?
-(define (make-tiny-url url #:key [user-agent #f])
-  (map xml->xexpr
-   (read-html-as-xml
-    (post-pure-port
-     (string->url
-      "http://tinyurl.com/create.php")
-     (string->bytes/utf-8
-      (parameterize ((current-alist-separator-mode 'amp))
-        (alist->form-urlencoded `((url . ,url)))))
+(define (make-tiny-url url #:user-agent [user-agent #f])
+  (third
+   ((sxpath
+    '(blockquote b *text*))
+    (map xml->xexpr
+         (read-html-as-xml
+          (post-pure-port
+           (string->url
+            "http://tinyurl.com/create.php")
+           (string->bytes/utf-8
+            (parameterize ((current-alist-separator-mode 'amp))
+              (alist->form-urlencoded `((url . ,url)))))
 
-     ;; this works as is, but let us note for the record that the
-     ;; "tinyurl creator" extension for Firefox
-     ;; (https://addons.mozilla.org/en-US/firefox/addon/126) passes
-     ;; a buttload more headers, namely
+           ;; this works as is, but let us note for the record that the
+           ;; "tinyurl creator" extension for Firefox
+           ;; (https://addons.mozilla.org/en-US/firefox/addon/126) passes
+           ;; a buttload more headers, namely
 
-     ;; ("User-Agent", navigator.userAgent);
-     ;; ("Accept", "text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,video/x-mng,image/png,image/jpeg,image/gif;q=0.2,*/*;q=0.1");
-     ;; ("Accept-Language", navigator.language);
-     ;; ("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-     ;; ("Referer", "http://tinyurl.com/");
+           ;; ("User-Agent", navigator.userAgent);
+           ;; ("Accept", "text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,video/x-mng,image/png,image/jpeg,image/gif;q=0.2,*/*;q=0.1");
+           ;; ("Accept-Language", navigator.language);
+           ;; ("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+           ;; ("Referer", "http://tinyurl.com/");
 
-     (cons "Content-Type: application/x-www-form-urlencoded"
-           (if user-agent
-               (list (format "User-Agent: ~a" user-agent ))
-               '()))))))
+           (cons "Content-Type: application/x-www-form-urlencoded"
+                 (if user-agent
+                     (list (format "User-Agent: ~a" user-agent ))
+                     '()))))))))
 
 (define tinyurl-tests
 
   (test-suite
    "tinyurl"
-   (test-case
-    "twivial"
-    (let ((xexprs (map xml->xexpr (call-with-input-file "example-tinyurl.html" read-html-as-xml)))
-          (parser (sxpath '(blockquote b *text*))))
-      (for ((xexpr (in-list  xexprs)))
-        (let ((gold (parser xexpr)))
-          (when (not (null? gold))
-            (display (third gold))))))
-
-    (exit 0))
    (test-case
     "photo.net"
     (with-handlers
