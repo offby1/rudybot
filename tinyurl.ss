@@ -44,7 +44,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 ;; string? -> string?
 (define (make-tiny-url url #:user-agent [user-agent #f])
-  (third
+  (second
    ((sxpath
     '(blockquote b *text*))
     (map xml->xexpr
