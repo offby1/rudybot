@@ -65,11 +65,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
        (out "PONG ~a" (cadr toks))]
 
       [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
-       (define (leading-alnum str)
-         (match str
-           [(regexp #px"^([[:alnum:]]+)" (list _ alnum))
-            alnum]
-           [_ #f]))
        (if (equal? nick *my-nick*)
            (log "I seem to have said ~s" (cdr toks))
            (match (cdr toks)
