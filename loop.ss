@@ -223,29 +223,29 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define (make-log-replaying-server log-file-name)
   (lambda ()
-    (parameterize ((*log-ports* (list (current-error-port))))
-      (let-values (((ip op)
-                    (make-pipe)))
-        (thread
-         (lambda ()
-           (call-with-input-file log-file-name
-             (lambda (ip)
-               (for ((line (in-lines ip)))
-                 (match line
-                   [(regexp #px"^<= (\".*\")" (list _ datum))
-                    (display (read (open-input-string datum)) op)
-                    (newline op)]
-                   [_ #f]))
-               (close-output-port op)))
-           ))
-        (values ip
-                (relocate-output-port
-                 (current-output-port)
-                 #f #f 1 #f))))))
+    (let-values (((ip op)
+                  (make-pipe)))
+      (thread
+       (lambda ()
+         (call-with-input-file log-file-name
+           (lambda (ip)
+             (for ((line (in-lines ip)))
+               (match line
+                 [(regexp #px"^<= (\".*\")" (list _ datum))
+                  (display (read (open-input-string datum)) op)
+                  (newline op)]
+                 [_ #f]))
+             (close-output-port op)))))
+
+      (values ip
+              (relocate-output-port
+               (current-output-port)
+               #f #f 1 #f)))))
 
 (define (main . args)
   (random-seed 0)
-  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4))
+  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
+                 (*log-ports* (list (current-error-port))))
     (connect-and-run
      (make-log-replaying-server "big-log"))))
 
