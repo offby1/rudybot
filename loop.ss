@@ -176,6 +176,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 
 (define (make-flaky-server)
+  (random-seed 0)
   (when (zero? (random 10))
     (raise (make-exn:fail:network
             "de network, she be broke"
@@ -199,15 +200,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
             (open-output-nowhere)
             )))
 
-(define real-server
-  (lambda ()
-    (let-values (((ip op)
-                  (tcp-connect
-                   "localhost"
-                   ;; "irc.freenode.org"
-                   6667)))
-      (file-stream-buffer-mode op 'line)
-      (values ip op))))
+(define (real-server)
+  (let-values (((ip op)
+                (tcp-connect
+                 "localhost"
+                 ;; "irc.freenode.org"
+                 6667)))
+    (file-stream-buffer-mode op 'line)
+    (values ip op)))
 
 (define (make-preloaded-server op)
   (lambda ()
@@ -242,15 +242,13 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                (current-output-port)
                #f #f 1 #f)))))
 
-(define (main . args)
-  (random-seed 0)
-  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-                 (*log-ports* (list (current-error-port))))
-    (connect-and-run
-     (make-log-replaying-server "big-log"))))
-
 ;; (define (main . args)
-;;   (random-seed 0)
-;;   (connect-and-run real-server))
+;;   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
+;;                  (*log-ports* (list (current-error-port))))
+;;     (connect-and-run
+;;      (make-log-replaying-server "big-log"))))
+
+(define (main . args)
+  (connect-and-run real-server))
 
 (provide (all-defined-out))
