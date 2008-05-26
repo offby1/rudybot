@@ -17,61 +17,86 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
 (define *desired-nick* "rudybot")
 
-(define *log-port* (make-parameter (current-error-port)))
-(port-count-lines! (*log-port*))
-(file-stream-buffer-mode (*log-port*) 'line)
-(define (log . args)
-  (apply fprintf (*log-port*) args)
-  (newline (*log-port*)))
-(define (fresh-line op)
-  (let-values ([(line column pos)
-                (port-next-location op)])
-    (unless (zero? column)
-      (newline op))))
+(define log #f)
+(let ((log-ports (list (current-error-port)
+                       (open-output-file
+                        "big-log"
+                        #:mode 'text
+                        #:exists 'append))))
+
+  (set! log
+        (lambda args
+
+          (define (fresh-line op)
+            (let-values ([(line column pos)
+                          (port-next-location op)])
+              (unless (zero? column)
+                (newline op))))
+
+          (for ((op (in-list log-ports)))
+            (fresh-line op)
+            (apply fprintf op args)
+            (newline op))))
+
+  (for ((op (in-list log-ports)))
+    (port-count-lines! op)
+    (file-stream-buffer-mode op 'line)))
 
 (define *state* 'start)
 
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out format-string . args)
     (let ((str (apply format format-string args)))
-      (fresh-line (*log-port*))
       (log "=> ~s" str)
       (fprintf op "~a~%" str)))
   (log "<= ~s" line)
   (let ((toks (string-tokenize line)))
-    (case (string->symbol (car toks))
-      ((ERROR)  (log "Uh oh!"))
-      ((NOTICE)
+    (match (car toks)
+
+      ["ERROR"
+       (log "Uh oh!")]
+
+      ["NOTICE"
        (case *state*
          ((start)
           (out "NICK ~a" *desired-nick*)
           (out "USER luser unknown-host localhost :duh, version 0")
-          (set! *state* 'attempted-auth))))
-      ((PING)   (out "PONG ~a" (cadr toks)))
-      (else
-       ;; e.g. ":Chalain!n=chalain@216-74-233-198.res.logixcom.net"
-       ;; but sometimes just ":kubrick.freenode.net"
-       (match (car toks)
-         [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
-          'put-cute-stuff-here]
-         [(regexp #rx"^:(.*)" (list _ host))
-          (match (cdr toks)
-            [(list digits mynick blather ...)
-             (case (string->symbol digits)
-               ((|001|)
-                (log "Yay, we're in")
-                (set! *state* 'authenticated)
-                (out "JOIN #scheme"))
-               ((|366|)
-                (log "I, ~a, seem to have joined channel ~a."
-                     mynick
-                     (car blather)))
-               ((|433|)
-                (log "Nuts, gotta try a different nick")
-                (set! *desired-nick* (string-append *desired-nick* "_"))
-                (out "NICK ~a" *desired-nick*)))])]
-         [_ (log "Duh?")])
-       ))))
+          (set! *state* 'attempted-auth)))]
+
+      ["PING"
+       (out "PONG ~a" (cadr toks))]
+
+      [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
+       (if (equal? nick *desired-nick*)
+           (log "I seem to have said ~s" toks)
+           (match (cdr toks)
+             [(list "JOIN" target)
+              (log "~a joined ~a" nick target)]
+             [(list "PART" target sayonara ...)
+              (log "~a left ~a, saying ~a" nick target sayonara)]
+             [(list "PRIVMSG" target blather ...)
+              (log "~a said ~a to ~a" nick blather target)
+              (out "PRIVMSG ~a :Well, ~a to you too" target blather)]
+             [_
+              (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
+
+      [(regexp #rx"^:(.*)" (list _ host))
+       (match (cdr toks)
+         [(list digits mynick blather ...)
+          (case (string->symbol digits)
+            ((|001|)
+             (log "Yay, we're in")
+             (set! *state* 'authenticated)
+             (out "JOIN #scheme"))
+            ((|366|)
+             (log "I, ~a, seem to have joined channel ~a."
+                  mynick
+                  (car blather)))
+            ((|433|)
+             (log "Nuts, gotta try a different nick")
+             (set! *desired-nick* (string-append *desired-nick* "_"))
+             (out "NICK ~a" *desired-nick*)))])]
+      [_ (log "Duh?")])))
 
 (define (connect-and-run server-maker (consecutive-failed-connections 0))
   (when (positive? consecutive-failed-connections)
@@ -161,7 +186,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                (lambda ()
                  (display "foO!\r\n" op)
                  (display "PING :localhost.\r\n" op)
-                 (display "bar\r\n" op)))
+                 (display ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot\r\n" op)))
               ip)
             op)))
 
