@@ -651,7 +651,7 @@ exec mzscheme --no-init-file --mute-banner --version --require bot-tests.ss -p "
                 *nickserv-password*)
            (out session "NICK ~a"
                 (*desired-nick*))
-           (set-irc-session-nick! (*desired-nick*)))
+           (set-irc-session-nick! session (*desired-nick*)))
          )
        #:responds? #t
        #:descr "'ghost' if needed when server asks our VERSION")
