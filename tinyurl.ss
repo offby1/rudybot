@@ -8,6 +8,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (require html
          xml
+         scheme/pretty
          (lib "kw.ss")
          (planet "sxml.ss"      ("lizorkin"    "sxml.plt"))
          (lib "uri-codec.ss" "net")
@@ -74,14 +75,13 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
    "tinyurl"
    (test-case
     "twivial"
-    (let ((xml   (call-with-input-file "example-tinyurl.html" read-html-as-xml)))
-      (match xml
-        [(list 'td stuff ...)
-         (printf "I wonder if this is it: ~s~%" stuff)]
-        [_ #f])
-      (for ((xml (in-list xml)))
-        (printf "~s~%" (xml->xexpr xml)))
-      )
+    (let ((xexprs (map xml->xexpr (call-with-input-file "example-tinyurl.html" read-html-as-xml)))
+          (parser (sxpath '(blockquote b *text*))))
+      (for ((xexpr (in-list  xexprs)))
+        (let ((gold (parser xexpr)))
+          (when (not (null? gold))
+            (display (third gold))))))
+
     (exit 0))
    (test-case
     "photo.net"
