@@ -8,12 +8,9 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (require html
          xml
-         scheme/pretty
-         (lib "kw.ss")
-         (planet "sxml.ss"      ("lizorkin"    "sxml.plt"))
+         (planet "sxml.ss" ("lizorkin"    "sxml.plt"))
          (lib "uri-codec.ss" "net")
          (lib "url.ss" "net")
-         (lib "trace.ss")
          (planet "test.ss"    ("schematics" "schemeunit.plt" ))
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
          (planet "util.ss"    ("schematics" "schemeunit.plt" )))
