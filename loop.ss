@@ -15,7 +15,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
-(define *my-nick* "rudybot")
+(define *my-nick* "upstartbot")
 
 (define *log-ports* (make-parameter (list (current-error-port)
                                           (open-output-file
@@ -111,7 +111,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
             ((|001|)
              (log "Yay, we're in")
              (set! *authenticated?* #t)
-             (out "JOIN #scheme!"))
+             (out "JOIN #scheme")
+             (out "JOIN #emacs"))
             ((|366|)
              (log "I, ~a, seem to have joined channel ~a."
                   mynick
@@ -195,8 +196,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define (real-server)
   (let-values (((ip op)
                 (tcp-connect
-                 "localhost"
-                 ;; "irc.freenode.org"
+                 ;;"localhost"
+                 "irc.freenode.org"
                  6667)))
     (file-stream-buffer-mode op 'line)
     (values ip op)))
