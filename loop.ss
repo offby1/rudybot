@@ -7,6 +7,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (require scheme/date
          scheme/port
+         (except-in "tinyurl.ss" main)
          (lib "trace.ss")
          (lib "13.ss" "srfi")
          (planet "test.ss"    ("schematics" "schemeunit.plt" ))
@@ -80,6 +81,13 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                     target
                     (regexp #px"^:(.*)" (list _ first-word ))
                     rest ...)
+              ;; look for long URLs to tiny-ify
+              (for ((word (in-list (cons first-word rest))))
+                (match word
+                  [(regexp url-regexp (list url _ _))
+                   (when (<= 75 (string-length url))
+                     (log "I should tiny-ify '~a'" url))]
+                  [_ #f]))
               (if (equal? target *my-nick*)
                   (begin
                     (log "~a privately said ~a to me"
