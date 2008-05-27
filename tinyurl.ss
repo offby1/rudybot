@@ -1,13 +1,14 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id: tinyurl.ss 144 2007-11-19 17:52:26Z eric.hanchrow $
-exec  mzscheme --require "$0" --main -- ${1+"$@"}
+exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme
 
 (require html
          xml
+         (lib "trace.ss")
          (planet "sxml.ss" ("lizorkin"    "sxml.plt"))
          (lib "uri-codec.ss" "net")
          (lib "url.ss" "net")
@@ -68,11 +69,17 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
                  (if user-agent
                      (list (format "User-Agent: ~a" user-agent ))
                      '()))))))))
+;;(trace make-tiny-url)
 
 (define tinyurl-tests
 
   (test-suite
    "tinyurl"
+   (test-case
+    "absurdly long"
+    (check-regexp-match
+     #rx"^http://tinyurl.com/.....$"
+     (make-tiny-url "http://www.badastronomy.com/bablog/2008/05/26/best-image-ever/whoa/baby/surely-this-URL-is-long-enough-to-make-tiny")))
    (test-case
     "photo.net"
     (with-handlers
