@@ -86,7 +86,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                 (match word
                   [(regexp url-regexp (list url _ _))
                    (when (<= 75 (string-length url))
-                     (log "I should tiny-ify '~a'" url))]
+                     (out "NOTICE ~a :~a"
+                          target
+                          (make-tiny-url url)))]
                   [_ #f]))
               (if (equal? target *my-nick*)
                   (begin
@@ -217,8 +219,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define (real-server)
   (let-values (((ip op)
                 (tcp-connect
-                 ;;"localhost"
-                 "irc.freenode.org"
+                 "localhost"
+                 ;;"irc.freenode.org"
                  6667)))
     (file-stream-buffer-mode op 'line)
     (values ip op)))
@@ -256,13 +258,13 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                (current-output-port)
                #f #f 1 #f)))))
 
-(define (main . args)
-  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-                 (*log-ports* (list (current-error-port))))
-    (connect-and-run
-     (make-log-replaying-server "big-log"))))
-
 ;; (define (main . args)
-;;   (connect-and-run real-server))
+;;   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
+;;                  (*log-ports* (list (current-error-port))))
+;;     (connect-and-run
+;;      (make-log-replaying-server "big-log"))))
+
+(define (main . args)
+  (connect-and-run real-server))
 
 (provide (all-defined-out))
