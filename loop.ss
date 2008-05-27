@@ -33,13 +33,18 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (file-stream-buffer-mode op 'line))
 
 (define *authenticated?* #f)
+(define *mute-privmsgs?* #t)
 
 (define (slightly-more-sophisticated-line-proc line op)
-  (define (out format-string . args)
+  (define (out #:for-real? [for-real? #t] format-string . args)
     (let ((str (apply format format-string args)))
       (log "=> ~s" str)
-      (fprintf op "~a~%" str)))
+      (when for-real?
+        (fprintf op "~a~%" str))))
 
+  (define (pm target fmt . args)
+    (out #:for-real? (not *mute-privmsgs?*)
+         "~a" (format "PRIVMSG ~a :~a" target (apply format fmt args))))
   (log "<= ~s" line)
   (let ((toks (string-tokenize line)))
     (match (car toks)
@@ -76,9 +81,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                          nick
                          (string-join (cons first-word rest)))
 
-                    (out "PRIVMSG ~a :Well, ~a to you too"
-                         nick
-                         (string-join (cons first-word rest))))
+                    (pm nick
+                        "Well, ~a to you too"
+                        (string-join (cons first-word rest))))
                   (match first-word
                     [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
                      (log "~a spake unto ~a in ~a, saying ~a"
@@ -87,10 +92,10 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                           target
                           (string-join rest))
                      (when (equal? addressee *my-nick*)
-                       (out "PRIVMSG ~a :~a: Well, ~a to you too"
-                            target
-                            nick
-                            (string-join rest)))]
+                       (pm target
+                           "~a: Well, ~a to you too"
+                           nick
+                           (string-join rest)))]
                     [_
                      (log "~a mumbled something uninteresting in ~a"
                           nick
