@@ -43,9 +43,11 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       (when for-real?
         (fprintf op "~a~%" str))))
 
-  (define (pm target fmt . args)
+  (define (pm #:notice? [notice? #f] target fmt . args)
     (out #:for-real? (not *mute-privmsgs?*)
-         "~a" (format "PRIVMSG ~a :~a" target (apply format fmt args))))
+         "~a" (format "~a ~a :~a"
+                      (if notice? "NOTICE" "PRIVMSG")
+                      target (apply format fmt args))))
   (log "<= ~s" line)
   (let ((toks (string-tokenize line)))
     (match (car toks)
@@ -86,8 +88,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                 (match word
                   [(regexp url-regexp (list url _ _))
                    (when (<= 75 (string-length url))
-                     (out "NOTICE ~a :~a"
-                          target
+                     (pm #:notice? #t
+                         target
+                          "~a"
                           (make-tiny-url url)))]
                   [_ #f]))
               (if (equal? target *my-nick*)
