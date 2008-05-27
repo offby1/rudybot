@@ -74,7 +74,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                     target
                     (regexp #px"^:(.*)" (list _ first-word ))
                     rest ...)
-              (log "Message is ~s" (cons first-word rest))
               (if (equal? target *my-nick*)
                   (begin
                     (log "~a privately said ~a to me"
@@ -101,6 +100,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                           nick
                           target)]))]
 
+             [(list "QUIT" (regexp #px"^:(.*)" (list _ first-word )) rest ...)
+              (log "~a quit, mumbling \"~a\"" nick (string-join (cons first-word rest)))]
              [_
               (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
 
@@ -235,13 +236,13 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                (current-output-port)
                #f #f 1 #f)))))
 
-;; (define (main . args)
-;;   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-;;                  (*log-ports* (list (current-error-port))))
-;;     (connect-and-run
-;;      (make-log-replaying-server "big-log"))))
-
 (define (main . args)
-  (connect-and-run real-server))
+  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
+                 (*log-ports* (list (current-error-port))))
+    (connect-and-run
+     (make-log-replaying-server "big-log"))))
+
+;; (define (main . args)
+;;   (connect-and-run real-server))
 
 (provide (all-defined-out))
