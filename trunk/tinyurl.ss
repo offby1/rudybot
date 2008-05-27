@@ -81,6 +81,11 @@ exec mzscheme --no-init-file --mute-banner --version --require "$0" -p "text-ui.
   (test-suite
    "tinyurl"
    (test-case
+    "absurdly long"
+    (check-regexp-match
+     #rx"^http://tinyurl.com/......$"
+     (make-tiny-url "http://www.badastronomy.com/bablog/2008/05/26/best-image-ever/whoa/baby/surely-this-URL-is-long-enough-to-make-tiny")))
+   (test-case
     "photo.net"
     (with-handlers
         ([exn:fail:network?
