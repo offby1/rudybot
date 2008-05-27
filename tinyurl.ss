@@ -42,33 +42,36 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 ;; string? -> string?
 (define (make-tiny-url url #:user-agent [user-agent #f])
-  (second
-   ((sxpath
-    '(blockquote b *text*))
-    (map xml->xexpr
-         (read-html-as-xml
-          (post-pure-port
-           (string->url
-            "http://tinyurl.com/create.php")
-           (string->bytes/utf-8
-            (parameterize ((current-alist-separator-mode 'amp))
-              (alist->form-urlencoded `((url . ,url)))))
+  (let ((matches (filter (lambda (str)
+                           (regexp-match #rx"^http://tinyurl.com/.*" str))
+                         ((sxpath
+                           '(blockquote b *text*)) (map xml->xexpr
+                           (read-html-as-xml
+                            (post-pure-port
+                             (string->url
+                              "http://tinyurl.com/create.php")
+                             (string->bytes/utf-8
+                              (parameterize ((current-alist-separator-mode 'amp))
+                                (alist->form-urlencoded `((url . ,url)))))
 
-           ;; this works as is, but let us note for the record that the
-           ;; "tinyurl creator" extension for Firefox
-           ;; (https://addons.mozilla.org/en-US/firefox/addon/126) passes
-           ;; a buttload more headers, namely
+                             ;; this works as is, but let us note for the record that the
+                             ;; "tinyurl creator" extension for Firefox
+                             ;; (https://addons.mozilla.org/en-US/firefox/addon/126) passes
+                             ;; a buttload more headers, namely
 
-           ;; ("User-Agent", navigator.userAgent);
-           ;; ("Accept", "text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,video/x-mng,image/png,image/jpeg,image/gif;q=0.2,*/*;q=0.1");
-           ;; ("Accept-Language", navigator.language);
-           ;; ("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-           ;; ("Referer", "http://tinyurl.com/");
+                             ;; ("User-Agent", navigator.userAgent);
+                             ;; ("Accept", "text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,video/x-mng,image/png,image/jpeg,image/gif;q=0.2,*/*;q=0.1");
+                             ;; ("Accept-Language", navigator.language);
+                             ;; ("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+                             ;; ("Referer", "http://tinyurl.com/");
 
-           (cons "Content-Type: application/x-www-form-urlencoded"
-                 (if user-agent
-                     (list (format "User-Agent: ~a" user-agent ))
-                     '()))))))))
+                             (cons "Content-Type: application/x-www-form-urlencoded"
+                                   (if user-agent
+                                       (list (format "User-Agent: ~a" user-agent ))
+                                       '())))))))))
+    (and (not (null? matches))
+         (car matches)))
+  )
 ;;(trace make-tiny-url)
 
 (define tinyurl-tests
@@ -78,7 +81,7 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
    (test-case
     "absurdly long"
     (check-regexp-match
-     #rx"^http://tinyurl.com/.....$"
+     #rx"^http://tinyurl.com/......$"
      (make-tiny-url "http://www.badastronomy.com/bablog/2008/05/26/best-image-ever/whoa/baby/surely-this-URL-is-long-enough-to-make-tiny")))
    (test-case
     "photo.net"
