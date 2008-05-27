@@ -67,8 +67,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
            (match (cdr toks)
              [(list "JOIN" target)
               (log "~a joined ~a" nick target)]
+             [(list "NICK" (regexp #px"^:(.*)" (list _ new-nick)))
+              (log "~a wants to be known as ~a" nick new-nick)]
              [(list "PART" target (regexp #px"^:(.*)" (list _ first-word )) rest ...)
-              (log "~a left ~a, saying ~a" nick target (string-join (cons first-word rest)))]
+              (log "~a left ~a~a"
+                   nick target
+                   (if (zero? (string-length first-word))
+                       ""
+                       (format ", saying ~a" (string-join (cons first-word rest)))))]
 
              [(list "PRIVMSG"
                     target
@@ -101,7 +107,13 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                           target)]))]
 
              [(list "QUIT" (regexp #px"^:(.*)" (list _ first-word )) rest ...)
-              (log "~a quit, mumbling \"~a\"" nick (string-join (cons first-word rest)))]
+              (log "~a quit~a"
+                   nick
+                   (if (zero? (string-length first-word))
+                       ""
+                       (format
+                        ", mumbling \"~a\""
+                        (string-join (cons first-word rest)))))]
              [_
               (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
 
