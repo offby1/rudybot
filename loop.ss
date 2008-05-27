@@ -23,21 +23,13 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                                            #:mode 'text
                                            #:exists 'append))))
 (define (log . args)
-  (define (fresh-line op)
-    (let-values ([(line column pos)
-                  (port-next-location op)])
-      (unless (zero? column)
-        (newline op))))
-
   (for ((op (in-list (*log-ports*))))
-    (fresh-line op)
     (apply fprintf op args)
     (newline op)))
 
 (for ((op (in-list (*log-ports*))))
   (fprintf (current-error-port)
            "Whopping port ~a~%" op)
-  (port-count-lines! op)
   (file-stream-buffer-mode op 'line))
 
 (define *authenticated?* #f)
