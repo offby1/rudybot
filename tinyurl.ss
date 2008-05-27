@@ -81,7 +81,7 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
    (test-case
     "absurdly long"
     (check-regexp-match
-     #rx"^http://tinyurl.com/......$"
+     #px"^http://tinyurl.com/.{5,6}$"
      (make-tiny-url "http://www.badastronomy.com/bablog/2008/05/26/best-image-ever/whoa/baby/surely-this-URL-is-long-enough-to-make-tiny")))
    (test-case
     "photo.net"
@@ -91,7 +91,7 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
             (fprintf (current-error-port)
                      "Can't contact tinyurl; skipping the test~%"))])
       (check-regexp-match
-       #rx"^http://tinyurl.com/.....$"
+       #px"^http://tinyurl.com/.{5,6}$"
        (make-tiny-url "http://photo.net"))))
    (test-case
     "including a user agent"
@@ -101,7 +101,7 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
             (fprintf (current-error-port)
                      "Can't contact tinyurl; skipping the test~%"))])
       (check-regexp-match
-       #rx"^http://tinyurl.com/.....$"
+       #px"^http://tinyurl.com/.{5,6}$"
        (make-tiny-url "http://photo.net" #:user-agent "test code for Eric's bot"))))
    (test-equal?
     "empty snagging"
