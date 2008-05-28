@@ -28,10 +28,18 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define (note-sighting s)
   (maybe-load!)
   (hash-set! *sightings* (sighting-who s) s)
-  (call-with-output-file *sightings-database-file-name*
-    (lambda (op)
-      (write *sightings* op))
-    #:exists 'truncate/replace))
+  ;; Do the writing in two steps -- first, write the hash to a string,
+  ;; and _then_ write the string to the file.  This seems pointless,
+  ;; but it lets us spend far less time with an open file handle, thus
+  ;; reducing (but not eliminating) the risk of corrupting the file if
+  ;; the process dies in the middle of writing it.
+  (let ((string-port (open-output-string)))
+    (write *sightings* string-port)
+    (let ((the-string (get-output-string string-port)))
+      (call-with-output-file *sightings-database-file-name*
+        (lambda (op)
+          (display the-string op))
+        #:exists 'truncate/replace))))
 
 (provide/contract
  [struct sighting ((who string?)

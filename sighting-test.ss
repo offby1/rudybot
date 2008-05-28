@@ -25,7 +25,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define (main . args)
   ;; fill up the sightings table with silliness, just to see if we can
   (for ((num (in-range 10)))
-    (let ((s (make-sighting (number->string num)
+    (let ((s (make-sighting (number->string (random 10000))
                             "silly"
                             num
                             (odd? num)
