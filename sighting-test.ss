@@ -8,9 +8,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "test.ss"    ("schematics" "schemeunit.plt" ))
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
          (planet "util.ss"    ("schematics" "schemeunit.plt" ))
-         (except-in "sighting.ss" main))
+         "sighting.ss")
 
-(require/expose "sighting.ss" (*sightings-database-file-name*))
+(require/expose "sighting.ss" (*sightings-database-file-name* *sightings*))
 
 
 (define sighting-tests
@@ -19,18 +19,19 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
    "sighting-test"
    (test-case
     "yow"
-    (let ((s (make-sighting "1" "2" 3 #t (list "hey" "you"))))
+    (let ((s (make-sighting "1" "2" 3 #f (list "hey" "you"))))
       (note-sighting s)
       (check-equal? s (lookup-sighting "1"))
       (check-false (lookup-sighting "snorkuplexity"))))
    (test-case
     "persistent"
-    (parameterize ((*sightings-database-file-name* "persistent-test.db"))
+    (parameterize ((*sightings-database-file-name* "persistent-test.db")
+                   (*sightings* #f))
       (let ((stuff (map make-sighting
                         (list "fred" "paul" "mary")
                         (list "2" "3" "4")
                         (list 9 8 7)
-                        (list #t #f #f)
+                        (list "QUIT" #f #f)
                         (list (list "znork?")
                               (list "I" "am" "NOT" "dead")
                               (list "I" "am" "Jesus'" "mom")))))
@@ -47,7 +48,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
             (if writing?
                 (note-sighting s)
-                (check-equal? s (lookup-sighting (sighting-who s)))))))))))
+                (check-equal? (lookup-sighting (sighting-who s)) s)))))))))
 
 (define (main . args)
   (exit (test/text-ui sighting-tests 'verbose)))

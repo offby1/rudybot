@@ -7,6 +7,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (require scheme/date
          scheme/port
+         "sighting.ss"
          (except-in "tinyurl.ss" main)
          (lib "trace.ss")
          (lib "13.ss" "srfi")
@@ -65,14 +66,17 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
        (out "PONG ~a" (cadr toks))]
 
       [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
+       ;; update the "seen" database
        (if (equal? nick *my-nick*)
            (log "I seem to have said ~s" (cdr toks))
            (match (cdr toks)
              [(list "JOIN" target)
+              (note-sighting (make-sighting nick target (current-seconds) #t '()))
               (log "~a joined ~a" nick target)]
              [(list "NICK" (regexp #px"^:(.*)" (list _ new-nick)))
               (log "~a wants to be known as ~a" nick new-nick)]
              [(list "PART" target (regexp #px"^:(.*)" (list _ first-word )) rest ...)
+              (note-sighting (make-sighting nick target (current-seconds) #t (cons first-word rest)))
               (log "~a left ~a~a"
                    nick target
                    (if (zero? (string-length first-word))
@@ -83,6 +87,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                     target
                     (regexp #px"^:(.*)" (list _ first-word ))
                     rest ...)
+              (note-sighting (make-sighting nick target (current-seconds) #f (cons first-word rest)))
               ;; look for long URLs to tiny-ify
               (for ((word (in-list (cons first-word rest))))
                 (match word
@@ -120,6 +125,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                           target)]))]
 
              [(list "QUIT" (regexp #px"^:(.*)" (list _ first-word )) rest ...)
+              (note-sighting (make-sighting nick host (current-seconds) #t (cons first-word rest)))
               (log "~a quit~a"
                    nick
                    (if (zero? (string-length first-word))
@@ -261,14 +267,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                (current-output-port)
                #f #f 1 #f)))))
 
-;; (define (main . args)
-;;   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-;;                  (*log-ports* (list (current-error-port))))
-;;     (connect-and-run
-;;      (make-log-replaying-server "big-log"))))
-
 (define (main . args)
-  (log "Main starting.")
-  (connect-and-run real-server))
+  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
+                 (*log-ports* (list (current-error-port))))
+    (connect-and-run
+     (make-log-replaying-server "big-log"))))
+
+;; (define (main . args)
+;;   (log "Main starting.")
+;;   (connect-and-run real-server))
 
 (provide (all-defined-out))
