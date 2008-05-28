@@ -6,7 +6,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 
-(define *sightings-database-file-name* "sightings.db")
+(define *sightings-database-file-name* (make-parameter "sightings.db"))
 
 (define-struct sighting (who where when was-action? words) #:prefab)
 
@@ -19,7 +19,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
               ([exn:fail:filesystem?
                 (lambda (e)
                   (make-hash))])
-            (hash-copy (call-with-input-file *sightings-database-file-name* read))))))
+            (hash-copy (call-with-input-file (*sightings-database-file-name*) read))))))
 
 (define (lookup-sighting who)
   (maybe-load!)
@@ -36,7 +36,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (let ((string-port (open-output-string)))
     (write *sightings* string-port)
     (let ((the-string (get-output-string string-port)))
-      (call-with-output-file *sightings-database-file-name*
+      (call-with-output-file (*sightings-database-file-name*)
         (lambda (op)
           (display the-string op))
         #:exists 'truncate/replace))))

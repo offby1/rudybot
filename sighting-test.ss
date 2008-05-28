@@ -10,7 +10,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "util.ss"    ("schematics" "schemeunit.plt" ))
          (except-in "sighting.ss" main))
 
+(require/expose "sighting.ss" (*sightings-database-file-name*))
 
+
 (define sighting-tests
 
   (test-suite
@@ -20,17 +22,34 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     (let ((s (make-sighting "1" "2" 3 #t (list "hey" "you"))))
       (note-sighting s)
       (check-equal? s (lookup-sighting "1"))
-      (check-false (lookup-sighting "snorkuplexity"))))))
+      (check-false (lookup-sighting "snorkuplexity"))))
+   (test-case
+    "persistent"
+    (parameterize ((*sightings-database-file-name* "persistent-test.db"))
+      (let ((stuff (map make-sighting
+                        (list "fred" "paul" "mary")
+                        (list "2" "3" "4")
+                        (list 9 8 7)
+                        (list #t #f #f)
+                        (list (list "znork?")
+                              (list "I" "am" "NOT" "dead")
+                              (list "I" "am" "Jesus'" "mom")))))
+        (let ((writing? (not (file-exists? (*sightings-database-file-name*)))))
+          ;; if the db doesn't exist, note some stuff.
+          ;; if the db does exist, check for what we noted.
+          (if writing?
+            (printf "Putting test data into ~a; run me again and I'll check the contents.~%"
+                    (*sightings-database-file-name*))
+            (printf "Reading test data from ~a~%"
+                    (*sightings-database-file-name*)))
+
+          (for ((s (in-list stuff)))
+
+            (if writing?
+                (note-sighting s)
+                (check-equal? s (lookup-sighting (sighting-who s)))))))))))
 
 (define (main . args)
-  ;; fill up the sightings table with silliness, just to see if we can
-  (for ((num (in-range 10)))
-    (let ((s (make-sighting (number->string (random 10000))
-                            "silly"
-                            num
-                            (odd? num)
-                            (list "ho" "hum"))))
-      (note-sighting s)))
   (exit (test/text-ui sighting-tests 'verbose)))
 (provide (all-defined-out))
 
