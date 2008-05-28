@@ -180,12 +180,12 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
               (fprintf (current-error-port)
                        "Bummer: ~a seconds passed with no news from the server~%"
                        (*bot-gives-up-after-this-many-silent-seconds*))
-                                        ;(retry)
+              (retry)
               )
              ((eof-object? line)
               (fprintf (current-error-port)
                        "Uh oh, server hung up on us~%")
-              ;; (retry)
+              (retry)
               )
              ((string? line)
               (slightly-more-sophisticated-line-proc line op)
@@ -222,8 +222,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define (real-server)
   (let-values (((ip op)
                 (tcp-connect
-                 "localhost"
-                 ;;"irc.freenode.org"
+                 ;;"localhost"
+                 "irc.freenode.org"
                  6667)))
     (file-stream-buffer-mode op 'line)
     (values ip op)))
@@ -268,6 +268,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 ;;      (make-log-replaying-server "big-log"))))
 
 (define (main . args)
+  (log "Main starting.")
   (connect-and-run real-server))
 
 (provide (all-defined-out))
