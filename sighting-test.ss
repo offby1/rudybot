@@ -19,9 +19,18 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     "yow"
     (let ((s (make-sighting "1" "2" 3 #t (list "hey" "you"))))
       (note-sighting s)
-      (check-equal? s (lookup-sighting "1"))))))
+      (check-equal? s (lookup-sighting "1"))
+      (check-false (lookup-sighting "snorkuplexity"))))))
 
 (define (main . args)
+  ;; fill up the sightings table with silliness, just to see if we can
+  (for ((num (in-range 10)))
+    (let ((s (make-sighting (number->string num)
+                            "silly"
+                            num
+                            (odd? num)
+                            (list "ho" "hum"))))
+      (note-sighting s)))
   (exit (test/text-ui sighting-tests 'verbose)))
 (provide (all-defined-out))
 

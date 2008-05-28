@@ -10,11 +10,28 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define-struct sighting (who where when was-action? words) #:prefab)
 
+(define *sightings* #f)
+
+(define (maybe-load!)
+  (unless *sightings*
+    (set! *sightings*
+          (with-handlers
+              ([exn:fail:filesystem?
+                (lambda (e)
+                  (make-hash))])
+            (hash-copy (call-with-input-file *sightings-database-file-name* read))))))
+
 (define (lookup-sighting who)
-  #s(sighting "1" "2" 3 #t ("hey" "you")))
+  (maybe-load!)
+  (hash-ref *sightings* who #f))
 
 (define (note-sighting s)
-  (void))
+  (maybe-load!)
+  (hash-set! *sightings* (sighting-who s) s)
+  (call-with-output-file *sightings-database-file-name*
+    (lambda (op)
+      (write *sightings* op))
+    #:exists 'truncate/replace))
 
 (provide/contract
  [struct sighting ((who string?)
