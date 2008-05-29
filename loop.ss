@@ -71,12 +71,12 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
            (log "I seem to have said ~s" (cdr toks))
            (match (cdr toks)
              [(list "JOIN" target)
-              (note-sighting (make-sighting nick target (current-seconds) #t '()))
+              (note-sighting (make-sighting nick target (current-seconds) "JOIN" '()))
               (log "~a joined ~a" nick target)]
              [(list "NICK" (regexp #px"^:(.*)" (list _ new-nick)))
               (log "~a wants to be known as ~a" nick new-nick)]
              [(list "PART" target (regexp #px"^:(.*)" (list _ first-word )) rest ...)
-              (note-sighting (make-sighting nick target (current-seconds) #t (cons first-word rest)))
+              (note-sighting (make-sighting nick target (current-seconds) "PART" (cons first-word rest)))
               (log "~a left ~a~a"
                    nick target
                    (if (zero? (string-length first-word))
@@ -125,7 +125,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                           target)]))]
 
              [(list "QUIT" (regexp #px"^:(.*)" (list _ first-word )) rest ...)
-              (note-sighting (make-sighting nick host (current-seconds) #t (cons first-word rest)))
+              (note-sighting (make-sighting nick host (current-seconds) "QUIT" (cons first-word rest)))
               (log "~a quit~a"
                    nick
                    (if (zero? (string-length first-word))
