@@ -19,27 +19,31 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
 (define *my-nick* "upstartbot")
+(define *irc-server-hostname* (make-parameter "localhost"))
 
 (define *log-ports* (make-parameter (list (current-error-port)
                                           (open-output-file
                                            "big-log"
                                            #:mode 'text
                                            #:exists 'append))))
-(define (log . args)
-  (for ((op (in-list (*log-ports*))))
-    (apply fprintf op args)
-    (newline op)))
-
 (for ((op (in-list (*log-ports*))))
   (fprintf (current-error-port)
            "Whopping port ~a~%" op)
   (file-stream-buffer-mode op 'line))
 
-(define *authenticated?* #f)
-(define *mute-privmsgs?* #t)
+(define (log . args)
+  (for ((op (in-list (*log-ports*))))
+    (apply fprintf op args)
+    (newline op)))
 
-(define (do-cmd requestor words)
-  (log "Doing ~s for ~a~%" words requestor))
+;; Maybe I should use rnrs/enums-6 to guard against typos
+(define *authentication-state* 'havent-even-tried)
+
+;; Normally this would be #f, so that when we issue a PRIVMSG, it
+;; really gets sent.  But during development, I have the bot lurking
+;; silently in a couple of channels, and this is #t, so that it
+;; doesn't say anything.
+(define *mute-privmsgs?* #f)
 
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
@@ -53,18 +57,28 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          "~a" (format "~a ~a :~a"
                       (if notice? "NOTICE" "PRIVMSG")
                       target (apply format fmt args))))
+
+  (define (do-cmd response-target response-prefix words)
+    (define (reply fmt . args)
+      (let ((response (string-append response-prefix (apply format fmt args))))
+        (pm response-target "~a" response)))
+    (log "Doing ~s" words)
+    (case (string->symbol (string-downcase (first words)))
+      [(quote)  (reply "No quotes yet; I'm workin' on it though")]
+      [(source) (reply "$Id$")]
+      [else #f]))
+
   (log "<= ~s" line)
   (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
-    (log "tokens: ~s" toks)
     (match (car toks)
       ["ERROR"
        (log "Uh oh!")]
 
       ["NOTICE"
-       (unless *authenticated?*
+       (when (eq? *authentication-state* 'havent-even-tried)
          (out "NICK ~a" *my-nick*)
          (out "USER luser unknown-host localhost :duh, version 0")
-         (set! *authenticated?* #t))]
+         (set! *authentication-state* 'tried))]
 
       ["PING"
        (out "PONG ~a" (cadr toks))]
@@ -118,8 +132,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                    (when (<= 75 (string-length url))
                      (pm #:notice? #t
                          target
-                          "~a"
-                          (make-tiny-url url)))]
+                         "~a"
+                         (make-tiny-url url)))]
                   [_ #f]))
               (if (equal? target *my-nick*)
                   (begin
@@ -127,7 +141,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                          nick
                          (string-join (cons first-word rest)))
 
-                    (do-cmd nick (cons first-word rest)))
+                    (do-cmd nick "" (cons first-word rest)))
                   (match first-word
                     [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
                      (log "~a spake unto ~a in ~a, saying ~a"
@@ -136,7 +150,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                           target
                           (string-join rest))
                      (when (equal? addressee *my-nick*)
-                       (do-cmd nick rest))]
+                       (do-cmd target (format "~a: " nick) rest))]
                     [_
                      (log "~a mumbled something uninteresting in ~a"
                           nick
@@ -160,7 +174,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
           (case (string->symbol digits)
             ((|001|)
              (log "Yay, we're in")
-             (set! *authenticated?* #t)
+             (set! *authentication-state* 'succeeded)
              (out "JOIN #scheme")
              (out "JOIN #emacs"))
             ((|366|)
@@ -178,9 +192,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (consecutive-failed-connections 0)
          #:retry-on-hangup? (retry-on-hangup? #t))
   (when (positive? consecutive-failed-connections)
-    (fprintf (current-error-port)
-             "~a consecutive-failed-connections~%"
-             consecutive-failed-connections)
+    (log "~a consecutive-failed-connections"
+         consecutive-failed-connections)
     (sleep (expt 2 consecutive-failed-connections)))
 
   (with-handlers ([exn:fail:network?
@@ -204,15 +217,15 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
             (cond
              ((not line)
-              (fprintf (current-error-port)
-                       "Bummer: ~a seconds passed with no news from the server~%"
-                       (*bot-gives-up-after-this-many-silent-seconds*))
+              (log
+               "Bummer: ~a seconds passed with no news from the server"
+               (*bot-gives-up-after-this-many-silent-seconds*))
               (retry)
               )
              ((eof-object? line)
               (when retry-on-hangup?
-                (fprintf (current-error-port)
-                         "Uh oh, server hung up on us~%")
+                (log
+                 "Uh oh, server hung up on us")
                 (retry))
               )
              ((string? line)
@@ -248,11 +261,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
             )))
 
 (define (real-server)
-  (let-values (((ip op)
-                (tcp-connect
-                 ;;"localhost"
-                 "irc.freenode.org"
-                 6667)))
+  (let-values (((ip op) (tcp-connect (*irc-server-hostname*) 6667)))
     (file-stream-buffer-mode op 'line)
     (values ip op)))
 
@@ -271,6 +280,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                    "PING :localhost."
                    ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
                    ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001\r"
+                   (format ":n!n=n@n PRIVMSG #scheme :~a: SOURCE\r" *my-nick*)
                    ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
                    ))
 
@@ -299,18 +309,19 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                (current-output-port)
                #f #f 1 #f)))))
 
-(define (main . args)
-  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-                 (*log-ports* (list (current-error-port))))
-    (connect-and-run
-
-     (make-log-replaying-server "big-log")
-     ;;(make-preloaded-server (open-output-nowhere))
-
-     #:retry-on-hangup? #f)))
-
 ;; (define (main . args)
-;;   (log "Main starting.")
-;;   (connect-and-run real-server))
+;;   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
+;;                  (*log-ports* (list (current-error-port))))
+;;     (connect-and-run
+
+;;      (if #f
+;;          (make-log-replaying-server "big-log")
+;;          (make-preloaded-server (open-output-nowhere)))
+
+;;      #:retry-on-hangup? #f)))
+
+(define (main . args)
+  (log "Main starting.")
+  (connect-and-run real-server))
 
 (provide (all-defined-out))
