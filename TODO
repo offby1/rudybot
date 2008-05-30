@@ -3,3 +3,8 @@ Features from the old bot worth keeping:
 * "seen"
 * "eval"
 * "quote"
+
+Features I am NOT keeping:
+
+* spewing a funny quote when it doesn't otherwise recognize what was said to it
+* spewing news headlines, etc., every so often when the channel has been silent

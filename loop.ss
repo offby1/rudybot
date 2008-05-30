@@ -11,6 +11,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (except-in "tinyurl.ss" main)
          (lib "trace.ss")
          (lib "13.ss" "srfi")
+         (lib "14.ss" "srfi")
          (planet "test.ss"    ("schematics" "schemeunit.plt" ))
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
          (planet "util.ss"    ("schematics" "schemeunit.plt" )))
@@ -37,6 +38,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define *authenticated?* #f)
 (define *mute-privmsgs?* #t)
 
+(define (do-cmd requestor words)
+  (log "Doing ~s for ~a~%" words requestor))
+
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
     (let ((str (apply format format-string args)))
@@ -50,9 +54,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                       (if notice? "NOTICE" "PRIVMSG")
                       target (apply format fmt args))))
   (log "<= ~s" line)
-  (let ((toks (string-tokenize line)))
+  (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
+    (log "tokens: ~s" toks)
     (match (car toks)
-
       ["ERROR"
        (log "Uh oh!")]
 
@@ -85,8 +89,27 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
              [(list "PRIVMSG"
                     target
+                    (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
+                    inner-words ...
+                    (regexp #px"(.*)\u0001$" (list _ trailing )))
+              (log "extended data: ~s ~s"
+                   extended-data-word
+                   (append inner-words
+                           (if (positive? (string-length trailing))
+                               (list trailing)
+                               '())))]
+
+             [(list "PRIVMSG"
+                    target
+                    (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
+                    rest ...)
+              (log "request: ~s" request-word)]
+
+             [(list "PRIVMSG"
+                    target
                     (regexp #px"^:(.*)" (list _ first-word ))
                     rest ...)
+              (log "PRIVMSG first-word is ~s" first-word)
               (note-sighting (make-sighting nick target (current-seconds) #f (cons first-word rest)))
               ;; look for long URLs to tiny-ify
               (for ((word (in-list (cons first-word rest))))
@@ -104,9 +127,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                          nick
                          (string-join (cons first-word rest)))
 
-                    (pm nick
-                        "Well, ~a to you too"
-                        (string-join (cons first-word rest))))
+                    (do-cmd nick (cons first-word rest)))
                   (match first-word
                     [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
                      (log "~a spake unto ~a in ~a, saying ~a"
@@ -115,10 +136,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                           target
                           (string-join rest))
                      (when (equal? addressee *my-nick*)
-                       (pm target
-                           "~a: Well, ~a to you too"
-                           nick
-                           (string-join rest)))]
+                       (do-cmd nick rest))]
                     [_
                      (log "~a mumbled something uninteresting in ~a"
                           nick
@@ -155,7 +173,10 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
              (out "NICK ~a" *my-nick*)))])]
       [_ (log "Duh?")])))
 
-(define (connect-and-run server-maker (consecutive-failed-connections 0))
+(define (connect-and-run
+         server-maker
+         (consecutive-failed-connections 0)
+         #:retry-on-hangup? (retry-on-hangup? #t))
   (when (positive? consecutive-failed-connections)
     (fprintf (current-error-port)
              "~a consecutive-failed-connections~%"
@@ -189,9 +210,10 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
               (retry)
               )
              ((eof-object? line)
-              (fprintf (current-error-port)
-                       "Uh oh, server hung up on us~%")
-              (retry)
+              (when retry-on-hangup?
+                (fprintf (current-error-port)
+                         "Uh oh, server hung up on us~%")
+                (retry))
               )
              ((string? line)
               (slightly-more-sophisticated-line-proc line op)
@@ -240,9 +262,19 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                           (make-pipe)))
               (thread
                (lambda ()
-                 (display "foO!\r\n" op)
-                 (display "PING :localhost.\r\n" op)
-                 (display ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot\r\n" op)))
+                 (for-each
+                  (lambda (line)
+                    (display line op)
+                    (display "\r\n" op))
+                  (list
+                   "foO!"
+                   "PING :localhost."
+                   ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
+                   ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001\r"
+                   ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
+                   ))
+
+                 (close-output-port op)))
               ip)
             op)))
 
@@ -271,7 +303,11 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
                  (*log-ports* (list (current-error-port))))
     (connect-and-run
-     (make-log-replaying-server "big-log"))))
+
+     (make-log-replaying-server "big-log")
+     ;;(make-preloaded-server (open-output-nowhere))
+
+     #:retry-on-hangup? #f)))
 
 ;; (define (main . args)
 ;;   (log "Main starting.")
