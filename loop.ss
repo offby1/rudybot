@@ -44,6 +44,11 @@
 ;; doesn't say anything.
 (define *mute-privmsgs?* (make-parameter #f))
 
+(define-match-expander colon-word
+  (syntax-rules ()
+    [(colon-word w)
+     (regexp #rx"^:(.*)" (list _ w))]))
+
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line op)
@@ -101,7 +106,7 @@
              [(list "JOIN" target)
               (note-sighting (make-sighting nick target (current-seconds) "JOIN" '()))
               (log "~a joined ~a" nick target)]
-             [(list "NICK" (regexp #px"^:(.*)" (list _ new-nick)))
+             [(list "NICK" (colon-word new-nick))
               (log "~a wants to be known as ~a" nick new-nick)]
              [(list "PART" target (regexp #px"^:(.*)" (list _ first-word )) rest ...)
               (note-sighting (make-sighting nick target (current-seconds) "PART" (cons first-word rest)))
