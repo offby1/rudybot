@@ -1,7 +1,7 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id$
-exec  mzscheme -l errortrace --require main.ss --main -- ${1+"$@"}
+exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 |#
 
 #lang scheme

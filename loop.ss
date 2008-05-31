@@ -6,6 +6,7 @@
 (require scheme/date
          scheme/port
          "sighting.ss"
+         "spelled-out-time.ss"
          (except-in "tinyurl.ss" main)
          (lib "trace.ss")
          (lib "13.ss" "srfi")
@@ -64,6 +65,16 @@
     (case (string->symbol (string-downcase (first words)))
       [(quote)  (reply "No quotes yet; I'm workin' on it though")]
       [(source) (reply "$Id$")]
+      [(seen)
+       (when (not (null? (cdr words)))
+         (let ((info (lookup-sighting (second words))))
+           (if info
+               (reply "~a was last seen in channel ~a ~a ago, saying \"~a\""
+                      (sighting-who   info)
+                      (sighting-where info)
+                      (spelled-out-time (- (current-seconds) (sighting-when  info)))
+                      (string-join (sighting-words info)))
+               (reply "No sign of ~a" (second words)))))]
       [else #f]))
 
   (log "<= ~s" line)
