@@ -42,8 +42,10 @@
 ;; really gets sent.  But during development, I have the bot lurking
 ;; silently in a couple of channels, and this is #t, so that it
 ;; doesn't say anything.
-(define *mute-privmsgs?* #f)
+(define *mute-privmsgs?* (make-parameter #f))
 
+;; Given a line of input from the server, do something side-effecty.
+;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
     (let ((str (apply format format-string args)))
@@ -52,19 +54,18 @@
         (fprintf op "~a~%" str))))
 
   (define (pm #:notice? [notice? #f] target fmt . args)
-    (out #:for-real? (not *mute-privmsgs?*)
+    (out #:for-real? (not (*mute-privmsgs?*))
          "~a" (format "~a ~a :~a"
                       (if notice? "NOTICE" "PRIVMSG")
                       target (apply format fmt args))))
 
   (define (do-cmd response-target response-prefix words)
     (define (reply fmt . args)
-      (let ((response (string-append response-prefix (apply format fmt args))))
-        (pm response-target "~a" response)))
+      (pm response-target "~a" (string-append response-prefix (apply format fmt args))))
     (log "Doing ~s" words)
     (case (string->symbol (string-downcase (first words)))
       [(quote)  (reply "No quotes yet; I'm workin' on it though")]
-      [(source) (reply "$Id$")]
+      [(source) (reply "$HeadURL$")]
       [(seen)
        (when (not (null? (cdr words)))
          (let ((info (lookup-sighting (second words))))
@@ -232,12 +233,8 @@
                       (log
                        "Uh oh, server hung up on us")
                       (retry)))
-
-                   ((string? line)
-                    (slightly-more-sophisticated-line-proc line op)
-                    (do-one-line 0))
                    (else
-                    (error 'do-the-bot-thing "I don't know what to do with ~s" line)))))))))))
-
+                    (slightly-more-sophisticated-line-proc line op)
+                    (do-one-line 0)))))))))))
 
 (provide (all-defined-out))
