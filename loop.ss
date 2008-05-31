@@ -1,7 +1,5 @@
-#! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id$
-exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 #lang scheme
 
@@ -233,95 +231,5 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
               (do-one-line 0))
              (else
               (error 'do-the-bot-thing "I don't know what to do with ~s" line)))))))))
-
-
-(define (make-flaky-server)
-  (random-seed 0)
-  (when (zero? (random 10))
-    (raise (make-exn:fail:network
-            "de network, she be broke"
-            (current-continuation-marks))))
-
-  (let-values (((ip op)
-                (make-pipe)))
-    (thread
-     (lambda ()
-       (when (not (port-closed? op))
-         (call-with-input-file "../irc/example input"
-           (lambda (ip)
-             (let loop ()
-               (let ((datum (read ip)))
-                 (when (not (eof-object? datum))
-                   (display datum op)
-                   (newline op)
-                   (loop))))))
-         )))
-    (values ip
-            (open-output-nowhere)
-            )))
-
-(define (real-server)
-  (let-values (((ip op) (tcp-connect (*irc-server-hostname*) 6667)))
-    (file-stream-buffer-mode op 'line)
-    (values ip op)))
-
-(define (make-preloaded-server op)
-  (lambda ()
-    (values (let-values (((ip op)
-                          (make-pipe)))
-              (thread
-               (lambda ()
-                 (for-each
-                  (lambda (line)
-                    (display line op)
-                    (display "\r\n" op))
-                  (list
-                   "foO!"
-                   "PING :localhost."
-                   ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
-                   ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001\r"
-                   (format ":n!n=n@n PRIVMSG #scheme :~a: SOURCE\r" *my-nick*)
-                   ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
-                   ))
-
-                 (close-output-port op)))
-              ip)
-            op)))
-
-(define (make-log-replaying-server log-file-name)
-  (lambda ()
-    (let-values (((ip op)
-                  (make-pipe)))
-      (thread
-       (lambda ()
-         (call-with-input-file log-file-name
-           (lambda (ip)
-             (for ((line (in-lines ip)))
-               (match line
-                 [(regexp #px"^<= (\".*\")" (list _ datum))
-                  (display (read (open-input-string datum)) op)
-                  (newline op)]
-                 [_ #f]))
-             (close-output-port op)))))
-
-      (values ip
-              (relocate-output-port
-               (current-output-port)
-               #f #f 1 #f)))))
-
-;; (define (main . args)
-;;   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-;;                  (*log-ports* (list (current-error-port))))
-;;     (connect-and-run
-
-;;      (if #f
-;;          (make-log-replaying-server "big-log")
-;;          (make-preloaded-server (open-output-nowhere)))
-
-;;      #:retry-on-hangup? #f)))
-
-(define (main . args)
-  (log "Main starting.")
-  (connect-and-run real-server))
 
 (provide (all-defined-out))
