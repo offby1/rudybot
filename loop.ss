@@ -213,34 +213,31 @@
                   (server-maker)))
       (let ((ch (make-channel)))
         (let do-one-line ((cfc consecutive-failed-connections))
-          (let ((reader (thread (lambda ()
-                                  (let ((line (read-line ip)))
-                                    (channel-put ch line)))))
-                (line (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ch))
+          (let ((ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ip))
                 (retry (lambda ()
                          (close-input-port ip)
                          (close-output-port op)
                          (connect-and-run server-maker (add1 cfc)))))
 
-            (kill-thread reader)
+            (if (not ready-ip)
+                (begin
+                  (log
+                   "Bummer: ~a seconds passed with no news from the server"
+                   (*bot-gives-up-after-this-many-silent-seconds*))
+                  (retry))
+                (let ((line (read-line ready-ip)))
+                  (cond
+                   ((eof-object? line)
+                    (when retry-on-hangup?
+                      (log
+                       "Uh oh, server hung up on us")
+                      (retry)))
 
-            (cond
-             ((not line)
-              (log
-               "Bummer: ~a seconds passed with no news from the server"
-               (*bot-gives-up-after-this-many-silent-seconds*))
-              (retry)
-              )
-             ((eof-object? line)
-              (when retry-on-hangup?
-                (log
-                 "Uh oh, server hung up on us")
-                (retry))
-              )
-             ((string? line)
-              (slightly-more-sophisticated-line-proc line op)
-              (do-one-line 0))
-             (else
-              (error 'do-the-bot-thing "I don't know what to do with ~s" line)))))))))
+                   ((string? line)
+                    (slightly-more-sophisticated-line-proc line op)
+                    (do-one-line 0))
+                   (else
+                    (error 'do-the-bot-thing "I don't know what to do with ~s" line)))))))))))
+
 
 (provide (all-defined-out))

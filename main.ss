@@ -10,8 +10,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          scheme/port)
 
 (define (make-flaky-server)
-  (random-seed 0)
-  (when (zero? (random 10))
+  (when (zero? (random 3))
     (raise (make-exn:fail:network
             "de network, she be broke"
             (current-continuation-marks))))
@@ -25,10 +24,15 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
            (lambda (ip)
              (let loop ()
                (let ((datum (read ip)))
-                 (when (not (eof-object? datum))
+                 (cond
+                  ((zero? (random 5))
+                   (close-output-port op))
+                  ((not (eof-object? datum))
                    (display datum op)
                    (newline op)
-                   (loop))))))
+                   (loop))
+                  (else
+                   (close-output-port op)))))))
          )))
     (values ip
             (open-output-nowhere)
@@ -110,5 +114,13 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (parameterize ((*irc-server-hostname* "irc.freenode.org"))
     (connect-and-run real-server)))
 
-(define main localhost-main)
+(define (flaky-main . args)
+  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
+                 (*log-ports* (list (current-error-port))))
+    (random-seed 0)
+    (connect-and-run
+     make-flaky-server
+     #:retry-on-hangup? #t)))
+
+(define main flaky-main)
 (provide (all-defined-out))
