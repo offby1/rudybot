@@ -87,126 +87,127 @@
   (log "<= ~s" line)
   (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
     (when (*nickserv-password*)
-      (match toks
-        [(list ":NickServ!NickServ@services."
-               "NOTICE"
-               my-nick
-               ":If" "this" "is" "your" "nickname," yaddayaddayadda ...)
-         (log "Gotta register my nick.")
-         (pm "NickServ" "identify ~a" (*nickserv-password*))]
-        [_
-         (match (car toks)
-           ["ERROR"
-            (log "Uh oh!")]
+      (match (car toks)
+        ["ERROR"
+         (log "Uh oh!")]
 
-           ["NOTICE"
-            (when (eq? *authentication-state* 'havent-even-tried)
-              (out "NICK ~a" *my-nick*)
-              (out "USER luser unknown-host localhost :duh, version 0")
-              (set! *authentication-state* 'tried))]
+        ["NOTICE"
+         (when (eq? *authentication-state* 'havent-even-tried)
+           (out "NICK ~a" *my-nick*)
+           (out "USER luser unknown-host localhost :duh, version 0")
+           (set! *authentication-state* 'tried))]
 
-           ["PING"
-            (out "PONG ~a" (cadr toks))]
+        ["PING"
+         (out "PONG ~a" (cadr toks))]
 
-           [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
-            ;; update the "seen" database
-            (if (equal? nick *my-nick*)
-                (log "I seem to have said ~s" (cdr toks))
-                (match (cdr toks)
-                  [(list "JOIN" target)
-                   (note-sighting (make-sighting nick target (current-seconds) "JOIN" '()))
-                   (log "~a joined ~a" nick target)]
-                  [(list "NICK" (colon new-nick))
-                   (log "~a wants to be known as ~a" nick new-nick)]
-                  [(list "PART" target (colon first-word) rest ...)
-                   (note-sighting (make-sighting nick target (current-seconds) "PART" (cons first-word rest)))
-                   (log "~a left ~a~a"
-                        nick target
-                        (if (zero? (string-length first-word))
-                            ""
-                            (format ", saying ~a" (string-join (cons first-word rest)))))]
+        [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
+         ;; update the "seen" database
+         (if (equal? nick *my-nick*)
+             (log "I seem to have said ~s" (cdr toks))
+             (match (cdr toks)
+               [(list
+                 "NOTICE"
+                 my-nick
+                 ":If" "this" "is" "your" "nickname," yaddayaddayadda ...)
+                (when (and (equal? nick "NickServ")
+                           (equal? id   "NickServ")
+                           (equal? host "services."))
+                  (log "Gotta register my nick.")
+                  (pm "NickServ" "identify ~a" (*nickserv-password*)))]
+               [(list "JOIN" target)
+                (note-sighting (make-sighting nick target (current-seconds) "JOIN" '()))
+                (log "~a joined ~a" nick target)]
+               [(list "NICK" (colon new-nick))
+                (log "~a wants to be known as ~a" nick new-nick)]
+               [(list "PART" target (colon first-word) rest ...)
+                (note-sighting (make-sighting nick target (current-seconds) "PART" (cons first-word rest)))
+                (log "~a left ~a~a"
+                     nick target
+                     (if (zero? (string-length first-word))
+                         ""
+                         (format ", saying ~a" (string-join (cons first-word rest)))))]
 
-                  [(list "PRIVMSG"
-                         target
-                         (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
-                         inner-words ...
-                         (regexp #px"(.*)\u0001$" (list _ trailing )))
-                   (log "extended data: ~s ~s"
-                        extended-data-word
-                        (append inner-words
-                                (if (positive? (string-length trailing))
-                                    (list trailing)
-                                    '())))]
+               [(list "PRIVMSG"
+                      target
+                      (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
+                      inner-words ...
+                      (regexp #px"(.*)\u0001$" (list _ trailing )))
+                (log "extended data: ~s ~s"
+                     extended-data-word
+                     (append inner-words
+                             (if (positive? (string-length trailing))
+                                 (list trailing)
+                                 '())))]
 
-                  [(list "PRIVMSG"
-                         target
-                         (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
-                         rest ...)
-                   (log "request: ~s" request-word)]
+               [(list "PRIVMSG"
+                      target
+                      (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
+                      rest ...)
+                (log "request: ~s" request-word)]
 
-                  [(list "PRIVMSG" target (colon first-word) rest ...)
-                   (note-sighting (make-sighting nick target (current-seconds) #f (cons first-word rest)))
-                   ;; look for long URLs to tiny-ify
-                   (for ((word (in-list (cons first-word rest))))
-                     (match word
-                       [(regexp url-regexp (list url _ _))
-                        (when (<= 75 (string-length url))
-                          (pm #:notice? #t
-                              target
-                              "~a"
-                              (make-tiny-url url)))]
-                       [_ #f]))
-                   (if (equal? target *my-nick*)
-                       (begin
-                         (log "~a privately said ~a to me"
-                              nick
-                              (string-join (cons first-word rest)))
+               [(list "PRIVMSG" target (colon first-word) rest ...)
+                (note-sighting (make-sighting nick target (current-seconds) #f (cons first-word rest)))
+                ;; look for long URLs to tiny-ify
+                (for ((word (in-list (cons first-word rest))))
+                  (match word
+                    [(regexp url-regexp (list url _ _))
+                     (when (<= 75 (string-length url))
+                       (pm #:notice? #t
+                           target
+                           "~a"
+                           (make-tiny-url url)))]
+                    [_ #f]))
+                (if (equal? target *my-nick*)
+                    (begin
+                      (log "~a privately said ~a to me"
+                           nick
+                           (string-join (cons first-word rest)))
 
-                         (do-cmd nick "" (cons first-word rest)))
-                       (match first-word
-                         [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
-                          (log "~a spake unto ~a in ~a, saying ~a"
-                               nick
-                               addressee
-                               target
-                               (string-join rest))
-                          (when (equal? addressee *my-nick*)
-                            (do-cmd target (format "~a: " nick) rest))]
-                         [_
-                          (log "~a mumbled something uninteresting in ~a"
-                               nick
-                               target)]))]
+                      (do-cmd nick "" (cons first-word rest)))
+                    (match first-word
+                      [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
+                       (log "~a spake unto ~a in ~a, saying ~a"
+                            nick
+                            addressee
+                            target
+                            (string-join rest))
+                       (when (equal? addressee *my-nick*)
+                         (do-cmd target (format "~a: " nick) rest))]
+                      [_
+                       (log "~a mumbled something uninteresting in ~a"
+                            nick
+                            target)]))]
 
-                  [(list "QUIT" (colon first-word) rest ...)
-                   (note-sighting (make-sighting nick host (current-seconds) "QUIT" (cons first-word rest)))
-                   (log "~a quit~a"
-                        nick
-                        (if (zero? (string-length first-word))
-                            ""
-                            (format
-                             ", mumbling \"~a\""
-                             (string-join (cons first-word rest)))))]
-                  [_
-                   (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
+               [(list "QUIT" (colon first-word) rest ...)
+                (note-sighting (make-sighting nick host (current-seconds) "QUIT" (cons first-word rest)))
+                (log "~a quit~a"
+                     nick
+                     (if (zero? (string-length first-word))
+                         ""
+                         (format
+                          ", mumbling \"~a\""
+                          (string-join (cons first-word rest)))))]
+               [_
+                (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
 
-           [(colon host)
-            (match (cdr toks)
-              [(list digits mynick blather ...)
-               (case (string->symbol digits)
-                 ((|001|)
-                  (log "Yay, we're in")
-                  (set! *authentication-state* 'succeeded)
-                  (out "JOIN #scheme")
-                  (out "JOIN #emacs"))
-                 ((|366|)
-                  (log "I, ~a, seem to have joined channel ~a."
-                       mynick
-                       (car blather)))
-                 ((|433|)
-                  (log "Nuts, gotta try a different nick")
-                  (set! *my-nick* (string-append *my-nick* "_"))
-                  (out "NICK ~a" *my-nick*)))])]
-           [_ (log "Duh?")])]))
+        [(colon host)
+         (match (cdr toks)
+           [(list digits mynick blather ...)
+            (case (string->symbol digits)
+              ((|001|)
+               (log "Yay, we're in")
+               (set! *authentication-state* 'succeeded)
+               (out "JOIN #scheme")
+               (out "JOIN #emacs"))
+              ((|366|)
+               (log "I, ~a, seem to have joined channel ~a."
+                    mynick
+                    (car blather)))
+              ((|433|)
+               (log "Nuts, gotta try a different nick")
+               (set! *my-nick* (string-append *my-nick* "_"))
+               (out "NICK ~a" *my-nick*)))])]
+        [_ (log "Duh?")]))
     ))
 
 (define (connect-and-run
