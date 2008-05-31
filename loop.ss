@@ -44,9 +44,9 @@
 ;; doesn't say anything.
 (define *mute-privmsgs?* (make-parameter #f))
 
-(define-match-expander colon-word
+(define-match-expander colon
   (syntax-rules ()
-    [(colon-word w)
+    [(colon w)
      (regexp #rx"^:(.*)" (list _ w))]))
 
 ;; Given a line of input from the server, do something side-effecty.
@@ -106,9 +106,9 @@
              [(list "JOIN" target)
               (note-sighting (make-sighting nick target (current-seconds) "JOIN" '()))
               (log "~a joined ~a" nick target)]
-             [(list "NICK" (colon-word new-nick))
+             [(list "NICK" (colon new-nick))
               (log "~a wants to be known as ~a" nick new-nick)]
-             [(list "PART" target (regexp #px"^:(.*)" (list _ first-word )) rest ...)
+             [(list "PART" target (colon first-word) rest ...)
               (note-sighting (make-sighting nick target (current-seconds) "PART" (cons first-word rest)))
               (log "~a left ~a~a"
                    nick target
@@ -134,10 +134,7 @@
                     rest ...)
               (log "request: ~s" request-word)]
 
-             [(list "PRIVMSG"
-                    target
-                    (regexp #px"^:(.*)" (list _ first-word ))
-                    rest ...)
+             [(list "PRIVMSG" target (colon first-word) rest ...)
               (log "PRIVMSG first-word is ~s" first-word)
               (note-sighting (make-sighting nick target (current-seconds) #f (cons first-word rest)))
               ;; look for long URLs to tiny-ify
@@ -171,7 +168,7 @@
                           nick
                           target)]))]
 
-             [(list "QUIT" (regexp #px"^:(.*)" (list _ first-word )) rest ...)
+             [(list "QUIT" (colon first-word) rest ...)
               (note-sighting (make-sighting nick host (current-seconds) "QUIT" (cons first-word rest)))
               (log "~a quit~a"
                    nick
@@ -183,7 +180,7 @@
              [_
               (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
 
-      [(regexp #rx"^:(.*)" (list _ host))
+      [(colon host)
        (match (cdr toks)
          [(list digits mynick blather ...)
           (case (string->symbol digits)

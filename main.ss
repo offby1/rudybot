@@ -123,5 +123,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-flaky-server
      #:retry-on-hangup? #t)))
 
-(define main localhost-main)
+(define main replay-main)
 (provide (all-defined-out))
