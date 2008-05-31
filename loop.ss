@@ -239,7 +239,7 @@
                    "Bummer: ~a seconds passed with no news from the server"
                    (*bot-gives-up-after-this-many-silent-seconds*))
                   (retry))
-                (let ((line (read-line ready-ip)))
+                (let ((line (read-line ready-ip 'return-linefeed)))
                   (cond
                    ((eof-object? line)
                     (when retry-on-hangup?

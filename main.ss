@@ -57,9 +57,9 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                    "foO!"
                    "PING :localhost."
                    ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
-                   ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001\r"
+                   ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
                    (format
-                    ":n!n=n@n PRIVMSG #scheme :~a: SOURCE\r"
+                    ":n!n=n@n PRIVMSG #scheme :~a: SOURCE"
                     *my-nick*)
                    ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
                    (format
