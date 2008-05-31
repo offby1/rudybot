@@ -58,8 +58,13 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                    "PING :localhost."
                    ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
                    ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001\r"
-                   (format ":n!n=n@n PRIVMSG #scheme :~a: SOURCE\r" *my-nick*)
+                   (format
+                    ":n!n=n@n PRIVMSG #scheme :~a: SOURCE\r"
+                    *my-nick*)
                    ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
+                   (format
+                    ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
+                    *my-nick*)
                    ))
 
                  (close-output-port op)))
@@ -123,5 +128,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-flaky-server
      #:retry-on-hangup? #t)))
 
-(define main replay-main)
+(define main preload-main)
 (provide (all-defined-out))
