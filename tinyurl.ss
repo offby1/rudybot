@@ -21,12 +21,6 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 ;; stolen from erc-button.el in Emacs 22
 (define url-regexp (pregexp "http(s)?(//[-a-zA-Z0-9_.]+:[0-9]*)?[-a-zA-Z0-9_=!?#$@~`%&*+\\/:;.,]+[-a-zA-Z0-9_=#$@~`%&*+\\/]"))
 
-(define long-url
-  (let loop ((kinda-long "http://foo.bar/baz/i/hope/this/is/long/enough"))
-    (if (< (string-length kinda-long) (*tinyurl-url-length-threshold*))
-        (loop (string-append kinda-long (format "/geez-louise~a" (string-length kinda-long))))
-      kinda-long)))
-
 ;; string? -> (listof string?)
 (define (snag-urls-from-bytes bytes)
   (let ((ip (open-input-bytes bytes)))
@@ -116,4 +110,7 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define (main . args)
   (exit (test/text-ui tinyurl-tests 'verbose)))
-(provide (all-defined-out))
+(provide/contract
+ [make-tiny-url
+  ((string?) (#:user-agent boolean?)  . ->* . string?)])
+(provide url-regexp)
