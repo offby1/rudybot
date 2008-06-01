@@ -32,11 +32,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                    (newline op)
                    (loop))
                   (else
-                   (close-output-port op)))))))
-         )))
+                   (close-output-port op))))))))))
+
     (values ip
-            (open-output-nowhere)
-            )))
+            (open-output-nowhere))))
 
 (define (real-server)
   (let-values (((ip op) (tcp-connect (*irc-server-hostname*) 6667)))
@@ -45,31 +44,31 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (define (make-preloaded-server op)
   (lambda ()
-    (values (let-values (((ip op)
-                          (make-pipe)))
-              (thread
-               (lambda ()
-                 (for-each
-                  (lambda (line)
-                    (display line op)
-                    (display "\r\n" op))
-                  (list
-                   "foO!"
-                   "PING :localhost."
-                   ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
-                   ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
-                   (format
-                    ":n!n=n@n PRIVMSG #scheme :~a: SOURCE"
-                    *my-nick*)
-                   ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
-                   (format
-                    ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
-                    *my-nick*)
-                   ))
+    (values
+     (let-values (((ip op)
+                   (make-pipe)))
+       (thread
+        (lambda ()
+          (for-each
+           (lambda (line)
+             (display line op)
+             (display "\r\n" op))
+           (list
+            "foO!"
+            "PING :localhost."
+            ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
+            ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
+            (format
+             ":n!n=n@n PRIVMSG #scheme :~a: SOURCE"
+             *my-nick*)
+            ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
+            (format
+             ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
+             *my-nick*)))
 
-                 (close-output-port op)))
-              ip)
-            op)))
+          (close-output-port op)))
+       ip)
+     op)))
 
 (define (make-log-replaying-server log-file-name)
   (lambda ()

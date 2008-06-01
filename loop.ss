@@ -249,5 +249,13 @@
                    (else
                     (slightly-more-sophisticated-line-proc line op)
                     (do-one-line 0)))))))))))
-
-(provide (all-defined-out))
+(provide/contract
+ [connect-and-run
+  (->* (procedure?) (natural-number/c #:retry-on-hangup? boolean?) void?)])
+(provide
+ log
+ *irc-server-hostname*
+ *my-nick*
+ *bot-gives-up-after-this-many-silent-seconds*
+ *log-ports*
+ *mute-privmsgs?*)
