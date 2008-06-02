@@ -7,7 +7,8 @@
          scheme/port
          "sighting.ss"
          "spelled-out-time.ss"
-         "tinyurl.ss"
+         (except-in "quotes.ss" main)
+         (except-in "tinyurl.ss" main)
          (lib "trace.ss")
          (lib "13.ss" "srfi")
          (lib "14.ss" "srfi")
@@ -70,7 +71,7 @@
       (pm response-target "~a" (string-append response-prefix (apply format fmt args))))
     (log "Doing ~s" words)
     (case (string->symbol (string-downcase (first words)))
-      [(quote)  (reply "No quotes yet; I'm workin' on it though")]
+      [(quote)  (reply (one-quote))]
       [(source) (reply "$HeadURL$")]
       [(seen)
        (when (not (null? (cdr words)))
@@ -143,7 +144,27 @@
                       target
                       (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
                       rest ...)
-                (log "request: ~s" request-word)]
+                (log "request: ~s" request-word)
+                (when (equal? "VERSION" request-word)
+                  (pm #:notice? #t
+                      nick
+                      "\u0001VERSION ~a (offby1@blarg.net):v4.~a:PLT scheme version ~a on ~a\0001"
+                      *my-nick*
+
+                      ;; *sigh*.  The version string with
+                      ;; which we reply to CTCP can't have a
+                      ;; colon, but of course Subversion's
+                      ;; keyword expansion inserted a colon
+                      ;; into *client-version*, so we have to
+                      ;; parse out the numbers.
+
+                      (match "$Rev$"
+                        [(regexp #rx"Revision: (.*)" (list _ rev))
+                         rev]
+                        [_ "?"])
+
+                      (version)
+                      (system-type 'os)))]
 
                [(list "PRIVMSG" target (colon first-word) rest ...)
                 (note-sighting (make-sighting nick target (current-seconds) #f (cons first-word rest)))
@@ -157,26 +178,32 @@
                            "~a"
                            (make-tiny-url url)))]
                     [_ #f]))
-                (if (equal? target *my-nick*)
-                    (begin
-                      (log "~a privately said ~a to me"
-                           nick
-                           (string-join (cons first-word rest)))
+                (match nick
+                  [(regexp "bot$")
+                   (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
+                        nick)]
+                  [_
+                   (if (equal? target *my-nick*)
+                       (begin
+                         (log "~a privately said ~a to me"
+                              nick
+                              (string-join (cons first-word rest)))
 
-                      (do-cmd nick "" (cons first-word rest)))
-                    (match first-word
-                      [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
-                       (log "~a spake unto ~a in ~a, saying ~a"
-                            nick
-                            addressee
-                            target
-                            (string-join rest))
-                       (when (equal? addressee *my-nick*)
-                         (do-cmd target (format "~a: " nick) rest))]
-                      [_
-                       (log "~a mumbled something uninteresting in ~a"
-                            nick
-                            target)]))]
+                         (do-cmd nick "" (cons first-word rest)))
+                       (match first-word
+                         [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
+                          (log "~a spake unto ~a in ~a, saying ~a"
+                               nick
+                               addressee
+                               target
+                               (string-join rest))
+                          (when (equal? addressee *my-nick*)
+                            (do-cmd target (format "~a: " nick) rest))]
+                         [_
+                          (log "~a mumbled something uninteresting in ~a"
+                               nick
+                               target)]))])
+                ]
 
                [(list "QUIT" (colon first-word) rest ...)
                 (note-sighting (make-sighting nick host (current-seconds) "QUIT" (cons first-word rest)))

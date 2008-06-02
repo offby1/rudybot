@@ -44,27 +44,31 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (define (make-preloaded-server op)
   (lambda ()
-    (values
-     (let-values (((ip op)
-                   (make-pipe)))
-       (thread
-        (lambda ()
-          (for-each
-           (lambda (line)
-             (display line op)
-             (display "\r\n" op))
-           (list
-            "foO!"
-            "PING :localhost."
-            ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
-            ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
-            (format
-             ":n!n=n@n PRIVMSG #scheme :~a: SOURCE"
-             *my-nick*)
-            ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
-            (format
-             ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
-             *my-nick*)))
+    (values (let-values (((ip op)
+                          (make-pipe)))
+              (thread
+               (lambda ()
+                 (for-each
+                  (lambda (line)
+                    (display line op)
+                    (display "\r\n" op))
+                  (list
+                   ":freenode-connect!freenode@freenode/bot/connect PRIVMSG upstartbot :\u0001VERSION\u0001"
+                   "foO!"
+                   "PING :localhost."
+                   ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
+                   ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
+                   (format
+                    ":n!n=n@n PRIVMSG #scheme :~a: SOURCE"
+                    *my-nick*)
+                   ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
+                   (format
+                    ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
+                    *my-nick*)
+                   (format
+                    ":n!n=n@n PRIVMSG #scheme :~a: quote"
+                    *my-nick*)
+                   ))
 
           (close-output-port op)))
        ip)
@@ -90,6 +94,35 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
               (relocate-output-port
                (current-output-port)
                #f #f 1 #f)))))
+
+(define (make-random-server)
+
+  (define (random-bytes [length 200])
+    (let ((r (make-bytes length)))
+      (for ((i (in-range length)))
+        (let new-byte ()
+          (let ((b (random 256)))
+            (case b
+              ((10 13)
+               (new-byte))
+              (else
+               (bytes-set! r i b))))))
+      r))
+
+  (let-values (((ip op)
+                (make-pipe)))
+    (thread
+     (lambda ()
+       (let loop ((lines-emitted 0))
+         (when (< lines-emitted 200)
+           (display #":ow!ow@ow PRIVMSG #ow :" op)
+           (display (random-bytes) op)
+           (display #"\r\n" op)
+           (loop (add1 lines-emitted))))
+       (close-output-port op)))
+
+    (values ip (open-output-nowhere))))
+
 
 
 (define (replay-main . args)
@@ -126,6 +159,14 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (connect-and-run
      make-flaky-server
      #:retry-on-hangup? #t)))
+
+(define (random-main . args)
+  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
+                 (*log-ports* (list (current-error-port))))
+    (random-seed 0)
+    (connect-and-run
+     make-random-server
+     #:retry-on-hangup? #f)))
 
 (define main preload-main)
 (provide (all-defined-out))

@@ -1,9 +1,11 @@
 Features from the old bot worth keeping:
 
-* "seen"
+* "seen"                        done
 * "eval"
-* "quote"
-* "VERSION" and "SOURCE"
+* "quote"                       done
+* "uptime"
+* "VERSION" and "SOURCE"        done
+* /msg nickserv ghost, if needed (not sure it's needed)
 
 Features I am NOT keeping:
 
