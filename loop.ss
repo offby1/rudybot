@@ -89,7 +89,7 @@
        (when (not (null? (cdr words)))
          (let ((info (lookup-sighting (second words))))
            (if info
-               (reply "~a was last seen in channel ~a ~a ago, saying \"~a\""
+               (reply "~a was last seen in/on ~a ~a ago, saying \"~a\""
                       (sighting-who   info)
                       (sighting-where info)
                       (describe-since (sighting-when  info))
@@ -197,6 +197,20 @@
                            (equal? host "services."))
                   (log "Gotta register my nick.")
                   (pm "NickServ" "identify ~a" (*nickserv-password*)))]
+               [(list (or "KICK" "MODE") target yadda ...)
+                (note-sighting
+                 (make-sighting
+                  nick
+                  target
+                  (current-seconds)
+                  (cadr toks)  yadda))]
+               [(list (or "INVITE" "NICK" "TOPIC") yadda ...)
+                (note-sighting
+                 (make-sighting
+                  nick
+                  host
+                  (current-seconds)
+                  (cadr toks) yadda))]
                [(list "JOIN" target)
                 (note-sighting (make-sighting nick target (current-seconds) "JOIN" '()))
                 (log "~a joined ~a" nick target)]
@@ -274,17 +288,9 @@
                          (do-cmd nick "" (cons first-word rest)))
                        (match first-word
                          [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
-                          (log "~a spake unto ~a in ~a, saying ~a"
-                               nick
-                               addressee
-                               target
-                               (string-join rest))
                           (when (equal? addressee *my-nick*)
                             (do-cmd target (format "~a: " nick) rest))]
-                         [_
-                          (log "~a mumbled something uninteresting in ~a"
-                               nick
-                               target)]))])
+                         [_ #f]))])
                 ]
 
                [(list "QUIT" (colon first-word) rest ...)

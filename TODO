@@ -1,7 +1,7 @@
 Features from the old bot worth keeping:
 
 * "seen"                        done
-* "eval"
+* "eval"                        done
 * "quote"                       done
 * "uptime"                      done
 * "VERSION" and "SOURCE"        done
@@ -11,3 +11,5 @@ Features I am NOT keeping:
 
 * spewing a funny quote when it doesn't otherwise recognize what was said to it
 * spewing news headlines, etc., every so often when the channel has been silent
+* loosening his collar with his index finger.  It was funny the first 2,000 times
+* stuff specific to Jan`
