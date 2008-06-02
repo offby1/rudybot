@@ -8,7 +8,7 @@
          "sighting.ss"
          "spelled-out-time.ss"
          (except-in "quotes.ss" main)
-         (except-in "tinyurl.ss" main)
+         "tinyurl.ss"
          (lib "trace.ss")
          (lib "13.ss" "srfi")
          (lib "14.ss" "srfi")
