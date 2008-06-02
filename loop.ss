@@ -89,11 +89,15 @@
        (when (not (null? (cdr words)))
          (let ((info (lookup-sighting (second words))))
            (if info
-               (reply "~a was last seen in/on ~a ~a ago, saying \"~a\""
+               (reply "~a was last seen ~ain/on ~a ~a ago~a"
                       (sighting-who   info)
+                      (or (string-append (sighting-action? info) " ") "")
                       (sighting-where info)
                       (describe-since (sighting-when  info))
-                      (string-join (sighting-words info)))
+                      (if (null? (sighting-words info))
+                           ""
+                           (format ", saying \"~a\""
+                                   (string-join (sighting-words info)))))
                (reply "No sign of ~a" (second words)))))]
       [(uptime)
        (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
@@ -197,32 +201,67 @@
                            (equal? host "services."))
                   (log "Gotta register my nick.")
                   (pm "NickServ" "identify ~a" (*nickserv-password*)))]
-               [(list (or "KICK" "MODE") target yadda ...)
+               [(list "KICK" target victim mumblage ...)
                 (note-sighting
                  (make-sighting
                   nick
                   target
                   (current-seconds)
-                  (cadr toks)  yadda))]
-               [(list (or "INVITE" "NICK" "TOPIC") yadda ...)
+                  (format "kicking ~a" victim)
+                  mumblage))]
+               [(list "MODE" target mode-data ...)
+                (note-sighting
+                 (make-sighting
+                  nick
+                  target
+                  (current-seconds)
+                  (format "changing the mode to '~a'" mode-data) '()))]
+               [(list "INVITE" lucky-recipient (colon party) further ...)
                 (note-sighting
                  (make-sighting
                   nick
                   host
                   (current-seconds)
-                  (cadr toks) yadda))]
+                  (format "inviting ~a to ~a" lucky-recipient party)
+                  further))]
+               [(list "NICK" (colon first-word) rest ...)
+                (note-sighting
+                 (make-sighting
+                  nick
+                  host
+                  (current-seconds)
+                  (format "changing their nick to ~a" first-word)
+                  '()))]
+               [(list "TOPIC" target (colon first-word) rest ...)
+                (note-sighting
+                 (make-sighting
+                  nick
+                  target
+                  (current-seconds)
+                  (format
+                   "changing the channel's topic to '~a'"
+                   (string-join (cons first-word rest)))
+                  '()))]
                [(list "JOIN" target)
-                (note-sighting (make-sighting nick target (current-seconds) "JOIN" '()))
+                (note-sighting
+                 (make-sighting
+                  nick
+                  target
+                  (current-seconds)
+                  (format "joining")
+                  '()))
                 (log "~a joined ~a" nick target)]
                [(list "NICK" (colon new-nick))
                 (log "~a wants to be known as ~a" nick new-nick)]
                [(list "PART" target (colon first-word) rest ...)
-                (note-sighting (make-sighting nick target (current-seconds) "PART" (cons first-word rest)))
-                (log "~a left ~a~a"
-                     nick target
-                     (if (zero? (string-length first-word))
-                         ""
-                         (format ", saying ~a" (string-join (cons first-word rest)))))]
+                (note-sighting
+                 (make-sighting
+                  nick
+                  target
+                  (current-seconds)
+                  "leaving the channel"
+                  (cons first-word rest)))
+                ]
 
                [(list "PRIVMSG"
                       target
@@ -294,7 +333,13 @@
                 ]
 
                [(list "QUIT" (colon first-word) rest ...)
-                (note-sighting (make-sighting nick host (current-seconds) "QUIT" (cons first-word rest)))
+                (note-sighting
+                 (make-sighting
+                  nick
+                  host
+                  (current-seconds)
+                  "quitting"
+                  (cons first-word rest)))
                 (log "~a quit~a"
                      nick
                      (if (zero? (string-length first-word))
