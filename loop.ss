@@ -188,7 +188,10 @@
                [(list
                  "NOTICE"
                  my-nick
-                 ":If" "this" "is" "your" "nickname," yaddayaddayadda ...)
+                 ":This"  "nickname" "is" "registered."
+                 ;; not sure where I got this from
+                 ;;":If" "this" "is" "your" "nickname,"
+                 yaddayaddayadda ...)
                 (when (and (equal? nick "NickServ")
                            (equal? id   "NickServ")
                            (equal? host "services."))
