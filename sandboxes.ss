@@ -102,13 +102,16 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
           "("
           ))))
 
-     #;(let ((charlies-sandbox (get-sandbox-by-name *sandboxes-by-nick* "charlie"))
-           (keiths-sandbox   (get-sandbox-by-name *sandboxes-by-nick* "keith")))
-
-       (set! *sandboxes-by-nick* (make-hash))
+     (let ((charlies-sandbox #f)
+           (keiths-sandbox   #f))
 
        (test-suite
         "distinct "
+        '#:before
+        (lambda ()
+          (set! *sandboxes-by-nick* (make-hash))
+          (set! charlies-sandbox (get-sandbox-by-name *sandboxes-by-nick* "charlie"))
+          (set! keiths-sandbox   (get-sandbox-by-name *sandboxes-by-nick* "keith")))
         (test-false
          "keeps sandboxes distinct, by name"
          (eq? charlies-sandbox keiths-sandbox))
@@ -122,43 +125,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (check-exn
           exn:fail?
           (lambda () (sandbox-eval keiths-sandbox))
-          "keith's sandbox didn't gack when I referenced 'x' -- even though we never defined it.")))
-
-       (test-case
-        "won't store too many"
-        (let* ((names (for/list ((i (in-range (* 2 (*max-sandboxes*)))))
-                        i))
-               (boxes (map (lambda (name)
-                             (get-sandbox-by-name *sandboxes-by-nick* name))
-                           names)))
-          (check-equal? (hash-count *sandboxes-by-nick*)
-                        (*max-sandboxes*))))
-       (test-case
-        "evicts oldest"
-        (before
-         (set! *sandboxes-by-nick* (make-hash 'equal))
-         ;; now I have to decide precisely when old sandboxes get
-         ;; evicted.  Is it when we call get-sandbox-by-name?  And I have
-         ;; to decide when the timestamp updates -- again, when we call
-         ;; get-sandbox-by-name?  Or when we run its evaluator?  There
-         ;; might not be any practical difference.
-         (parameterize ((*max-sandboxes* 2))
-           (sandbox-eval (get-sandbox-by-name *sandboxes-by-nick*"old"   ) "(define x 'old   )")
-           (sleep 1/10)
-           (sandbox-eval (get-sandbox-by-name *sandboxes-by-nick*"young" ) "(define x 'young )")
-           (sleep 1/10)
-           (sandbox-eval (get-sandbox-by-name *sandboxes-by-nick*"newest") "(define x 'newest)")
-
-           (check-equal? (sandbox-eval (get-sandbox-by-name *sandboxes-by-nick*"young")
-                                       "x")
-                         'young)
-           (check-equal? (sandbox-eval (get-sandbox-by-name *sandboxes-by-nick*"newest")
-                                       "x")
-                         'newest)
-           (check-exn exn:fail? (lambda () (sandbox-eval (get-sandbox-by-name *sandboxes-by-nick*"old")
-                                                         "x"))))))
-       )
-     )))
+          "keith's sandbox didn't gack when I referenced 'x' -- even though we never defined it.")))))))
 
 (provide get-sandbox-by-name
          sandbox-eval
