@@ -22,6 +22,9 @@
 (define *nickserv-password* (make-parameter "SEKRIT PASSWIRD"))
 (define *irc-server-hostname* (make-parameter "localhost"))
 
+(define *start-time* (current-seconds))
+(define *connection-start-time* (make-parameter #f))
+
 (define *log-ports* (make-parameter (list (current-error-port)
                                           (open-output-file
                                            "big-log"
@@ -53,6 +56,10 @@
 
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
+
+(define (describe-since when)
+  (spelled-out-time (- (current-seconds) when)))
+
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
     (let ((str (apply format format-string args)))
@@ -80,9 +87,13 @@
                (reply "~a was last seen in channel ~a ~a ago, saying \"~a\""
                       (sighting-who   info)
                       (sighting-where info)
-                      (spelled-out-time (- (current-seconds) (sighting-when  info)))
+                      (describe-since (sighting-when  info))
                       (string-join (sighting-words info)))
                (reply "No sign of ~a" (second words)))))]
+      [(uptime)
+       (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
+              (describe-since *start-time*)
+              (describe-since (*connection-start-time*)))]
       [else #f]))
 
   (log "<= ~s" line)
@@ -241,6 +252,9 @@
          server-maker
          (consecutive-failed-connections 0)
          #:retry-on-hangup? (retry-on-hangup? #t))
+
+  (*connection-start-time* (current-seconds))
+
   (when (positive? consecutive-failed-connections)
     (log "~a consecutive-failed-connections"
          consecutive-failed-connections)

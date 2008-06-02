@@ -52,23 +52,25 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                   (lambda (line)
                     (display line op)
                     (display "\r\n" op))
-                  (list
-                   ":freenode-connect!freenode@freenode/bot/connect PRIVMSG upstartbot :\u0001VERSION\u0001"
-                   "foO!"
-                   "PING :localhost."
-                   ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
-                   ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
-                   (format
-                    ":n!n=n@n PRIVMSG #scheme :~a: SOURCE"
-                    *my-nick*)
-                   ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
-                   (format
-                    ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
-                    *my-nick*)
-                   (format
-                    ":n!n=n@n PRIVMSG #scheme :~a: quote"
-                    *my-nick*)
-                   ))
+                  (append
+                   (list
+                    ":freenode-connect!freenode@freenode/bot/connect PRIVMSG upstartbot :\u0001VERSION\u0001"
+                    "foO!"
+                    "PING :localhost."
+                    ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
+                    ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
+                    (format
+                     ":n!n=n@n PRIVMSG #scheme :~a: SOURCE"
+                     *my-nick*)
+                    ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
+                    (format
+                     ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
+                     *my-nick*))
+                   (for/list ((cmd (in-list (list "quote" "uptime"))))
+                     (format
+                      ":n!n=n@n PRIVMSG #scheme :~a: ~a"
+                      *my-nick*
+                      cmd))))
 
           (close-output-port op)))
        ip)

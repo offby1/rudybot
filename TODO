@@ -3,7 +3,7 @@ Features from the old bot worth keeping:
 * "seen"                        done
 * "eval"
 * "quote"                       done
-* "uptime"
+* "uptime"                      done
 * "VERSION" and "SOURCE"        done
 * /msg nickserv ghost, if needed (not sure it's needed)
 
