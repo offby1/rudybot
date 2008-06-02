@@ -66,6 +66,13 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     (format
                      ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
                      *my-nick*))
+                   (list
+                    (format ":n!n=n@n PRIVMSG #scheme :~a: eval ~a"
+                            *my-nick*
+                            '(+ 2 1))
+                    (format ":n!n=n@n PRIVMSG #scheme :~a: eval ~a"
+                            *my-nick*
+                            '(begin (display (+ 2 1)) (newline))))
                    (for/list ((cmd (in-list (list "quote" "uptime"))))
                      (format
                       ":n!n=n@n PRIVMSG #scheme :~a: ~a"
