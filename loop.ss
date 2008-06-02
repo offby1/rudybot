@@ -268,12 +268,15 @@
                       (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
                       inner-words ...
                       (regexp #px"(.*)\u0001$" (list _ trailing )))
-                (log "extended data: ~s ~s"
-                     extended-data-word
-                     (append inner-words
-                             (if (positive? (string-length trailing))
-                                 (list trailing)
-                                 '())))]
+                (note-sighting
+                 (make-sighting
+                  nick
+                  target
+                  (current-seconds)
+                  (format "doing ~a: ~a" extended-data-word
+                          (string-join
+                           (append inner-words (list trailing))))
+                  '()))]
 
                [(list "PRIVMSG"
                       target
@@ -340,13 +343,7 @@
                   (current-seconds)
                   "quitting"
                   (cons first-word rest)))
-                (log "~a quit~a"
-                     nick
-                     (if (zero? (string-length first-word))
-                         ""
-                         (format
-                          ", mumbling \"~a\""
-                          (string-join (cons first-word rest)))))]
+                ]
                [_
                 (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
 

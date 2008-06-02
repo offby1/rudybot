@@ -59,6 +59,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
                     ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
 
+                    ":action!n=No@unaffiliated/clue PRIVMSG #ch :\u0001ACTION does an action!\u0001"
                     ":invite!n=No@unaffiliated/clue INVITE upstartbot :##mircscripts"
                     ":join!n=Aaron@b415.adsl.ecomtel.com.au JOIN :#scheme"
                     ":kick!n=chandler@opendarwin/developer/chandler KICK #scheme lumon :http://www.penny-arcade.com/comic/2003/11/07/"
@@ -72,7 +73,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ":quit!n=adam@yax.org.uk QUIT :Client Quit"
                     ":topic!n=javachat@cpe-74-71-143-65.twcny.res.rr.com TOPIC #emacs :-=[ www.WHAK.com ]=- Make Free/Fun Graphics Online At http://www.ImageGenerator.org =)"
 
-                    ,@(for/list ((action (in-list (list "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
+                    ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
                         (format
                          ":n!n=n@n PRIVMSG #scheme :~a: seen ~a"
                          *my-nick*
