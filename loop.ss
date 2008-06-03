@@ -14,6 +14,7 @@
          (lib "trace.ss")
          (lib "13.ss" "srfi")
          (lib "14.ss" "srfi")
+         (planet "macro.ss" ("schematics" "macro.plt"))
          (planet "numspell.ss" ("neil" "numspell.plt"))
          (planet "test.ss"    ("schematics" "schemeunit.plt" ))
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
@@ -21,8 +22,8 @@
 
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
-(define *my-nick* "upstartbot")
-(define *nickserv-password* (make-parameter "SEKRIT PASSWIRD"))
+(define *my-nick* "rudybot")
+(define *nickserv-password* (make-parameter "eezahpaiohpubahb"))
 (define *irc-server-hostname* (make-parameter "localhost"))
 
 (define *start-time* (current-seconds))
@@ -91,7 +92,7 @@
            (if info
                (reply "~a was last seen ~ain/on ~a ~a ago~a"
                       (sighting-who   info)
-                      (or (string-append (sighting-action? info) " ") "")
+                      (aif it (sighting-action? info) (string-append it " ") "")
                       (sighting-where info)
                       (describe-since (sighting-when  info))
                       (if (null? (sighting-words info))
@@ -199,8 +200,8 @@
                 (when (and (equal? nick "NickServ")
                            (equal? id   "NickServ")
                            (equal? host "services."))
-                  (log "Gotta register my nick.")
-                  (pm "NickServ" "identify ~a" (*nickserv-password*)))]
+                 (log "Gotta register my nick.")
+                 (pm "NickServ" "identify ~a" (*nickserv-password*)))]
                [(list "KICK" target victim mumblage ...)
                 (note-sighting
                  (make-sighting

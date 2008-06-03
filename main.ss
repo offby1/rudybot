@@ -178,7 +178,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (define (freenode-main . args)
   (log "Main starting.")
   (parameterize ((*irc-server-hostname* "irc.freenode.org")
-                 (*mute-privmsgs?* #t))
+                 (*mute-privmsgs?* #f))
     (connect-and-run real-server)))
 
 (define (flaky-main . args)
@@ -197,5 +197,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-random-server
      #:retry-on-hangup? #f)))
 
-(define main preload-main)
+(define main freenode-main)
 (provide (all-defined-out))
