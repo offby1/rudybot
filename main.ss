@@ -48,6 +48,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                           (make-pipe)))
               (thread
                (lambda ()
+                 (define (c str)
+                   (format ":n!n@n PRIVMSG #c :~a: ~a"
+                           *my-nick*
+                           str))
                  (for-each
                   (lambda (line)
                     (display line op)
@@ -74,36 +78,28 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ":quit!n=adam@yax.org.uk QUIT :Client Quit"
                     ":topic!n=javachat@cpe-74-71-143-65.twcny.res.rr.com TOPIC #emacs :-=[ www.WHAK.com ]=- Make Free/Fun Graphics Online At http://www.ImageGenerator.org =)"
 
-                    ,(format ":n!n@n PRIVMSG #c :~a: quote"       *my-nick*)
+                    ,(c "quote")
                     ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" *my-nick*)
 
                     ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
-                        (format
-                         ":n!n=n@n PRIVMSG #scheme :~a: seen ~a"
-                         *my-nick*
-                         action))
+                        (c (format "seen ~a" action)))
 
-                    ,(format
-                      ":n!n=n@n PRIVMSG #scheme :~a: SOURCE"
-                      *my-nick*)
+                    ,(c "SOURCE")
                     ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
                     ,(format
                       ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
                       *my-nick*)
 
-                    ,(format ":n!n=n@n PRIVMSG #scheme :~a: eval ~a"
-                             *my-nick*
-                             '(+ 2 1))
-                    ,(format ":n!n=n@n PRIVMSG #scheme :~a: eval ~a"
-                             *my-nick*
-                             '(begin (display (+ 2 1)) (newline)))
-                    ,@(for/list ((cmd (in-list (list "quote" "uptime"))))
-                        (format
-                         ":n!n=n@n PRIVMSG #scheme :~a: ~a"
-                         *my-nick*
-                         cmd))))
+                    ,@(for/list ((expr (in-list '((+ 2 1)
+                                                  (begin (display (+ 2 1)) (newline))
+                                                  (let loop ()
+                                                    (printf "Yaa!!")
+                                                    (loop))))))
+                        (c (format "eval ~s" expr)))
 
-          (close-output-port op)))
+                    ,@(map c (list "quote" "uptime"))))
+
+                 (close-output-port op)))
        ip)
      op)))
 
@@ -201,5 +197,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-random-server
      #:retry-on-hangup? #f)))
 
-(define main freenode-main)
+(define main preload-main)
 (provide (all-defined-out))
