@@ -173,8 +173,8 @@
          (let ((stdout (sandbox-get-stdout s))
                (stderr (sandbox-get-stderr s)))
            (when (and (string? stdout)
-                      (positive? (string-length stdout)))
-             (reply "; stdout: ~s" stdout))
+                         (positive? (string-length stdout)))
+                (reply "; stdout: ~s" stdout))
            (when (and (string? stderr)
                       (positive? (string-length stderr)))
              (reply  "; stderr: ~s" stderr))
@@ -262,8 +262,7 @@
                   target
                   (current-seconds)
                   (format "joining")
-                  '()))
-                (log "~a joined ~a" nick target)]
+                  '()))]
                [(list "NICK" (colon new-nick))
                 (log "~a wants to be known as ~a" nick new-nick)]
                [(list "PART" target (colon first-word) rest ...)
