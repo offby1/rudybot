@@ -80,12 +80,20 @@
                             (string-join (sighting-words info)))))
         (format "No sign of ~a" n))))
 
+;; Lines much longer than this will cause the server to kick us for
+;; flooding.
+(define *max-output-line* 500)
+
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
     (let ((str (apply format format-string args)))
-      (log "=> ~s" str)
-      (when for-real?
-        (fprintf op "~a~%" str))))
+      (let ((str (if (> (string-length str) *max-output-line*)
+                     (string-append (substring str 0 (- *max-output-line* 4)) " ...")
+                     str)))
+
+        (log "=> ~s" str)
+        (when for-real?
+          (fprintf op "~a~%" str)))))
 
   (define (pm #:notice? [notice? #f] target fmt . args)
     (out #:for-real? (not (*mute-privmsgs?*))

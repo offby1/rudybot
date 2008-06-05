@@ -94,7 +94,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                                                   (begin (display (+ 2 1)) (newline))
                                                   (let loop ()
                                                     (printf "Yaa!!")
-                                                    (loop))))))
+                                                    (loop))
+                                                  (require (lib "1.ss" "srfi"))
+                                                  (make-list 100000)
+                                                  (apply values (make-list 100000))))))
                         (c (format "eval ~s" expr)))
 
                     ,@(map c (list "quote" "uptime"))))
