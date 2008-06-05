@@ -168,17 +168,17 @@
                              "; Value: ~s"
                              (car values)))
                           (loop (cdr values)
-                                (add1 displayed))))))))))
+                                (add1 displayed)))))))))
 
-         (let ((stdout (sandbox-get-stdout s))
-               (stderr (sandbox-get-stderr s)))
-           (when (and (string? stdout)
-                         (positive? (string-length stdout)))
-                (reply "; stdout: ~s" stdout))
-           (when (and (string? stderr)
-                      (positive? (string-length stderr)))
-             (reply  "; stderr: ~s" stderr))
-           ))]
+           (let ((stdout (sandbox-get-stdout s))
+                 (stderr (sandbox-get-stderr s)))
+             (when (and (string? stdout)
+                        (positive? (string-length stdout)))
+               (reply "; stdout: ~s" stdout))
+             (when (and (string? stderr)
+                        (positive? (string-length stderr)))
+               (reply  "; stderr: ~s" stderr)))))]
+
       [else #f]))
 
   (log "<= ~s" line)
