@@ -39,7 +39,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     (let ((the-string (get-output-string string-port)))
       (call-with-output-file (*sightings-database-file-name*)
         (lambda (op)
-          (display the-string op))
+          (parameterize-break #f
+            (display the-string op)))
         #:exists 'truncate/replace))))
 
 (provide/contract
