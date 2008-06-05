@@ -52,6 +52,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                    (format ":n!n@n PRIVMSG #c :~a: ~a"
                            *my-nick*
                            str))
+                 (define (p str)
+                   (format ":n!n@n PRIVMSG ~a :~a"
+                           *my-nick*
+                           str))
                  (for-each
                   (lambda (line)
                     (display line op)
@@ -90,15 +94,19 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                       ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
                       *my-nick*)
 
-                    ,@(for/list ((expr (in-list '((+ 2 1)
-                                                  (begin (display (+ 2 1)) (newline))
-                                                  (let loop ()
-                                                    (printf "Yaa!!")
-                                                    (loop))
-                                                  (require (lib "1.ss" "srfi"))
-                                                  (make-list 100000)
-                                                  (apply values (make-list 100000))))))
-                        (c (format "eval ~s" expr)))
+                    ,@(apply
+                       append
+                       (for/list ((expr (in-list '((+ 2 1)
+                                                   (begin (display (+ 2 1)) (newline))
+                                                   (let loop ()
+                                                     (printf "Yaa!!")
+                                                     (loop))
+                                                   (require (lib "1.ss" "srfi"))
+                                                   (make-list 100000)
+                                                   (apply values (make-list 100000))))))
+                         (list
+                          (c (format "eval ~s" expr))
+                          (p (format "eval ~s" expr)))))
 
                     ,@(map c (list "quote" "uptime"))))
 

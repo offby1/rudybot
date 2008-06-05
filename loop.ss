@@ -101,16 +101,19 @@
                       (if notice? "NOTICE" "PRIVMSG")
                       target (apply format fmt args))))
 
-  (define (do-cmd response-target response-prefix words)
+  (define (do-cmd response-target for-whom words)
     (define (reply fmt . args)
-      (pm response-target "~a" (string-append response-prefix (apply format fmt args))))
+      (let ((response-prefix (if (equal? response-target for-whom)
+                                 ""
+                                 (format "~a: " for-whom))))
+        (pm response-target "~a" (string-append response-prefix (apply format fmt args)))))
     (log "Doing ~s" words)
     (case (string->symbol (string-downcase (first words)))
       [(quote)
        (let ((q (one-quote)))
          ;; special case: jordanb doesn't want quotes prefixed with
          ;; his nick.
-         (match response-prefix
+         (match for-whom
            [(regexp #rx"^jordanb")
             (pm response-target "~a" q)]
            [_ (reply q)])
@@ -125,7 +128,7 @@
               (describe-since *start-time*)
               (describe-since (*connection-start-time*)))]
       [(eval)
-       (let ((s (get-sandbox-by-name *sandboxes* response-target)))
+       (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
          (with-handlers
              (
               ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
@@ -347,11 +350,11 @@
                               nick
                               (string-join (cons first-word rest)))
 
-                         (do-cmd nick "" (cons first-word rest)))
+                         (do-cmd nick nick (cons first-word rest)))
                        (match first-word
                          [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
                           (when (equal? addressee *my-nick*)
-                            (do-cmd target (format "~a: " nick) rest))]
+                            (do-cmd target nick rest))]
                          [_ #f]))])
                 ]
 
