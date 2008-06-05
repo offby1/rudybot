@@ -70,8 +70,12 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ":notice!NickServ@services. NOTICE rudybot :This nickname is registered. Please choose a different nickname, or identify via \u0002/msg NickServ identify <password>\u0002."
                     ":notice2!i=christel@freenode/staff/exherbo.christel NOTICE $* :[Global Notice] Aaaaand we make contact! A small step for manki..oh wai-! Sorry about the delay there and thank you for your patience. Services are now back up!"
                     ":part!n=Akaleb@bl6-112-187.dsl.telepac.pt PART #emacs :\"Changed major mode\""
+                    ":quit!n=adam@yax.org.uk PRIVMSG #ch :This is my last utterance before quitting."
                     ":quit!n=adam@yax.org.uk QUIT :Client Quit"
                     ":topic!n=javachat@cpe-74-71-143-65.twcny.res.rr.com TOPIC #emacs :-=[ www.WHAK.com ]=- Make Free/Fun Graphics Online At http://www.ImageGenerator.org =)"
+
+                    ,(format ":n!n@n PRIVMSG #c :~a: quote"       *my-nick*)
+                    ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" *my-nick*)
 
                     ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
                         (format

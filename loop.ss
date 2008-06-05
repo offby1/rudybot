@@ -66,6 +66,20 @@
 (define (describe-since when)
   (spelled-out-time (- (current-seconds) when)))
 
+(define (nick->sighting-string n)
+  (let ((info (lookup-sighting n)))
+    (if info
+        (format "~a was last seen ~ain/on ~a ~a ago~a"
+                (sighting-who   info)
+                (aif it (sighting-action? info) (string-append it " ") "")
+                (sighting-where info)
+                (describe-since (sighting-when  info))
+                (if (null? (sighting-words info))
+                    ""
+                    (format ", saying \"~a\""
+                            (string-join (sighting-words info)))))
+        (format "No sign of ~a" n))))
+
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
     (let ((str (apply format format-string args)))
@@ -84,22 +98,20 @@
       (pm response-target "~a" (string-append response-prefix (apply format fmt args))))
     (log "Doing ~s" words)
     (case (string->symbol (string-downcase (first words)))
-      [(quote)  (reply (one-quote))]
+      [(quote)
+       (let ((q (one-quote)))
+         ;; special case: jordanb doesn't want quotes prefixed with
+         ;; his nick.
+         (match response-prefix
+           [(regexp #rx"^jordanb")
+            (pm response-target "~a" q)]
+           [_ (reply q)])
+         )]
       [(source) (reply "$HeadURL$")]
       [(seen)
        (when (not (null? (cdr words)))
-         (let ((info (lookup-sighting (second words))))
-           (if info
-               (reply "~a was last seen ~ain/on ~a ~a ago~a"
-                      (sighting-who   info)
-                      (aif it (sighting-action? info) (string-append it " ") "")
-                      (sighting-where info)
-                      (describe-since (sighting-when  info))
-                      (if (null? (sighting-words info))
-                           ""
-                           (format ", saying \"~a\""
-                                   (string-join (sighting-words info)))))
-               (reply "No sign of ~a" (second words)))))]
+         (reply (nick->sighting-string (second words)))
+         )]
       [(uptime)
        (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
               (describe-since *start-time*)
@@ -342,8 +354,8 @@
                   nick
                   host
                   (current-seconds)
-                  "quitting"
-                  (cons first-word rest)))
+                  "quitting; previously"
+                  (append (cons first-word rest) (list (nick->sighting-string nick)))))
                 ]
                [_
                 (log "~a said ~s, which I don't understand" nick (cdr toks))]))]

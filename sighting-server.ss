@@ -7,7 +7,9 @@
 ;; (http://pre.plt-scheme.org/docs/html/web-server/servlet.html) that
 ;; displays the sightings database in a simple web page.
 
-;; ln -s sighting-server.ss sighting.ss sightings.db /usr/local/src/plt/collects/web-server/default-web-root/servlets/
+;; for i in sighting-server.ss sighting.ss sightings.db; do ln -s $i
+;; /usr/local/src/plt/collects/web-server/default-web-root/servlets/; done
+;;
 ;; http://server:8080/servlets/sighting-server.ss
 #lang scheme
 
