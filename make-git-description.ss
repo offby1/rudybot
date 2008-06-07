@@ -1,3 +1,4 @@
+#!/usr/bin/env mzscheme
 #lang scheme
 (define *command* (list "git-describe" "--tag"))
 
