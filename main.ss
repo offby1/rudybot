@@ -84,7 +84,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
                     ,(c "quote")
                     ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" *my-nick*)
-
+                    ,(format ":n!n@n PRIVMSG #c :~a:~a" *my-nick* "lookboynospaces")
+                    ,(format ":n!n@n PRIVMSG #c :~a:" *my-nick* )
                     ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
                         (c (format "seen ~a" action)))
 
@@ -208,5 +209,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-random-server
      #:retry-on-hangup? #f)))
 
-(define main preload-main)
+(define main freenode-main)
 (provide (all-defined-out))

@@ -352,9 +352,9 @@
 
                          (do-cmd nick nick (cons first-word rest)))
                        (match first-word
-                         [(regexp #px"^([[:alnum:]]+)[,:]" (list _ addressee))
+                         [(regexp #px"^([[:alnum:]]+)[,:](.*)" (list _ addressee garbage))
                           (when (equal? addressee *my-nick*)
-                            (do-cmd target nick rest))]
+                            (do-cmd target nick (cons garbage rest)))]
                          [_ #f]))])
                 ]
 
