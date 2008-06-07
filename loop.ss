@@ -122,7 +122,7 @@
             (pm response-target "~a" q)]
            [_ (reply q)])
          )]
-      [(source) (reply "$HeadURL$")]
+      [(source) (reply "http://rudybot.ath.cx:1234")]
       [(seen)
        (when (not (null? (cdr words)))
          (reply (nick->sighting-string (second words)))
