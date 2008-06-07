@@ -18,12 +18,19 @@
 
 (controller 'wait)
 
-(for-each (lambda (ip)
-            (for ((line (in-lines ip)))
-              (printf "~a: One line: ~s~%" ip line)))
-          (list stderr-ip
-                stdout-ip))
-
 (unless (eq? 'done-ok (controller 'status))
+  (for ((line (in-lines stderr-ip)))
+    (printf "~a~%" line))
   (error 'make-git-description
          "Bummer: ~s returned exit code ~a" *command*  (controller 'status)))
+
+(define *description-string* (read-line stdout-ip))
+(define *file-name* "version.ss")
+(when (or (not (file-exists? *file-name*))
+        (not (equal? *description-string* (call-with-input-file *file-name* read))))
+  (call-with-output-file *file-name* (lambda (op)
+                                       (write *description-string* op)
+                                       (newline op))
+                         #:exists 'truncate/replace)
+  (fprintf (current-error-port) "Created or updated ~a with ~s~%" *file-name* *description-string*))
+
