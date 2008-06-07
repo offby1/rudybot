@@ -21,12 +21,22 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
    (*sightings-database-directory-name*)
    (canonicalize-nick n)))
 
+(define (safe-take lst pos)
+  (let ((pos (min pos (length lst))))
+    (take lst pos)))
+
 (define (lookup-sightings who)
   (let ((dirname (nick->dirpath who)))
     (if (directory-exists? dirname)
-        (map (lambda (fn)
-               (call-with-input-file (build-path dirname fn) read))
-             (directory-list dirname))
+        (safe-take
+         (sort
+          (map (lambda (fn)
+                 (call-with-input-file (build-path dirname fn) read))
+               (directory-list dirname))
+          (lambda (s1 s2)
+            (> (sighting-when s1)
+               (sighting-when s2))))
+         2)
         '())))
 
 (define (note-sighting s)
