@@ -1,6 +1,5 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-#$Id: tinyurl.ss 144 2007-11-19 17:52:26Z eric.hanchrow $
 exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
