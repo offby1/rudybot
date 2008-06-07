@@ -332,7 +332,17 @@
                       (system-type 'os)))]
 
                [(list "PRIVMSG" target (colon first-word) rest ...)
-                (note-sighting (make-sighting nick target (current-seconds) #f (cons first-word rest)))
+
+                ;; fledermaus points out that people may be surprised
+                ;; to find "private" messages -- those where "target"
+                ;; is *my-nick* -- recorded in the sightings log.
+                (note-sighting
+                 (make-sighting
+                  nick
+                  target
+                  (current-seconds)
+                  #f
+                  (cons first-word rest)))
                 ;; look for long URLs to tiny-ify
                 (for ((word (in-list (cons first-word rest))))
                   (match word
