@@ -6,21 +6,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 
-(define *sightings-database-file-name* (make-parameter "sightings.db"))
+(define *sightings-database-directory-name* (make-parameter "sightings.db"))
 
 (define-struct sighting (who where when action? words) #:prefab)
-
-(define *sightings* (make-parameter #f))
-
-(define (maybe-load!)
-  (unless (*sightings*)
-    (*sightings*
-     (with-handlers
-         ([exn:fail:filesystem?
-           (lambda (e)
-             (make-hash))])
-       (printf "Loading from ~s~%" (*sightings-database-file-name*))
-       (hash-copy (call-with-input-file (*sightings-database-file-name*) read))))))
 
 (define (canonicalize-nick n)
   (match n
@@ -28,32 +16,32 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
      base]
     [_ n]))
 
-(define (lookup-sighting who)
-  (maybe-load!)
-  (hash-ref
-   (*sightings*)
-   (canonicalize-nick who)
-   #f))
+(define (nick->dirpath n)
+  (build-path
+   (*sightings-database-directory-name*)
+   (canonicalize-nick n)))
+
+(define (lookup-sightings who)
+  (let ((dirname (nick->dirpath who)))
+    (if (directory-exists? dirname)
+        (map (lambda (fn)
+               (call-with-input-file (build-path dirname fn) read))
+             (directory-list dirname))
+        '())))
 
 (define (note-sighting s)
-  (maybe-load!)
-  (hash-set!
-   (*sightings*)
-   (canonicalize-nick (sighting-who s))
-   s)
-  ;; Do the writing in two steps -- first, write the hash to a string,
-  ;; and _then_ write the string to the file.  This seems pointless,
-  ;; but it lets us spend far less time with an open file handle, thus
-  ;; reducing (but not eliminating) the risk of corrupting the file if
-  ;; the process dies in the middle of writing it.
-  (let ((string-port (open-output-string)))
-    (write (*sightings*) string-port)
-    (let ((the-string (get-output-string string-port)))
-      (parameterize-break #f
-        (call-with-output-file (*sightings-database-file-name*)
-          (lambda (op)
-            (display the-string op))
-          #:exists 'truncate/replace)))))
+  (let ((dirname (nick->dirpath (sighting-who s))))
+
+    (make-directory* dirname)
+
+    (let ( ;; not thread-safe
+          (new-name (build-path dirname (number->string (length (directory-list dirname))))))
+
+      (call-with-output-file
+          new-name
+        (lambda (op)
+          (write s op)
+          (newline op))))))
 
 (provide/contract
  [struct sighting ((who string?)
@@ -62,6 +50,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                    (action? (or/c string? not))
                    (words (listof string?)))]
 
- [lookup-sighting (-> string? (or/c sighting? not))]
+ [lookup-sightings (-> string? (listof sighting?))]
  [note-sighting (-> sighting? void?)]
  [canonicalize-nick (-> string? string?)])

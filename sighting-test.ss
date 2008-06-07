@@ -10,7 +10,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "util.ss"    ("schematics" "schemeunit.plt" ))
          "sighting.ss")
 
-(require/expose "sighting.ss" (*sightings-database-file-name* *sightings*))
+(require/expose "sighting.ss" (*sightings-database-directory-name*))
 
 
 (define sighting-tests
@@ -21,12 +21,11 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     "yow"
     (let ((s (make-sighting "1" "2" 3 #f (list "hey" "you"))))
       (note-sighting s)
-      (check-equal? s (lookup-sighting "1"))
-      (check-false (lookup-sighting "snorkuplexity"))))
+      (check-not-false (member s (lookup-sightings "1")))
+      (check-equal? (lookup-sightings "snorkuplexity") '())))
    (test-case
     "persistent"
-    (parameterize ((*sightings-database-file-name* "persistent-test.db")
-                   (*sightings* #f))
+    (parameterize ((*sightings-database-directory-name* "persistent-test.db"))
       (let ((stuff (map make-sighting
                         (list "fred" "paul" "mary" "fred_")
                         (list "2" "3" "4" "5")
@@ -36,20 +35,20 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                               (list "I" "am" "NOT" "dead")
                               (list "I" "am" "Jesus'" "mom")
                               (list "I'm" "fred" "with" "a" "trailing" "underscore")))))
-        (let ((writing? (not (file-exists? (*sightings-database-file-name*)))))
+        (let ((writing? (not (directory-exists? (*sightings-database-directory-name*)))))
           ;; if the db doesn't exist, note some stuff.
           ;; if the db does exist, check for what we noted.
           (if writing?
             (printf "Putting test data into ~a; run me again and I'll check the contents.~%"
-                    (*sightings-database-file-name*))
+                    (*sightings-database-directory-name*))
             (printf "Reading test data from ~a~%"
-                    (*sightings-database-file-name*)))
+                    (*sightings-database-directory-name*)))
 
           (for ((s (in-list stuff)))
 
             (if writing?
                 (note-sighting s)
-                (check-equal? (lookup-sighting (canonicalize-nick (sighting-who s))) s)))))))))
+                (check-not-false (member s (lookup-sightings (canonicalize-nick (sighting-who s)))))))))))))
 
 (define (main . args)
   (exit (test/text-ui sighting-tests 'verbose)))
