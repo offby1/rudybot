@@ -29,6 +29,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                    (close-output-port op))
                   ((not (eof-object? datum))
                    (display datum op)
+                   (display #\return op)
                    (newline op)
                    (loop))
                   (else
@@ -112,8 +113,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ,@(map c (list "quote" "uptime"))))
 
                  (close-output-port op)))
-       ip)
-     op)))
+              ip)
+            op)))
 
 (define (make-log-replaying-server log-file-name)
   (lambda ()
@@ -127,6 +128,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                (match line
                  [(regexp #px"^<= (\".*\")" (list _ datum))
                   (display (read (open-input-string datum)) op)
+                  (display #\return op)
                   (newline op)]
                  [_ #f]))
              (close-output-port op)))))
@@ -167,9 +169,9 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 
 (define (replay-main . args)
-  (log "Main starting.")
   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
                  (*log-ports* (list (current-error-port))))
+    (log "Main starting.")
     (connect-and-run
      (make-log-replaying-server "big-log")
      #:retry-on-hangup? #f)))
@@ -209,5 +211,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-random-server
      #:retry-on-hangup? #f)))
 
-(define main preload-main)
+(define main replay-main)
 (provide (all-defined-out))
