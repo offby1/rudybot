@@ -67,18 +67,22 @@
   (spelled-out-time (- (current-seconds) when)))
 
 (define (nick->sighting-string n)
-  (let ((info (lookup-sighting n)))
-    (if info
-        (format "~a was last seen ~ain/on ~a ~a ago~a"
-                (sighting-who   info)
-                (aif it (sighting-action? info) (string-append it " ") "")
-                (sighting-where info)
-                (describe-since (sighting-when  info))
-                (if (null? (sighting-words info))
-                    ""
-                    (format ", saying \"~a\""
-                            (string-join (sighting-words info)))))
-        (format "No sign of ~a" n))))
+  (let ((ss (lookup-sightings n)))
+    (if (null? ss)
+        (format "No sign of ~a" n)
+        (string-join
+         (map (lambda (info)
+                (format "~a was seen ~ain/on ~a ~a ago~a"
+                        (sighting-who   info)
+                        (aif it (sighting-action? info) (string-append it " ") "")
+                        (sighting-where info)
+                        (describe-since (sighting-when  info))
+                        (if (null? (sighting-words info))
+                            ""
+                            (format ", saying \"~a\""
+                                    (string-join (sighting-words info))))))
+              ss)
+         "; "))))
 
 ;; Lines much longer than this will cause the server to kick us for
 ;; flooding.
@@ -368,8 +372,8 @@
                   nick
                   host
                   (current-seconds)
-                  "quitting; previously"
-                  (append (cons first-word rest) (list (nick->sighting-string nick)))))
+                  "quitting"
+                  '()))
                 ]
                [_
                 (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
