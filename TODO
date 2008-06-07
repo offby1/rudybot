@@ -1,15 +1,16 @@
-Features from the old bot worth keeping:
+An idea for the Sightings feature:
 
-* "seen"                        done
-* "eval"                        done
-* "quote"                       done
-* "uptime"                      done
-* "VERSION" and "SOURCE"        done
-* /msg nickserv ghost, if needed (not sure it's needed)
+Rather than keeping the info in a big hash table, keep it in a
+directory full of little files.  Each file's name is a nick; its
+contents are the last thing they said (the whole line, as received
+from the server).  Maybe the last _two_ things they said, so that when
+they quit, I can report both the quit message, and the previous
+utterance.  And timestamps on each line -- either in the file, or just
+the metadata on the file.
 
-Features I am NOT keeping:
+And rather than using the nick exactly as seen from the server,
+"canonicalize" it, for two purposes:
 
-* spewing a funny quote when it doesn't otherwise recognize what was said to it
-* spewing news headlines, etc., every so often when the channel has been silent
-* loosening his collar with his index finger.  It was funny the first 2,000 times
-* stuff specific to Jan`
+1) to ensure it is a valid file name; and
+2) to remove trailing punctuation like ` _, so that a nick like
+"jordanb`" gets saved under "jordanb"

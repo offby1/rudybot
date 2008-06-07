@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-#$Id$
+#$Id: sighting-test.ss 5606 2008-05-28 05:05:44Z erich $
 exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 #lang scheme
@@ -28,13 +28,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     (parameterize ((*sightings-database-file-name* "persistent-test.db")
                    (*sightings* #f))
       (let ((stuff (map make-sighting
-                        (list "fred" "paul" "mary")
-                        (list "2" "3" "4")
-                        (list 9 8 7)
-                        (list "QUIT" #f #f)
+                        (list "fred" "paul" "mary" "fred_")
+                        (list "2" "3" "4" "5")
+                        (list 9 8 7 6)
+                        (list "QUIT" #f #f "SNORK")
                         (list (list "znork?")
                               (list "I" "am" "NOT" "dead")
-                              (list "I" "am" "Jesus'" "mom")))))
+                              (list "I" "am" "Jesus'" "mom")
+                              (list "I'm" "fred" "with" "a" "trailing" "underscore")))))
         (let ((writing? (not (file-exists? (*sightings-database-file-name*)))))
           ;; if the db doesn't exist, note some stuff.
           ;; if the db does exist, check for what we noted.
@@ -48,7 +49,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
             (if writing?
                 (note-sighting s)
-                (check-equal? (lookup-sighting (sighting-who s)) s)))))))))
+                (check-equal? (lookup-sighting (canonicalize-nick (sighting-who s))) s)))))))))
 
 (define (main . args)
   (exit (test/text-ui sighting-tests 'verbose)))

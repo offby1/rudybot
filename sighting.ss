@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-#$Id$
+#$Id: sighting.ss 5642 2008-06-05 03:26:22Z erich $
 exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
@@ -22,13 +22,25 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
        (printf "Loading from ~s~%" (*sightings-database-file-name*))
        (hash-copy (call-with-input-file (*sightings-database-file-name*) read))))))
 
+(define (canonicalize-nick n)
+  (match n
+    [(regexp #px"(.*?)([`_]*)$" (list _ base suffixes))
+     base]
+    [_ n]))
+
 (define (lookup-sighting who)
   (maybe-load!)
-  (hash-ref (*sightings*) who #f))
+  (hash-ref
+   (*sightings*)
+   (canonicalize-nick who)
+   #f))
 
 (define (note-sighting s)
   (maybe-load!)
-  (hash-set! (*sightings*) (sighting-who s) s)
+  (hash-set!
+   (*sightings*)
+   (canonicalize-nick (sighting-who s))
+   s)
   ;; Do the writing in two steps -- first, write the hash to a string,
   ;; and _then_ write the string to the file.  This seems pointless,
   ;; but it lets us spend far less time with an open file handle, thus
@@ -51,4 +63,5 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                    (words (listof string?)))]
 
  [lookup-sighting (-> string? (or/c sighting? not))]
- [note-sighting (-> sighting? void?)])
+ [note-sighting (-> sighting? void?)]
+ [canonicalize-nick (-> string? string?)])
