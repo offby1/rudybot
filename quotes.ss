@@ -1,6 +1,5 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-#$Id$
 exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 |#
 

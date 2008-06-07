@@ -1,6 +1,5 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-#$Id$
 exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 |#
 
@@ -83,6 +82,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ":quit!n=adam@yax.org.uk QUIT :Client Quit"
                     ":topic!n=javachat@cpe-74-71-143-65.twcny.res.rr.com TOPIC #emacs :-=[ www.WHAK.com ]=- Make Free/Fun Graphics Online At http://www.ImageGenerator.org =)"
 
+                    ,(c "version")
                     ,(c "quote")
                     ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" *my-nick*)
                     ,(format ":n!n@n PRIVMSG #c :~a:~a" *my-nick* "lookboynospaces")
@@ -211,5 +211,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-random-server
      #:retry-on-hangup? #f)))
 
-(define main localhost-main)
+(define main preload-main)
 (provide (all-defined-out))

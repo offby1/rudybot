@@ -1,5 +1,4 @@
 #| Hey Emacs, this is -*-scheme-*- code!
-#$Id$
 |#
 #lang scheme
 
@@ -87,6 +86,8 @@
 ;; Lines much longer than this will cause the server to kick us for
 ;; flooding.
 (define *max-output-line* 500)
+
+(define *version-string* (include "version.ss"))
 
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
@@ -194,6 +195,8 @@
                         (positive? (string-length stderr)))
                (reply  "; stderr: ~s" stderr)))))]
 
+      [(version)
+       (reply *version-string*)]
       [else #f]))
 
   (log "<= ~s" line)
@@ -315,19 +318,7 @@
                       nick
                       "\u0001VERSION ~a (offby1@blarg.net):v4.~a:PLT scheme version ~a on ~a\0001"
                       *my-nick*
-
-                      ;; *sigh*.  The version string with
-                      ;; which we reply to CTCP can't have a
-                      ;; colon, but of course Subversion's
-                      ;; keyword expansion inserted a colon
-                      ;; into *client-version*, so we have to
-                      ;; parse out the numbers.
-
-                      (match "$Rev$"
-                        [(regexp #rx"Revision: (.*)" (list _ rev))
-                         rev]
-                        [_ "?"])
-
+                      *version-string*
                       (version)
                       (system-type 'os)))]
 
