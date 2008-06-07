@@ -354,7 +354,11 @@
                        (match first-word
                          [(regexp #px"^([[:alnum:]]+)[,:](.*)" (list _ addressee garbage))
                           (when (equal? addressee *my-nick*)
-                            (do-cmd target nick (cons garbage rest)))]
+                            (let ((words  (if (positive? (string-length garbage))
+                                              (cons garbage rest)
+                                              rest)))
+                              (when (not (null? words))
+                                (do-cmd target nick words))))]
                          [_ #f]))])
                 ]
 
