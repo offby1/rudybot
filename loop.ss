@@ -201,202 +201,158 @@
 
   (log "<= ~s" line)
   (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
-    (when (*nickserv-password*)
-      (match (car toks)
-        ["ERROR"
-         (log "Uh oh!")]
+    (match (car toks)
+      ["ERROR"
+       (log "Uh oh!")]
 
-        ["NOTICE"
-         (when (eq? *authentication-state* 'havent-even-tried)
-           (out "NICK ~a" *my-nick*)
-           (out "USER luser unknown-host localhost :duh, version 0")
-           (set! *authentication-state* 'tried))]
+      ["NOTICE"
+       (when (eq? *authentication-state* 'havent-even-tried)
+         (out "NICK ~a" *my-nick*)
+         ;; RFC 1459 suggests that most of this data is ignored.
+         (out "USER luser unknown-host localhost :duh, version ~a"
+              *version-string*)
+         (set! *authentication-state* 'tried))]
 
-        ["PING"
-         (out "PONG ~a" (cadr toks))]
+      ["PING"
+       (out "PONG ~a" (cadr toks))]
 
-        [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
-         ;; update the "seen" database
-         (if (equal? nick *my-nick*)
-             (log "I seem to have said ~s" (cdr toks))
-             (match (cdr toks)
-               [(list
-                 "NOTICE"
-                 my-nick
-                 ":This"  "nickname" "is" "registered."
-                 ;; not sure where I got this from
-                 ;;":If" "this" "is" "your" "nickname,"
-                 yaddayaddayadda ...)
-                (when (and (equal? nick "NickServ")
-                           (equal? id   "NickServ")
-                           (equal? host "services."))
-                 (log "Gotta register my nick.")
-                 (pm "NickServ" "identify ~a" (*nickserv-password*)))]
-               [(list "KICK" target victim mumblage ...)
-                (note-sighting
-                 (make-sighting
-                  nick
-                  target
-                  (current-seconds)
-                  (format "kicking ~a" victim)
-                  mumblage))]
-               [(list "MODE" target mode-data ...)
-                (note-sighting
-                 (make-sighting
-                  nick
-                  target
-                  (current-seconds)
-                  (format "changing the mode to '~a'" mode-data) '()))]
-               [(list "INVITE" lucky-recipient (colon party) further ...)
-                (note-sighting
-                 (make-sighting
-                  nick
-                  host
-                  (current-seconds)
-                  (format "inviting ~a to ~a" lucky-recipient party)
-                  further))]
-               [(list "NICK" (colon first-word) rest ...)
-                (note-sighting
-                 (make-sighting
-                  nick
-                  host
-                  (current-seconds)
-                  (format "changing their nick to ~a" first-word)
-                  '()))]
-               [(list "TOPIC" target (colon first-word) rest ...)
-                (note-sighting
-                 (make-sighting
-                  nick
-                  target
-                  (current-seconds)
-                  (format
-                   "changing the channel's topic to '~a'"
-                   (string-join (cons first-word rest)))
-                  '()))]
-               [(list "JOIN" target)
-                (note-sighting
-                 (make-sighting
-                  nick
-                  target
-                  (current-seconds)
-                  (format "joining")
-                  '()))]
-               [(list "NICK" (colon new-nick))
-                (log "~a wants to be known as ~a" nick new-nick)]
-               [(list "PART" target (colon first-word) rest ...)
-                (note-sighting
-                 (make-sighting
-                  nick
-                  target
-                  (current-seconds)
-                  "leaving the channel"
-                  (cons first-word rest)))
-                ]
+      [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
+       (define (espy target action words)
+         (note-sighting
+          (make-sighting
+           nick
+           target
+           (current-seconds)
+           action
+           words)))
+       (if (equal? nick *my-nick*)
+           (log "I seem to have said ~s" (cdr toks))
+           (match (cdr toks)
+             [(list
+               "NOTICE"
+               my-nick
+               ":This"  "nickname" "is" "registered."
+               yaddayaddayadda ...)
+              (when (and (*nickserv-password*)
+                         (equal? nick "NickServ")
+                         (equal? id   "NickServ")
+                         (equal? host "services."))
+                (log "Gotta register my nick.")
+                (pm "NickServ" "identify ~a" (*nickserv-password*)))]
+             [(list "KICK" target victim mumblage ...)
+              (espy target (format "kicking ~a" victim) mumblage)]
+             [(list "MODE" target mode-data ...)
+              (espy target (format "changing the mode to '~a'" mode-data) '())]
+             [(list "INVITE" lucky-recipient (colon party) further ...)
+              (espy host (format "inviting ~a to ~a" lucky-recipient party)
+                    further)]
+             [(list "NICK" (colon first-word) rest ...)
+              (espy host (format "changing their nick to ~a" first-word)
+                    '())]
+             [(list "TOPIC" target (colon first-word) rest ...)
+              (espy target
+                    (format
+                     "changing the channel's topic to '~a'"
+                     (string-join (cons first-word rest)))
+                    '())]
+             [(list "JOIN" target)
+              (espy target
+                    (format "joining")
+                    '())]
+             [(list "NICK" (colon new-nick))
+              (log "~a wants to be known as ~a" nick new-nick)]
+             [(list "PART" target (colon first-word) rest ...)
+              (espy target
+                    "leaving the channel"
+                    (cons first-word rest))]
+             [(list "PRIVMSG"
+                    target
+                    (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
+                    inner-words ...
+                    (regexp #px"(.*)\u0001$" (list _ trailing )))
+              (espy target
+                    (format "doing ~a: ~a" extended-data-word
+                            (string-join
+                             (append inner-words (list trailing))))
+                    '())]
+             [(list "PRIVMSG"
+                    target
+                    (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
+                    rest ...)
+              (log "request: ~s" request-word)
+              (when (equal? "VERSION" request-word)
+                (pm #:notice? #t
+                    nick
+                    "\u0001VERSION ~a (offby1@blarg.net):v4.~a:PLT scheme version ~a on ~a\0001"
+                    *my-nick*
+                    *version-string*
+                    (version)
+                    (system-type 'os)))]
 
-               [(list "PRIVMSG"
-                      target
-                      (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
-                      inner-words ...
-                      (regexp #px"(.*)\u0001$" (list _ trailing )))
-                (note-sighting
-                 (make-sighting
-                  nick
-                  target
-                  (current-seconds)
-                  (format "doing ~a: ~a" extended-data-word
-                          (string-join
-                           (append inner-words (list trailing))))
-                  '()))]
+             [(list "PRIVMSG" target (colon first-word) rest ...)
 
-               [(list "PRIVMSG"
-                      target
-                      (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
-                      rest ...)
-                (log "request: ~s" request-word)
-                (when (equal? "VERSION" request-word)
-                  (pm #:notice? #t
-                      nick
-                      "\u0001VERSION ~a (offby1@blarg.net):v4.~a:PLT scheme version ~a on ~a\0001"
-                      *my-nick*
-                      *version-string*
-                      (version)
-                      (system-type 'os)))]
+              ;; fledermaus points out that people may be surprised
+              ;; to find "private" messages -- those where "target"
+              ;; is *my-nick* -- recorded in the sightings log.
+              (espy target #f (cons first-word rest))
+              ;; look for long URLs to tiny-ify
+              (for ((word (in-list (cons first-word rest))))
+                (match word
+                  [(regexp url-regexp (list url _ _))
+                   (when (<= 75 (string-length url))
+                     (pm #:notice? #t
+                         target
+                         "~a"
+                         (make-tiny-url url)))]
+                  [_ #f]))
+              (match nick
+                [(regexp "bot$")
+                 (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
+                      nick)]
+                [_
+                 (if (equal? target *my-nick*)
+                     (begin
+                       (log "~a privately said ~a to me"
+                            nick
+                            (string-join (cons first-word rest)))
 
-               [(list "PRIVMSG" target (colon first-word) rest ...)
+                       (do-cmd nick nick (cons first-word rest)))
+                     (match first-word
+                       [(regexp #px"^([[:alnum:]]+)[,:](.*)" (list _ addressee garbage))
+                        (when (equal? addressee *my-nick*)
+                          (let ((words  (if (positive? (string-length garbage))
+                                            (cons garbage rest)
+                                            rest)))
+                            (when (not (null? words))
+                              (do-cmd target nick words))))]
+                       [_ #f]))])
+              ]
 
-                ;; fledermaus points out that people may be surprised
-                ;; to find "private" messages -- those where "target"
-                ;; is *my-nick* -- recorded in the sightings log.
-                (note-sighting
-                 (make-sighting
-                  nick
-                  target
-                  (current-seconds)
-                  #f
-                  (cons first-word rest)))
-                ;; look for long URLs to tiny-ify
-                (for ((word (in-list (cons first-word rest))))
-                  (match word
-                    [(regexp url-regexp (list url _ _))
-                     (when (<= 75 (string-length url))
-                       (pm #:notice? #t
-                           target
-                           "~a"
-                           (make-tiny-url url)))]
-                    [_ #f]))
-                (match nick
-                  [(regexp "bot$")
-                   (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
-                        nick)]
-                  [_
-                   (if (equal? target *my-nick*)
-                       (begin
-                         (log "~a privately said ~a to me"
-                              nick
-                              (string-join (cons first-word rest)))
+             [(list "QUIT" (colon first-word) rest ...)
+              (espy host "quitting"
+                '())]
 
-                         (do-cmd nick nick (cons first-word rest)))
-                       (match first-word
-                         [(regexp #px"^([[:alnum:]]+)[,:](.*)" (list _ addressee garbage))
-                          (when (equal? addressee *my-nick*)
-                            (let ((words  (if (positive? (string-length garbage))
-                                              (cons garbage rest)
-                                              rest)))
-                              (when (not (null? words))
-                                (do-cmd target nick words))))]
-                         [_ #f]))])
-                ]
+             [_
+              (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
 
-               [(list "QUIT" (colon first-word) rest ...)
-                (note-sighting
-                 (make-sighting
-                  nick
-                  host
-                  (current-seconds)
-                  "quitting"
-                  '()))
-                ]
-               [_
-                (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
-
-        [(colon host)
-         (match (cdr toks)
-           [(list digits mynick blather ...)
-            (case (string->symbol digits)
-              ((|001|)
-               (log "Yay, we're in")
-               (set! *authentication-state* 'succeeded)
-               (out "JOIN #scheme")
-               (out "JOIN #emacs"))
-              ((|366|)
-               (log "I, ~a, seem to have joined channel ~a."
-                    mynick
-                    (car blather)))
-              ((|433|)
-               (log "Nuts, gotta try a different nick")
-               (set! *my-nick* (string-append *my-nick* "_"))
-               (out "NICK ~a" *my-nick*)))])]
-        [_ (log "Duh?")]))
+      [(colon host)
+       (match (cdr toks)
+         [(list digits mynick blather ...)
+          (case (string->symbol digits)
+            ((|001|)
+             (log "Yay, we're in")
+             (set! *authentication-state* 'succeeded)
+             (out "JOIN #scheme")
+             (out "JOIN #emacs"))
+            ((|366|)
+             (log "I, ~a, seem to have joined channel ~a."
+                  mynick
+                  (car blather)))
+            ((|433|)
+             (log "Nuts, gotta try a different nick")
+             (set! *my-nick* (string-append *my-nick* "_"))
+             (out "NICK ~a" *my-nick*)))])]
+      [_ (log "Duh?")])
     ))
 
 (define (connect-and-run
