@@ -211,5 +211,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-random-server
      #:retry-on-hangup? #f)))
 
-(define main preload-main)
+(define main freenode-main)
 (provide (all-defined-out))
