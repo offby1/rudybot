@@ -6,6 +6,7 @@
          scheme/port
          scheme/sandbox
          (except-in "sandboxes.ss" main)
+         "git-version.ss"
          "sighting.ss"
          "spelled-out-time.ss"
          (except-in "quotes.ss" main)
@@ -88,8 +89,6 @@
 ;; Lines much longer than this will cause the server to kick us for
 ;; flooding.
 (define *max-output-line* 500)
-
-(define *version-string* (include "version.ss"))
 
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
@@ -198,7 +197,7 @@
                (reply  "; stderr: ~s" stderr)))))]
 
       [(version)
-       (reply *version-string*)]
+       (reply (git-version))]
       [else #f]))
 
   (log "<= ~s" line)
@@ -212,7 +211,7 @@
          (out "NICK ~a" *my-nick*)
          ;; RFC 1459 suggests that most of this data is ignored.
          (out "USER luser unknown-host localhost :duh, version ~a"
-              *version-string*)
+              (git-version))
          (set! *authentication-state* 'tried))]
 
       ["PING"
@@ -287,7 +286,7 @@
                     nick
                     "\u0001VERSION ~a (offby1@blarg.net):v4.~a:PLT scheme version ~a on ~a\0001"
                     *my-nick*
-                    *version-string*
+                    (git-version)
                     (version)
                     (system-type 'os)))]
 
@@ -408,5 +407,4 @@
  *my-nick*
  *bot-gives-up-after-this-many-silent-seconds*
  *log-ports*
- *mute-privmsgs?*
- *version-string*)
+ *mute-privmsgs?*)
