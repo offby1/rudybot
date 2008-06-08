@@ -6,6 +6,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 #lang scheme
 
 (require "loop.ss"
+         "git-version.ss"
          scheme/port)
 
 (define (make-flaky-server)
@@ -185,12 +186,12 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      #:retry-on-hangup? #f)))
 
 (define (localhost-main . args)
-  (log "Main starting: ~a" *version-string*)
+  (log "Main starting: ~a" (git-version))
   (parameterize ((*irc-server-hostname* "localhost"))
     (connect-and-run real-server)))
 
 (define (freenode-main . args)
-  (log "Main starting: ~a" *version-string*)
+  (log "Main starting: ~a" (git-version))
   (parameterize ((*irc-server-hostname* "irc.freenode.org")
                  (*mute-privmsgs?* #f))
     (connect-and-run real-server)))
@@ -211,5 +212,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-random-server
      #:retry-on-hangup? #f)))
 
-(define main freenode-main)
+(define main localhost-main)
 (provide (all-defined-out))

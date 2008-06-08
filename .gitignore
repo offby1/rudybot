@@ -1,4 +1,4 @@
 *.db
 *~
+TAGS
 big-log
-version.ss
