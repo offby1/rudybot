@@ -13,6 +13,7 @@
          (lib "trace.ss")
          (lib "13.ss" "srfi")
          (lib "14.ss" "srfi")
+         (only-in (planet "zdate.ss" ("offby1" "offby1.plt")) zdate)
          (planet "macro.ss" ("schematics" "macro.plt"))
          (planet "numspell.ss" ("neil" "numspell.plt"))
          (planet "test.ss"    ("schematics" "schemeunit.plt" ))
@@ -42,6 +43,7 @@
 
 (define (log . args)
   (for ((op (in-list (*log-ports*))))
+    (fprintf op "~a " (zdate))
     (apply fprintf op args)
     (newline op)))
 
@@ -406,4 +408,5 @@
  *my-nick*
  *bot-gives-up-after-this-many-silent-seconds*
  *log-ports*
- *mute-privmsgs?*)
+ *mute-privmsgs?*
+ *version-string*)

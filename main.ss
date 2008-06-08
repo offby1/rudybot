@@ -185,12 +185,12 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      #:retry-on-hangup? #f)))
 
 (define (localhost-main . args)
-  (log "Main starting.")
+  (log "Main starting: ~a" *version-string*)
   (parameterize ((*irc-server-hostname* "localhost"))
     (connect-and-run real-server)))
 
 (define (freenode-main . args)
-  (log "Main starting.")
+  (log "Main starting: ~a" *version-string*)
   (parameterize ((*irc-server-hostname* "irc.freenode.org")
                  (*mute-privmsgs?* #f))
     (connect-and-run real-server)))
