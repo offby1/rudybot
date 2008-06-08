@@ -28,10 +28,9 @@
 (define *description-string* (read-line stdout-ip))
 (define *file-name* "version.ss")
 (when (or (not (file-exists? *file-name*))
-        (not (equal? *description-string* (call-with-input-file *file-name* read))))
+          (not (equal? *description-string* (call-with-input-file *file-name* read))))
   (call-with-output-file *file-name* (lambda (op)
                                        (write *description-string* op)
                                        (newline op))
                          #:exists 'truncate/replace)
   (fprintf (current-error-port) "Created or updated ~a with ~s~%" *file-name* *description-string*))
-
