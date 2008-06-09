@@ -194,7 +194,15 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (log "Main starting: ~a" (git-version))
   (parameterize ((*irc-server-hostname* "irc.freenode.org")
                  (*mute-privmsgs?* #f))
-    (connect-and-run real-server)))
+    (command-line
+     #:program "rudybot"
+     #:once-each
+     [("-p" "--nickserv-password") pw
+      "Password to identify with NickServ"
+      (*nickserv-password* pw)])
+    (if (*nickserv-password*)
+        (connect-and-run real-server)
+        (error 'freenode-main "You didn't specify a NickServ password"))))
 
 (define (flaky-main . args)
   (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
@@ -212,5 +220,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-random-server
      #:retry-on-hangup? #f)))
 
-(define main localhost-main)
+(define main freenode-main)
 (provide (all-defined-out))

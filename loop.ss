@@ -24,7 +24,9 @@
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
 (define *my-nick* "rudybot")
-(define *nickserv-password* (make-parameter "eezahpaiohpubahb"))
+
+(define *nickserv-password* (make-parameter #f))
+
 (define *irc-server-hostname* (make-parameter "localhost"))
 
 (define *start-time* (current-seconds))
@@ -405,6 +407,7 @@
  log
  *irc-server-hostname*
  *my-nick*
+ *nickserv-password*
  *bot-gives-up-after-this-many-silent-seconds*
  *log-ports*
  *mute-privmsgs?*)
