@@ -1,6 +1,9 @@
 #lang scheme
 
-(require (planet "numspell.ss" ("neil" "numspell.plt")))
+(require (planet "numspell.ss" ("neil" "numspell.plt"))
+         (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
+         (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
+         (planet "util.ss"    ("schematics" "schemeunit.plt" 2)))
 
 (define (seconds->english secs)
   (let loop ((units secs)
@@ -43,17 +46,38 @@
                      ""
                      "s")))
 
-(define (seconds->approx secs)
+(define (spelled-out-time secs)
   (let* ((result (seconds->english secs))
-         (i (min 2 (length result))))
+         (final (list (car result)))
+         (final (if (and (< 1 (length result))
+                         (zero? (cdr (second result))))
+                     final
+                     (append final (cdr result)))))
     (string-join
      (map (lambda (p)
             (number->english/plural
               (cdr p)
               (symbol->string (car p))))
-          (take result i))
+          final)
      ", ")))
+
+
+(define spelled-out-time-tests
+
+  (test-suite
+   "spelled-out-time"
+   (test-equal? "one second"          (spelled-out-time 1) "one second")
+   (test-equal? "two seconds"         (spelled-out-time 2) "two seconds")
+   (test-equal? "twenty-five seconds" (spelled-out-time 25) "twenty-five seconds")
+   (test-equal? "two minutes, three seconds" (spelled-out-time 123) "two minutes, three seconds")
+   (test-equal? "one hour"            (spelled-out-time 3611) "one hour")
+   (test-equal? "two hours"           (spelled-out-time 7229) "two hours")
+   (test-equal? "one day"             (spelled-out-time (+ 17 (* 24 3600))) "one day")))
+
+(define (main . args)
+  (exit (test/text-ui spelled-out-time-tests 'verbose)))
 
 (provide/contract
  [seconds->english (-> natural-number/c (listof (cons/c symbol? natural-number/c)))]
- [seconds->approx  (-> natural-number/c string?)])
+ [spelled-out-time  (-> natural-number/c string?)])
+(provide main)
