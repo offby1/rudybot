@@ -1,49 +1,65 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
-|#
-
 #lang scheme
 
-(require (lib "trace.ss")
+(require (planet "numspell.ss" ("neil" "numspell.plt"))
          (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
-         (planet "numspell.ss" ("neil" "numspell.plt")))
+         (planet "util.ss"    ("schematics" "schemeunit.plt" 2)))
+
+(define (seconds->english secs)
+  (let loop ((units secs)
+             (divisors '((second . 60)
+                         (minute . 60)
+                         (hour   . 24)
+                         (day    .  7)
+                         (week   . 52)
+                         (year   . 100)))
+             (accum '()))
+
+    (cond
+     ((zero? units)
+      accum)
+     ((null? divisors)
+      (cons `(century . ,units) accum))
+     (else
+      (let ((d (car divisors)))
+        (let-values (((q r) (quotient/remainder units (cdr d))))
+          (loop
+           q
+           (cdr divisors)
+           (cons (cons (car d) r) accum))))))))
 
 (define (number->english/plural n unit-name)
+
+  (define (y->ie n unit-name)
+    (cond
+     ((equal? 1 n)
+      unit-name)
+     ((equal? #\y (string-ref unit-name (sub1 (string-length unit-name))))
+      (string-append (substring unit-name 0 (- (string-length unit-name) 1))
+                     "ie"))
+     (else unit-name)))
+
   (string-append (number->english n)
                  " "
-                 unit-name
+                 (y->ie n unit-name)
                  (if (equal? 1 n)
                      ""
-                   "s")))
+                     "s")))
 
-(define (maybe n unit-name)
-  (if (positive? n)
-      (format ", ~a"
-              (number->english/plural n unit-name))
-    ""))
-
-(define (spelled-out-time seconds)
-  (let* ((minutes (floor (/ seconds 60)))
-         (hours   (floor (/ minutes 60)))
-         (days    (floor (/ hours 24))))
-    (cond
-     ((positive? days)
-      (string-append
-       (number->english/plural days "day")
-       (maybe (remainder hours 24) "hour")))
-     ((positive? hours)
-      (string-append
-       (number->english/plural (remainder hours 24) "hour")
-       (maybe (remainder minutes 60) "minute")))
-     ((positive? minutes)
-      (string-append
-       (number->english/plural (remainder minutes 60) "minute")
-       (maybe (remainder seconds 60) "second")))
-     (else
-      (number->english/plural seconds "second")))))
+(define (spelled-out-time secs)
+  (let* ((result (seconds->english secs))
+         (final (list (car result)))
+         (final (if (and (< 1 (length result))
+                         (zero? (cdr (second result))))
+                     final
+                     (append final (cdr result)))))
+    (string-join
+     (map (lambda (p)
+            (number->english/plural
+              (cdr p)
+              (symbol->string (car p))))
+          final)
+     ", ")))
 
 
 (define spelled-out-time-tests
@@ -58,6 +74,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
    (test-equal? "two hours"           (spelled-out-time 7229) "two hours")
    (test-equal? "one day"             (spelled-out-time (+ 17 (* 24 3600))) "one day")))
 
-(provide main spelled-out-time)
 (define (main . args)
   (exit (test/text-ui spelled-out-time-tests 'verbose)))
+
+(provide/contract
+ [seconds->english (-> natural-number/c (listof (cons/c symbol? natural-number/c)))]
+ [spelled-out-time  (-> natural-number/c string?)])
+(provide main)
