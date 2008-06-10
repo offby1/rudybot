@@ -16,10 +16,7 @@
          (lib "14.ss" "srfi")
          (only-in (planet "zdate.ss" ("offby1" "offby1.plt")) zdate)
          (planet "macro.ss" ("schematics" "macro.plt"))
-         (planet "numspell.ss" ("neil" "numspell.plt"))
-         (planet "test.ss"    ("schematics" "schemeunit.plt" ))
-         (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" )))
+         (planet "numspell.ss" ("neil" "numspell.plt")))
 
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
@@ -64,9 +61,6 @@
     [(colon w)
      (regexp #rx"^:(.*)" (list _ w))]))
 
-;; Given a line of input from the server, do something side-effecty.
-;; Writes to OP get sent back to the server.
-
 (define (describe-since when)
   (spelled-out-time (- (current-seconds) when)))
 
@@ -92,6 +86,8 @@
 ;; flooding.
 (define *max-output-line* 500)
 
+;; Given a line of input from the server, do something side-effecty.
+;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
     (let ((str (apply format format-string args)))
