@@ -1,3 +1,8 @@
+#! /bin/sh
+#| Hey Emacs, this is -*-scheme-*- code!
+exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
+|#
+
 #lang scheme
 
 (require (planet "numspell.ss" ("neil" "numspell.plt"))
@@ -72,7 +77,9 @@
    (test-equal? "two minutes, three seconds" (spelled-out-time 123) "two minutes, three seconds")
    (test-equal? "one hour"            (spelled-out-time 3611) "one hour")
    (test-equal? "two hours"           (spelled-out-time 7229) "two hours")
-   (test-equal? "one day"             (spelled-out-time (+ 17 (* 24 3600))) "one day")))
+   (test-equal? "one day"             (spelled-out-time (+ 17 (* 24 3600))) "one day")
+   (test-equal? "one century"         (spelled-out-time (* 1 60 60 24 7 52 100))   "one century")
+   (test-equal? "ten centuries"       (spelled-out-time (* 1 60 60 24 7 52 100 10))"ten centuries")))
 
 (define (main . args)
   (exit (test/text-ui spelled-out-time-tests 'verbose)))
