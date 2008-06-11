@@ -53,8 +53,12 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                      ""
                      "s")))
 
+(define (safe-take lst pos)
+  (let ((pos (min pos (length lst))))
+    (take lst pos)))
+
 (define (spelled-out-time secs)
-  (let* ((result (seconds->english secs))
+  (let* ((result (safe-take (seconds->english secs) 2))
          (final (list (car result)))
          (final (if (and (< 1 (length result))
                          (zero? (cdr (second result))))
@@ -79,6 +83,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
    (test-equal? "twenty-five seconds" (spelled-out-time 25) "twenty-five seconds")
    (test-equal? "two minutes, three seconds" (spelled-out-time 123) "two minutes, three seconds")
    (test-equal? "one hour"            (spelled-out-time 3611) "one hour")
+   (test-equal? "yow"                 (spelled-out-time 75532) "twenty hours, fifty-eight minutes")
    (test-equal? "two hours"           (spelled-out-time 7229) "two hours")
    (test-equal? "one day"             (spelled-out-time (+ 17 (* 24 3600))) "one day")
    (test-equal? "one century"         (spelled-out-time (* 1 60 60 24 7 52 100))   "one century")
