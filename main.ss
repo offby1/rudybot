@@ -86,6 +86,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ,(c "version")
                     ,(c "quote")
                     ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" *my-nick*)
+                    ,(format ":n!n@n PRIVMSG #emacs :,...")
+                    ,(format ":n!n@n PRIVMSG #not-emacs :,...")
                     ,(format ":n!n@n PRIVMSG #c :~a:~a" *my-nick* "lookboynospaces")
                     ,(format ":n!n@n PRIVMSG #c :~a:" *my-nick* )
                     ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))

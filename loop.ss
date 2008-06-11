@@ -324,6 +324,9 @@
                                             rest)))
                             (when (not (null? words))
                               (do-cmd target nick words))))]
+                       [",..."
+                        (when (equal? target "#emacs")
+                          (pm target "Arooooooooooo"))]
                        [_ #f]))])
               ]
 
