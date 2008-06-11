@@ -22,7 +22,9 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
     (cond
      ((zero? units)
-      accum)
+      (if (null? accum)
+          '((second . 0))
+          accum))
      ((null? divisors)
       (cons `(century . ,units) accum))
      (else
@@ -71,6 +73,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
   (test-suite
    "spelled-out-time"
+   (test-equal? "zero seconds"        (spelled-out-time 0) "zero seconds")
    (test-equal? "one second"          (spelled-out-time 1) "one second")
    (test-equal? "two seconds"         (spelled-out-time 2) "two seconds")
    (test-equal? "twenty-five seconds" (spelled-out-time 25) "twenty-five seconds")
