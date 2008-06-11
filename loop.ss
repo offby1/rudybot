@@ -316,18 +316,27 @@
                             (string-join (cons first-word rest)))
 
                        (do-cmd nick nick (cons first-word rest)))
-                     (match first-word
-                       [(regexp #px"^([[:alnum:]]+)[,:](.*)" (list _ addressee garbage))
-                        (when (equal? addressee *my-nick*)
-                          (let ((words  (if (positive? (string-length garbage))
-                                            (cons garbage rest)
-                                            rest)))
-                            (when (not (null? words))
-                              (do-cmd target nick words))))]
-                       [",..."
-                        (when (equal? target "#emacs")
-                          (pm target "Arooooooooooo"))]
-                       [_ #f]))])
+                     (begin
+
+                       (match first-word
+                         [(regexp #rx"^(?i:let(')?s)" _)
+                          (match nick
+                            [(regexp #rx"^(?i:jordanb)")
+                             (log "KOMEDY GOLD: ~s" (cons first-word rest))]
+                            [_ #f])]
+                         [_ #f])
+                       (match first-word
+                         [(regexp #px"^([[:alnum:]]+)[,:](.*)" (list _ addressee garbage))
+                          (when (equal? addressee *my-nick*)
+                            (let ((words  (if (positive? (string-length garbage))
+                                              (cons garbage rest)
+                                              rest)))
+                              (when (not (null? words))
+                                (do-cmd target nick words))))]
+                         [",..."
+                          (when (equal? target "#emacs")
+                            (pm target "Arooooooooooo"))]
+                         [_ #f])))])
               ]
 
              [(list "QUIT" (colon first-word) rest ...)
