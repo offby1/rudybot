@@ -332,8 +332,7 @@
 
              [(list "QUIT" (colon first-word) rest ...)
               (espy host "quitting"
-                '())]
-
+                (cons first-word rest))]
              [_
               (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
 
