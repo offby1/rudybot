@@ -41,9 +41,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (cond
      ((equal? 1 n)
       unit-name)
-     ((equal? #\y (string-ref unit-name (sub1 (string-length unit-name))))
-      (string-append (substring unit-name 0 (- (string-length unit-name) 1))
-                     "ie"))
+     ((equal? unit-name "century")
+      "centurie")
      (else unit-name)))
 
   (string-append (number->english n)
@@ -86,6 +85,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
    (test-equal? "yow"                 (spelled-out-time 75532) "twenty hours, fifty-eight minutes")
    (test-equal? "two hours"           (spelled-out-time 7229) "two hours")
    (test-equal? "one day"             (spelled-out-time (+ 17 (* 24 3600))) "one day")
+   (test-equal? "two days"            (spelled-out-time (* 2 24 3600)) "two days")
    (test-equal? "one century"         (spelled-out-time (* 1 60 60 24 7 52 100))   "one century")
    (test-equal? "ten centuries"       (spelled-out-time (* 1 60 60 24 7 52 100 10))"ten centuries")))
 
