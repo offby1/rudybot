@@ -319,7 +319,7 @@
                      (begin
 
                        (match first-word
-                         [(regexp #rx"^(?i:let(')?s)" _)
+                         [(regexp #rx"^(?i:let(')?s)" (list x y))
                           (match nick
                             [(regexp #rx"^(?i:jordanb)")
                              (log "KOMEDY GOLD: ~s" (cons first-word rest))]
