@@ -90,14 +90,18 @@
 ;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line op)
   (define (out #:for-real? [for-real? #t] format-string . args)
-    (let ((str (apply format format-string args)))
-      (let ((str (if (> (string-length str) *max-output-line*)
-                     (string-append (substring str 0 (- *max-output-line* 4)) " ...")
-                     str)))
+    (let* ((str (apply format format-string args))
+           (str (if (> (string-length str) *max-output-line*)
+                    (string-append (substring str 0 (- *max-output-line* 4)) " ...")
+                    str))
+           ;; don't display newlines, so that Bad Guys won't be able
+           ;; to inject IRC commands into our output.
+           (str (regexp-replace* #rx"[\n\r]" str " <NEWLINE> ")))
 
-        (log "=> ~s" str)
-        (when for-real?
-          (fprintf op "~a~%" str)))))
+
+      (log "=> ~s" str)
+      (when for-real?
+        (fprintf op "~a~%" str))))
 
   (define (pm #:notice? [notice? #f] target fmt . args)
     (out #:for-real? (not (*mute-privmsgs?*))

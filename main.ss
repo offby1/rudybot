@@ -62,6 +62,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     (display line op)
                     (display "\r\n" op))
                   `(
+                    ,(c (format "eval (error \"foo\\r\\nQUIT bar\")"))
                     ":freenode-connect!freenode@freenode/bot/connect PRIVMSG upstartbot :\u0001VERSION\u0001"
                     "foO!"
                     "PING :localhost."
