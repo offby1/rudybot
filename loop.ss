@@ -330,6 +330,13 @@
                             [_ #f])]
                          [_ #f])
                        (match first-word
+
+                         ;; TODO -- use a regex that matches just
+                         ;; those characters that are legal in
+                         ;; nicknames, followed by _any_ non-white
+                         ;; character -- that way people can use, say,
+                         ;; a semicolon after our nick, rather than
+                         ;; just the comma and colon I've hard-coded here.
                          [(regexp #px"^([[:alnum:]]+)[,:](.*)" (list _ addressee garbage))
                           (when (equal? addressee *my-nick*)
                             (let ((words  (if (positive? (string-length garbage))
