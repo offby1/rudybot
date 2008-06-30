@@ -171,6 +171,23 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
     (values ip (open-output-nowhere))))
 
+(define (make-hanging-up-server)
+
+  (let-values (((ip op)
+                (make-pipe)))
+    (thread
+     (lambda ()
+       (for ((line (in-list '("NOTICE AUTH :*** Looking up your hostname..."
+                              "NOTICE AUTH :*** Found your hostname, welcome back"
+                              "NOTICE AUTH :*** Checking ident"
+                              "NOTICE AUTH :*** No identd (auth) response"
+                              "ERROR :Closing Link: 127.0.0.1 (Connection Timed Out)"))))
+         (fprintf op "~a\r~%" line))
+
+       (sleep 1)
+       (close-output-port op)))
+
+    (values ip (open-output-nowhere))))
 
 
 (define (replay-main . args)
@@ -224,5 +241,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      make-random-server
      #:retry-on-hangup? #f)))
 
-(define main freenode-main)
+(define (hanging-up-main . args)
+  (parameterize ((*log-ports* (list (current-error-port))))
+    (connect-and-run
+     make-hanging-up-server)))
+
+(define main hanging-up-main)
 (provide (all-defined-out))
