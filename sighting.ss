@@ -41,10 +41,38 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define (note-sighting s)
   (let ((dirname (nick->dirpath (sighting-who s))))
 
+    (define-struct both (path number) #:transparent)
+
     (make-directory* dirname)
 
-    (let ( ;; not thread-safe
-          (new-name (build-path dirname (number->string (length (directory-list dirname))))))
+    ;; first, prune old existing sightings.
+    (let* ((existing-increasing-order
+            (sort
+             (filter (lambda (p)
+                       (both-number p))
+                     (map (lambda (entry)
+                            (make-both (build-path dirname entry)
+                                       (string->number (path->string entry))))
+                          (directory-list dirname)))
+             <
+             #:key both-number))
+
+           (new-name
+            (build-path
+             dirname
+             (number->string
+              (if (null? existing-increasing-order)
+                  0
+                  (add1
+                   (both-number (last  existing-increasing-order))))))))
+
+      (define max-to-keep 2)
+      (let nuke ((e  existing-increasing-order)
+                 (num-files (length existing-increasing-order)))
+        (when (< max-to-keep num-files)
+          (delete-file (both-path (car e)))
+          (nuke (cdr e)
+                (sub1 num-files))))
 
       (call-with-output-file
           new-name
