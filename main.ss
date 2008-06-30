@@ -9,35 +9,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          "git-version.ss"
          scheme/port)
 
-(define (make-flaky-server)
-  (when (zero? (random 3))
-    (raise (make-exn:fail:network
-            "de network, she be broke"
-            (current-continuation-marks))))
-
-  (let-values (((ip op)
-                (make-pipe)))
-    (thread
-     (lambda ()
-       (when (not (port-closed? op))
-         (call-with-input-file "../irc/example input"
-           (lambda (ip)
-             (let loop ()
-               (let ((datum (read ip)))
-                 (cond
-                  ((zero? (random 5))
-                   (close-output-port op))
-                  ((not (eof-object? datum))
-                   (display datum op)
-                   (display #\return op)
-                   (newline op)
-                   (loop))
-                  (else
-                   (close-output-port op))))))))))
-
-    (values ip
-            (open-output-nowhere))))
-
 (define (real-server)
   (let-values (((ip op) (tcp-connect (*irc-server-hostname*) 6667)))
     (file-stream-buffer-mode op 'line)
@@ -121,27 +92,43 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
               ip)
             op)))
 
-(define (make-log-replaying-server log-file-name)
-  (lambda ()
-    (let-values (((ip op)
-                  (make-pipe)))
-      (thread
-       (lambda ()
-         (call-with-input-file log-file-name
-           (lambda (ip)
-             (for ((line (in-lines ip)))
+(define (make-log-replaying-ip-port log-file-name (max-lines 'all))
+  (let-values (((ip op)
+                (make-pipe)))
+    (thread
+     (lambda ()
+       (call-with-input-file log-file-name
+         (lambda (ip)
+           (let/ec return
+             (for ((line (in-lines ip))
+                   (lines-handled (in-naturals)))
+               (when (equal? lines-handled max-lines)
+                 (return))
                (match line
                  [(regexp #px"^<= (\".*\")" (list _ datum))
                   (display (read (open-input-string datum)) op)
                   (display #\return op)
                   (newline op)]
-                 [_ #f]))
-             (close-output-port op)))))
+                 [_ #f])))
+           (close-output-port op)))))
+    ip))
 
-      (values ip
-              (relocate-output-port
-               (current-output-port)
-               #f #f 1 #f)))))
+(define (make-flaky-server log-file-name)
+  (lambda ()
+    (when (zero? (random 3))
+      (raise (make-exn:fail:network
+              "de network, she be broke"
+              (current-continuation-marks))))
+
+    (values (make-log-replaying-ip-port log-file-name 20)
+            (open-output-nowhere))))
+
+(define (make-log-replaying-server log-file-name)
+  (lambda ()
+    (values (make-log-replaying-ip-port log-file-name)
+            (relocate-output-port
+             (current-output-port)
+             #f #f 1 #f))))
 
 (define (make-random-server)
 
@@ -172,22 +159,22 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (values ip (open-output-nowhere))))
 
 (define (make-hanging-up-server)
+  (lambda ()
+    (let-values (((ip op)
+                  (make-pipe)))
+      (thread
+       (lambda ()
+         (for ((line (in-list '("NOTICE AUTH :*** Looking up your hostname..."
+                                "NOTICE AUTH :*** Found your hostname, welcome back"
+                                "NOTICE AUTH :*** Checking ident"
+                                "NOTICE AUTH :*** No identd (auth) response"
+                                "ERROR :Closing Link: 127.0.0.1 (Connection Timed Out)"))))
+           (fprintf op "~a\r~%" line))
 
-  (let-values (((ip op)
-                (make-pipe)))
-    (thread
-     (lambda ()
-       (for ((line (in-list '("NOTICE AUTH :*** Looking up your hostname..."
-                              "NOTICE AUTH :*** Found your hostname, welcome back"
-                              "NOTICE AUTH :*** Checking ident"
-                              "NOTICE AUTH :*** No identd (auth) response"
-                              "ERROR :Closing Link: 127.0.0.1 (Connection Timed Out)"))))
-         (fprintf op "~a\r~%" line))
+         (sleep 1)
+         (close-output-port op)))
 
-       (sleep 1)
-       (close-output-port op)))
-
-    (values ip (open-output-nowhere))))
+      (values ip (open-output-nowhere)))))
 
 
 (define (replay-main . args)
@@ -230,7 +217,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                  (*log-ports* (list (current-error-port))))
     (random-seed 0)
     (connect-and-run
-     make-flaky-server
+     (make-flaky-server "big-log")
      #:retry-on-hangup? #t)))
 
 (define (random-main . args)
@@ -244,7 +231,15 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (define (hanging-up-main . args)
   (parameterize ((*log-ports* (list (current-error-port))))
     (connect-and-run
-     make-hanging-up-server)))
+     (make-hanging-up-server))))
 
-(define main hanging-up-main)
+(define main
+;;  flaky-main
+;;;   freenode-main
+;;;   hanging-up-main
+;;;   localhost-main
+;;;   preload-main
+;;;   random-main
+   replay-main
+  )
 (provide (all-defined-out))

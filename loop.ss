@@ -382,6 +382,7 @@
          #:retry-on-hangup? (retry-on-hangup? #t))
 
   (*connection-start-time* (current-seconds))
+  (set! *authentication-state* 'havent-even-tried)
 
   (when (positive? consecutive-failed-connections)
     (log "~a consecutive-failed-connections"
@@ -409,15 +410,18 @@
                    (*bot-gives-up-after-this-many-silent-seconds*))
                   (retry))
                 (let ((line (read-line ready-ip 'return-linefeed)))
-                  (cond
-                   ((eof-object? line)
+                  (match line
+                   [(? eof-object?)
                     (when retry-on-hangup?
                       (log
                        "Uh oh, server hung up on us")
-                      (retry)))
-                   (else
+                      (retry))]
+                   [(regexp #rx"^ERROR :(.*)$" (list _ whine))
+                    (log "Hmm, error: ~s" whine)
+                    (retry)]
+                   [_
                     (slightly-more-sophisticated-line-proc line op)
-                    (do-one-line 0)))))))))))
+                    (do-one-line 0)])))))))))
 (provide/contract
  [connect-and-run
   (->* (procedure?) (natural-number/c #:retry-on-hangup? boolean?) void?)])
