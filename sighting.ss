@@ -33,7 +33,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                  (call-with-input-file (build-path dirname fn) read))
                (directory-list dirname))
           (lambda (s1 s2)
-            (> (sighting-when s1)
+            (< (sighting-when s1)
                (sighting-when s2))))
          2)
         '())))
