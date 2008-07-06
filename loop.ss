@@ -76,8 +76,8 @@
                         (sighting-where info)
                         (describe-since (sighting-when  info))
                         (aif it (sighting-words info)
-                             ""
-                             (format ", saying \"~a\"" string-join it))))
+                             (format ", saying \"~a\"" (string-join it))
+                             "")))
               ss)
          ", and then "))))
 
