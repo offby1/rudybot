@@ -75,12 +75,11 @@
                         (aif it (sighting-action? info) (string-append it " ") "")
                         (sighting-where info)
                         (describe-since (sighting-when  info))
-                        (if (null? (sighting-words info))
-                            ""
-                            (format ", saying \"~a\""
-                                    (string-join (sighting-words info))))))
+                        (aif it (sighting-words info)
+                             ""
+                             (format ", saying \"~a\"" string-join it))))
               ss)
-         "; "))))
+         ", and then "))))
 
 ;; Lines much longer than this will cause the server to kick us for
 ;; flooding.
