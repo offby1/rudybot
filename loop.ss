@@ -125,12 +125,12 @@
          (match for-whom
            [(regexp #rx"^jordanb")
             (pm response-target "~a" q)]
-           [_ (reply q)])
+           [_ (reply "~a" q)])
          )]
-      [(source) (reply "http://rudybot.ath.cx:1234")]
+      [(source) (reply "~a" "http://rudybot.ath.cx:1234")]
       [(seen)
        (when (not (null? (cdr words)))
-         (reply (nick->sighting-string (second words)))
+         (reply "~a" (nick->sighting-string (second words)))
          )]
       [(uptime)
        (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
@@ -147,11 +147,11 @@
                  (let ((whine (if (exn? v)
                                   (exn-message v)
                                   (format "~s" v))))
-                   (reply
+                   (apply reply
                     ;; make sure our error message begins with "error: ".
                     (if (regexp-match #rx"^error: " whine)
-                        whine
-                        (format "error: ~a" whine)))))])
+                        (list "~a" whine)
+                        (list "error: ~a" whine)))))])
 
            (call-with-values
                (lambda ()
@@ -200,7 +200,7 @@
                (reply  "; stderr: ~s" stderr)))))]
 
       [(version)
-       (reply (git-version))]
+       (reply "~a" (git-version))]
       [else #f]))
 
   (log "<= ~s" line)
