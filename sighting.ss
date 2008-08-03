@@ -7,7 +7,7 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 (require (planet "macro.ss" ("schematics" "macro.plt"))
          (lib "1.ss" "srfi"))
 
-(define *sightings-database-directory-name* (make-parameter "sightings.db"))
+(define *sightings-database-directory-name* (make-parameter "test-sightings.db"))
 ;; This is just for testing.
 (define *downcase-nicks* (make-parameter #t))
 
@@ -112,6 +112,7 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
           (write s op)
           (newline op))))))
 
+(provide *sightings-database-directory-name*)
 (provide/contract
  [struct sighting ((who string?)
                    (where string?)
