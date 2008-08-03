@@ -39,7 +39,9 @@
 (for ((op (in-list (*log-ports*))))
   (fprintf (current-error-port)
            "Whopping port ~a~%" op)
-  (file-stream-buffer-mode op 'line))
+  (with-handlers
+      ([exn:fail? values])
+    (file-stream-buffer-mode op 'line)))
 
 (define (log . args)
   (for ((op (in-list (*log-ports*))))
