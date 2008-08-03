@@ -7,11 +7,13 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 (require (planet "macro.ss" ("schematics" "macro.plt")))
 
 (define *sightings-database-directory-name* (make-parameter "sightings.db"))
+;; This is just for testing.
+(define *downcase-nicks* (make-parameter #t))
 
 (define-struct sighting (who where when action? words) #:prefab)
 
 (define (canonicalize-nick n)
-  (string-downcase
+  ((if (*downcase-nicks*) string-downcase values)
    (match n
      [(regexp #px"(.*?)([`_]*)$" (list _ base suffixes))
       base]

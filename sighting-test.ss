@@ -9,7 +9,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "util.ss"    ("schematics" "schemeunit.plt" ))
          "sighting.ss")
 
-(require/expose "sighting.ss" (*sightings-database-directory-name*))
+(require/expose "sighting.ss" (*sightings-database-directory-name*
+                               *downcase-nicks*))
 
 
 (define sighting-tests
@@ -59,7 +60,16 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       (note-sighting s)
       (let ((looked-up-lc  (lookup-sightings "bob"))
             (looked-up-uc  (lookup-sightings "BOB")))
-        (check-equal? looked-up-uc looked-up-lc))))))
+        (check-equal? looked-up-uc looked-up-lc)))
+
+    (parameterize ((*downcase-nicks* #f))
+      (delete-directory/files (build-path (*sightings-database-directory-name*) "bob"))
+      (let ((s (make-sighting "BOB" "2" 3 #f (list "hey" "you"))))
+        (note-sighting s)
+        (parameterize ((*downcase-nicks* #t))
+          (let ((looked-up-lc  (lookup-sightings "bob"))
+                (looked-up-uc  (lookup-sightings "BOB")))
+            (check-equal? looked-up-uc looked-up-lc))))))))
 
 (define (main . args)
   (exit (test/text-ui sighting-tests 'verbose)))
