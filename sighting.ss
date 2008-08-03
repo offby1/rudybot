@@ -48,8 +48,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     ;; first, prune old existing sightings.
     (let* ((existing-increasing-order
             (sort
-             (filter (lambda (p)
-                       (both-number p))
+             (filter both-number
                      (map (lambda (entry)
                             (make-both (build-path dirname entry)
                                        (string->number (path->string entry))))
