@@ -4,7 +4,8 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme
-(require (planet "macro.ss" ("schematics" "macro.plt")))
+(require (planet "macro.ss" ("schematics" "macro.plt"))
+         (lib "1.ss" "srfi"))
 
 (define *sightings-database-directory-name* (make-parameter "sightings.db"))
 ;; This is just for testing.
