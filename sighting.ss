@@ -1,19 +1,21 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
+exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme
+(require (planet "macro.ss" ("schematics" "macro.plt")))
 
 (define *sightings-database-directory-name* (make-parameter "sightings.db"))
 
 (define-struct sighting (who where when action? words) #:prefab)
 
 (define (canonicalize-nick n)
-  (match n
-    [(regexp #px"(.*?)([`_]*)$" (list _ base suffixes))
-     base]
-    [_ n]))
+  (string-downcase
+   (match n
+     [(regexp #px"(.*?)([`_]*)$" (list _ base suffixes))
+      base]
+     [_ n])))
 
 (define (nick->dirpath n)
   (build-path
@@ -24,19 +26,47 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (let ((pos (min pos (length lst))))
     (take lst pos)))
 
+(define (false-if-null x)
+  (and (not (null? x))
+       x))
+
+(define (newest files)
+  (if (null? files)
+      '()
+      (for/fold ([newest (car files)])
+                ([f (in-list files)])
+                (if (< (file-or-directory-modify-seconds newest)
+                       (file-or-directory-modify-seconds f))
+                    f
+                    newest))))
+
+(define (siblings path)
+  (let ((parent (apply build-path (drop-right (explode-path (simple-form-path path)) 1))))
+    (map (lambda (p)
+           (build-path parent p))
+         (directory-list parent))))
+
+(define (directory-exists/ci? name)
+  (let ((name (build-path name)))
+    (false-if-null
+     (newest
+      (filter (lambda (s)
+                (equal? (simple-form-path (build-path (string-downcase (path->string s))))
+                        (simple-form-path (build-path (string-downcase (path->string name))))))
+              (siblings name))))))
+
 (define (lookup-sightings who)
-  (let ((dirname (nick->dirpath who)))
-    (if (directory-exists? dirname)
-        (safe-take
-         (sort
-          (map (lambda (fn)
-                 (call-with-input-file (build-path dirname fn) read))
-               (directory-list dirname))
-          (lambda (s1 s2)
-            (< (sighting-when s1)
-               (sighting-when s2))))
-         2)
-        '())))
+  (aif dirname (directory-exists/ci? (nick->dirpath who))
+       (safe-take
+        (sort
+         (map (lambda (fn)
+                (call-with-input-file (build-path dirname fn) read))
+              (directory-list dirname))
+         (lambda (s1 s2)
+           (< (sighting-when s1)
+              (sighting-when s2))))
+        2)
+       '()))
 
 (define (note-sighting s)
   (let ((dirname (nick->dirpath (sighting-who s))))

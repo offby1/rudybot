@@ -47,7 +47,19 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
             (if writing?
                 (note-sighting s)
-                (check-not-false (member s (lookup-sightings (canonicalize-nick (sighting-who s)))))))))))))
+                (check-not-false (member s (lookup-sightings (canonicalize-nick (sighting-who s)))))))))))
+   (test-case
+    "case-insensitive"
+    (let ((s (make-sighting "BOB" "2" 3 #f (list "hey" "you"))))
+      (note-sighting s)
+      (let ((looked-up-uc  (lookup-sightings "BOB"))
+            (looked-up-lc  (lookup-sightings "bob")))
+        (check-equal? looked-up-lc looked-up-uc)))
+    (let ((s (make-sighting "bob" "2" 3 #f (list "hey" "you"))))
+      (note-sighting s)
+      (let ((looked-up-lc  (lookup-sightings "bob"))
+            (looked-up-uc  (lookup-sightings "BOB")))
+        (check-equal? looked-up-uc looked-up-lc))))))
 
 (define (main . args)
   (exit (test/text-ui sighting-tests 'verbose)))
