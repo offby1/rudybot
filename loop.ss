@@ -215,7 +215,7 @@
        (when (eq? *authentication-state* 'havent-even-tried)
          (out "NICK ~a" *my-nick*)
          ;; RFC 1459 suggests that most of this data is ignored.
-         (out "USER luser unknown-host localhost :duh, version ~a"
+         (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
               (git-version))
          (set! *authentication-state* 'tried))]
 
