@@ -262,6 +262,8 @@
                      (string-join (cons first-word rest)))
                     '())]
              [(list "JOIN" target)
+              (when (regexp-match #rx"^duncanm" nick)
+                (pm target "la la la"))
               (espy target
                     (format "joining")
                     '())]

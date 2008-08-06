@@ -43,6 +43,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ":action!n=No@unaffiliated/clue PRIVMSG #ch :\u0001ACTION does an action!\u0001"
                     ":invite!n=No@unaffiliated/clue INVITE upstartbot :##mircscripts"
                     ":join!n=Aaron@b415.adsl.ecomtel.com.au JOIN :#scheme"
+                    ":duncanm!n=duncanm@b415.adsl.ecomtel.com.au JOIN :#scheme"
                     ":kick!n=chandler@opendarwin/developer/chandler KICK #scheme lumon :http://www.penny-arcade.com/comic/2003/11/07/"
                     ":kick2!n=asc@pdpc/supporter/active/kensanata KICK #emacs jordanb :you too"
                     ":mode!ChanServ@services. MODE #emacs +o alephnull "
@@ -223,8 +224,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 ;;  flaky-main
 ;;;   hanging-up-main
 ;;;   localhost-main
-;;;   preload-main
+   preload-main
 ;;;   random-main
-   replay-main
+;;;   replay-main
   )
 (provide (all-defined-out))
