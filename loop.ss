@@ -90,11 +90,17 @@
 ;; flooding.
 (define *max-output-line* 500)
 
+;; For rate limiting -- every time we respond to a direct request, we
+;; save the time under the requstor's nick.  That way, we can later
+;; check a request from the same nick to see if they've requested
+;; something recently, and perhaps deny the request.
+(define *action-times-by-nick* (make-hash))
 (define (we-recently-did-something-for nick)
-  #f)
+  (>= (hash-ref *action-times-by-nick* nick 0)
+      (- (current-seconds) 10)))
 (trace we-recently-did-something-for)
 (define (note-we-did-something-for! for-whom)
-  'yeah-whatever)
+  (hash-set! *action-times-by-nick* for-whom (current-seconds)))
 (trace note-we-did-something-for!)
 
 ;; Given a line of input from the server, do something side-effecty.
