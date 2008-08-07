@@ -16,7 +16,8 @@
          (lib "14.ss" "srfi")
          (only-in (planet "zdate.ss" ("offby1" "offby1.plt")) zdate)
          (planet "macro.ss" ("schematics" "macro.plt"))
-         (planet "numspell.ss" ("neil" "numspell.plt")))
+         (planet "numspell.ss" ("neil" "numspell.plt"))
+         mzlib/trace)
 
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
@@ -89,6 +90,13 @@
 ;; flooding.
 (define *max-output-line* 500)
 
+(define (we-recently-did-something-for nick)
+  #f)
+(trace we-recently-did-something-for)
+(define (note-we-did-something-for! for-whom)
+  'yeah-whatever)
+(trace note-we-did-something-for!)
+
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line op)
@@ -119,91 +127,95 @@
                                  (format "~a: " for-whom))))
         (pm response-target "~a" (string-append response-prefix (apply format fmt args)))))
     (log "Doing ~s" words)
-    (case (string->symbol (string-downcase (first words)))
-      [(quote)
-       (let ((q (one-quote)))
-         ;; special case: jordanb doesn't want quotes prefixed with
-         ;; his nick.
-         (match for-whom
-           [(regexp #rx"^jordanb")
-            (pm response-target "~a" q)]
-           [_ (reply "~a" q)])
-         )]
-      [(source) (reply "~a" "http://rudybot.ath.cx:1234")]
-      [(seen)
-       (when (not (null? (cdr words)))
-         (reply "~a" (nick->sighting-string (second words)))
-         )]
-      [(uptime)
-       (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
-              (describe-since *start-time*)
-              (describe-since (*connection-start-time*)))]
-      [(eval)
-       (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
-         (with-handlers
-             (
-              ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
-              ;; killing this thread.
-              [void
-               (lambda (v)
-                 (let ((whine (if (exn? v)
-                                  (exn-message v)
-                                  (format "~s" v))))
-                   (apply reply
-                    ;; make sure our error message begins with "error: ".
-                    (if (regexp-match #rx"^error: " whine)
-                        (list "~a" whine)
-                        (list "error: ~a" whine)))))])
+    (if (we-recently-did-something-for for-whom)
+        (log "Not doing anything for ~a, since we recently did something for them." for-whom)
+        (begin
+          (case (string->symbol (string-downcase (first words)))
+            [(quote)
+             (let ((q (one-quote)))
+               ;; special case: jordanb doesn't want quotes prefixed with
+               ;; his nick.
+               (match for-whom
+                 [(regexp #rx"^jordanb")
+                  (pm response-target "~a" q)]
+                 [_ (reply "~a" q)])
+               )]
+            [(source) (reply "~a" "http://rudybot.ath.cx:1234")]
+            [(seen)
+             (when (not (null? (cdr words)))
+               (reply "~a" (nick->sighting-string (second words)))
+               )]
+            [(uptime)
+             (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
+                    (describe-since *start-time*)
+                    (describe-since (*connection-start-time*)))]
+            [(eval)
+             (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
+               (with-handlers
+                   (
+                    ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
+                    ;; killing this thread.
+                    [void
+                     (lambda (v)
+                       (let ((whine (if (exn? v)
+                                        (exn-message v)
+                                        (format "~s" v))))
+                         (apply reply
+                                ;; make sure our error message begins with "error: ".
+                                (if (regexp-match #rx"^error: " whine)
+                                    (list "~a" whine)
+                                    (list "error: ~a" whine)))))])
 
-           (call-with-values
-               (lambda ()
-                 (sandbox-eval
-                  s
-                  (string-join (cdr words))))
-             (lambda values
-               (let loop ((values values)
-                          (displayed 0))
-                 (when (not (null? values))
+                 (call-with-values
+                     (lambda ()
+                       (sandbox-eval
+                        s
+                        (string-join (cdr words))))
+                   (lambda values
+                     (let loop ((values values)
+                                (displayed 0))
+                       (when (not (null? values))
 
-                   ;; prevent flooding
-                   (if (= displayed *max-values-to-display*)
-                       (reply
-                        "~a values is enough for anybody; here's the rest in a list: ~s"
-                        (number->english *max-values-to-display*)
-                        values)
+                         ;; prevent flooding
+                         (if (= displayed *max-values-to-display*)
+                             (reply
+                              "~a values is enough for anybody; here's the rest in a list: ~s"
+                              (number->english *max-values-to-display*)
+                              values)
 
-                       ;; Even though the sandbox runs with strict
-                       ;; memory and time limits, we use
-                       ;; call-with-limits here anyway, because it's
-                       ;; possible that the sandbox can, without
-                       ;; exceeding its limits, return a value that
-                       ;; will require a lot of time and memory to
-                       ;; convert into a string!  (make-list 100000)
-                       ;; is an example.
-                       (call-with-limits
-                        2 20
-                        (lambda ()
-                          (when (not (void? (car values)))
-                            (when (positive? displayed)
-                              (sleep 1))
-                            (reply
-                             "; Value: ~s"
-                             (car values)))
-                          (loop (cdr values)
-                                (add1 displayed)))))))))
+                             ;; Even though the sandbox runs with strict
+                             ;; memory and time limits, we use
+                             ;; call-with-limits here anyway, because it's
+                             ;; possible that the sandbox can, without
+                             ;; exceeding its limits, return a value that
+                             ;; will require a lot of time and memory to
+                             ;; convert into a string!  (make-list 100000)
+                             ;; is an example.
+                             (call-with-limits
+                              2 20
+                              (lambda ()
+                                (when (not (void? (car values)))
+                                  (when (positive? displayed)
+                                    (sleep 1))
+                                  (reply
+                                   "; Value: ~s"
+                                   (car values)))
+                                (loop (cdr values)
+                                      (add1 displayed)))))))))
 
-           (let ((stdout (sandbox-get-stdout s))
-                 (stderr (sandbox-get-stderr s)))
-             (when (and (string? stdout)
-                        (positive? (string-length stdout)))
-               (reply "; stdout: ~s" stdout))
-             (when (and (string? stderr)
-                        (positive? (string-length stderr)))
-               (reply  "; stderr: ~s" stderr)))))]
+                 (let ((stdout (sandbox-get-stdout s))
+                       (stderr (sandbox-get-stderr s)))
+                   (when (and (string? stdout)
+                              (positive? (string-length stdout)))
+                     (reply "; stdout: ~s" stdout))
+                   (when (and (string? stderr)
+                              (positive? (string-length stderr)))
+                     (reply  "; stderr: ~s" stderr)))))]
 
-      [(version)
-       (reply "~a" (git-version))]
-      [else #f]))
+            [(version)
+             (reply "~a" (git-version))]
+            [else #f])
+          (note-we-did-something-for! for-whom))))
 
   (log "<= ~s" line)
   (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
