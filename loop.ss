@@ -11,13 +11,11 @@
          "spelled-out-time.ss"
          (except-in "quotes.ss" main)
          "tinyurl.ss"
-         (lib "trace.ss")
          (lib "13.ss" "srfi")
          (lib "14.ss" "srfi")
          (only-in (planet "zdate.ss" ("offby1" "offby1.plt")) zdate)
          (planet "macro.ss" ("schematics" "macro.plt"))
-         (planet "numspell.ss" ("neil" "numspell.plt"))
-         mzlib/trace)
+         (planet "numspell.ss" ("neil" "numspell.plt")))
 
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
@@ -98,10 +96,9 @@
 (define (we-recently-did-something-for nick)
   (>= (hash-ref *action-times-by-nick* nick 0)
       (- (current-seconds) 10)))
-(trace we-recently-did-something-for)
+
 (define (note-we-did-something-for! for-whom)
   (hash-set! *action-times-by-nick* for-whom (current-seconds)))
-(trace note-we-did-something-for!)
 
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
@@ -132,10 +129,10 @@
                                  ""
                                  (format "~a: " for-whom))))
         (pm response-target "~a" (string-append response-prefix (apply format fmt args)))))
-    (log "Doing ~s" words)
     (if (we-recently-did-something-for for-whom)
         (log "Not doing anything for ~a, since we recently did something for them." for-whom)
         (begin
+          (log "Doing ~s" words)
           (case (string->symbol (string-downcase (first words)))
             [(quote)
              (let ((q (one-quote)))
