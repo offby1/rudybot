@@ -340,7 +340,7 @@
                             nick
                             (string-join (cons first-word rest)))
 
-                       (do-cmd nick nick (cons first-word rest)))
+                       (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))
                      (begin
 
                        (match first-word
@@ -364,7 +364,9 @@
                                               (cons garbage rest)
                                               rest)))
                               (when (not (null? words))
-                                (do-cmd target nick words #:rate_limit? (equal? target "#emacs" )))))]
+                                (do-cmd target nick words #:rate_limit?
+                                        (and (not (regexp-match #rx"^offby1" nick))
+                                             (equal? target "#emacs" ))))))]
                          [",..."
                           (when (equal? target "#emacs")
                             (pm target "Arooooooooooo"))]
