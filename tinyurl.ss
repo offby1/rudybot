@@ -11,9 +11,8 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "sxml.ss" ("lizorkin"    "sxml.plt"))
          (lib "uri-codec.ss" "net")
          (lib "url.ss" "net")
-         (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
-         (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" 2)))
+         (planet schematics/schemeunit:3)
+         (planet schematics/schemeunit:3/text-ui))
 
 (define *tinyurl-url-length-threshold* (make-parameter 75))
 
@@ -115,7 +114,7 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     (list #"http://photo.net/foo?bar=baz" #"http://microsoft.com"))))
 
 (define (main . args)
-  (exit (test/text-ui tinyurl-tests 'verbose)))
+  (exit (run-tests tinyurl-tests 'verbose)))
 (provide/contract
  [make-tiny-url
   ((string?) (#:user-agent boolean?)  . ->* . string?)])

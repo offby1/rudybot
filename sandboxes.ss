@@ -6,9 +6,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 #lang scheme
 
 (require scheme/sandbox
-         (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
-         (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" 2)))
+         (planet schematics/schemeunit:3)
+         (planet schematics/schemeunit:3/text-ui))
 
 (define-struct sandbox (evaluator
                         last-used-time) #:transparent #:mutable)
@@ -107,7 +106,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
        (test-suite
         "distinct "
-        '#:before
+        #:before
         (lambda ()
           (set! *sandboxes-by-nick* (make-hash))
           (set! charlies-sandbox (get-sandbox-by-name *sandboxes-by-nick* "charlie"))
@@ -142,4 +141,5 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (require (except-in "log.ss" main))
 (define (main . args)
   (printf "Main running ...~%")
-  (exit (test/text-ui sandboxes-tests 'verbose)))
+
+  (exit (run-tests sandboxes-tests 'verbose)))

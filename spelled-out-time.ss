@@ -6,9 +6,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 #lang scheme
 
 (require (planet "numspell.ss" ("neil" "numspell.plt"))
-         (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
-         (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" 2)))
+         (planet schematics/schemeunit:3)
+         (planet schematics/schemeunit:3/text-ui))
 
 (define (seconds->english secs)
   (let loop ((units secs)
@@ -90,7 +89,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
    (test-equal? "ten centuries"       (spelled-out-time (* 1 60 60 24 7 52 100 10))"ten centuries")))
 
 (define (main . args)
-  (exit (test/text-ui spelled-out-time-tests 'verbose)))
+  (exit (run-tests spelled-out-time-tests 'verbose)))
 
 (provide/contract
  [seconds->english (-> natural-number/c (listof (cons/c symbol? natural-number/c)))]
