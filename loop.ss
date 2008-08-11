@@ -364,7 +364,7 @@
                                               (cons garbage rest)
                                               rest)))
                               (when (not (null? words))
-                                (do-cmd target nick words #:rate_limit? (equal target "#emacs" )))))]
+                                (do-cmd target nick words #:rate_limit? (equal? target "#emacs" )))))]
                          [",..."
                           (when (equal? target "#emacs")
                             (pm target "Arooooooooooo"))]
