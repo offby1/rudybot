@@ -126,14 +126,15 @@
                       (if notice? "NOTICE" "PRIVMSG")
                       target (apply format fmt args))))
 
-  (define (do-cmd response-target for-whom words)
+  (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #t])
     (define (reply fmt . args)
       (let ((response-prefix (if (equal? response-target for-whom)
                                  ""
                                  (format "~a: " for-whom))))
         (pm response-target "~a" (string-append response-prefix (apply format fmt args)))))
     (log "Doing ~s" words)
-    (if (we-recently-did-something-for for-whom)
+    (if (and rate_limit?
+             (we-recently-did-something-for for-whom))
         (log "Not doing anything for ~a, since we recently did something for them." for-whom)
         (begin
           (case (string->symbol (string-downcase (first words)))
@@ -366,7 +367,7 @@
                                               (cons garbage rest)
                                               rest)))
                               (when (not (null? words))
-                                (do-cmd target nick words))))]
+                                (do-cmd target nick words #:rate_limit? (equal target "#emacs" )))))]
                          [",..."
                           (when (equal? target "#emacs")
                             (pm target "Arooooooooooo"))]
