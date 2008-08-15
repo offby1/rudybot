@@ -11,7 +11,6 @@
          "spelled-out-time.ss"
          (except-in "quotes.ss" main)
          "tinyurl.ss"
-         (lib "trace.ss")
          (lib "13.ss" "srfi")
          (lib "14.ss" "srfi")
          (only-in (planet "zdate.ss" ("offby1" "offby1.plt")) zdate)
@@ -89,6 +88,18 @@
 ;; flooding.
 (define *max-output-line* 500)
 
+;; For rate limiting -- every time we respond to a direct request, we
+;; save the time under the requstor's nick.  That way, we can later
+;; check a request from the same nick to see if they've requested
+;; something recently, and perhaps deny the request.
+(define *action-times-by-nick* (make-hash))
+(define (we-recently-did-something-for nick)
+  (>= (hash-ref *action-times-by-nick* nick 0)
+      (- (current-seconds) 10)))
+
+(define (note-we-did-something-for! for-whom)
+  (hash-set! *action-times-by-nick* for-whom (current-seconds)))
+
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line op)
@@ -112,98 +123,103 @@
                       (if notice? "NOTICE" "PRIVMSG")
                       target (apply format fmt args))))
 
-  (define (do-cmd response-target for-whom words)
+  (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #t])
     (define (reply fmt . args)
       (let ((response-prefix (if (equal? response-target for-whom)
                                  ""
                                  (format "~a: " for-whom))))
         (pm response-target "~a" (string-append response-prefix (apply format fmt args)))))
-    (log "Doing ~s" words)
-    (case (string->symbol (string-downcase (first words)))
-      [(quote)
-       (let ((q (one-quote)))
-         ;; special case: jordanb doesn't want quotes prefixed with
-         ;; his nick.
-         (match for-whom
-           [(regexp #rx"^jordanb")
-            (pm response-target "~a" q)]
-           [_ (reply "~a" q)])
-         )]
-      [(source) (reply "~a" "http://rudybot.ath.cx:1234")]
-      [(seen)
-       (when (not (null? (cdr words)))
-         (reply "~a" (nick->sighting-string (second words)))
-         )]
-      [(uptime)
-       (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
-              (describe-since *start-time*)
-              (describe-since (*connection-start-time*)))]
-      [(eval)
-       (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
-         (with-handlers
-             (
-              ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
-              ;; killing this thread.
-              [void
-               (lambda (v)
-                 (let ((whine (if (exn? v)
-                                  (exn-message v)
-                                  (format "~s" v))))
-                   (apply reply
-                    ;; make sure our error message begins with "error: ".
-                    (if (regexp-match #rx"^error: " whine)
-                        (list "~a" whine)
-                        (list "error: ~a" whine)))))])
+    (if (and rate_limit?
+             (we-recently-did-something-for for-whom))
+        (log "Not doing anything for ~a, since we recently did something for them." for-whom)
+        (begin
+          (log "Doing ~s" words)
+          (case (string->symbol (string-downcase (first words)))
+            [(quote)
+             (let ((q (one-quote)))
+               ;; special case: jordanb doesn't want quotes prefixed with
+               ;; his nick.
+               (match for-whom
+                 [(regexp #rx"^jordanb")
+                  (pm response-target "~a" q)]
+                 [_ (reply "~a" q)])
+               )]
+            [(source) (reply "~a" "http://rudybot.ath.cx:1234")]
+            [(seen)
+             (when (not (null? (cdr words)))
+               (reply "~a" (nick->sighting-string (second words)))
+               )]
+            [(uptime)
+             (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
+                    (describe-since *start-time*)
+                    (describe-since (*connection-start-time*)))]
+            [(eval)
+             (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
+               (with-handlers
+                   (
+                    ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
+                    ;; killing this thread.
+                    [void
+                     (lambda (v)
+                       (let ((whine (if (exn? v)
+                                        (exn-message v)
+                                        (format "~s" v))))
+                         (apply reply
+                                ;; make sure our error message begins with "error: ".
+                                (if (regexp-match #rx"^error: " whine)
+                                    (list "~a" whine)
+                                    (list "error: ~a" whine)))))])
 
-           (call-with-values
-               (lambda ()
-                 (sandbox-eval
-                  s
-                  (string-join (cdr words))))
-             (lambda values
-               (let loop ((values values)
-                          (displayed 0))
-                 (when (not (null? values))
+                 (call-with-values
+                     (lambda ()
+                       (sandbox-eval
+                        s
+                        (string-join (cdr words))))
+                   (lambda values
+                     (let loop ((values values)
+                                (displayed 0))
+                       (when (not (null? values))
 
-                   ;; prevent flooding
-                   (if (= displayed *max-values-to-display*)
-                       (reply
-                        "~a values is enough for anybody; here's the rest in a list: ~s"
-                        (number->english *max-values-to-display*)
-                        values)
+                         ;; prevent flooding
+                         (if (= displayed *max-values-to-display*)
+                             (reply
+                              "~a values is enough for anybody; here's the rest in a list: ~s"
+                              (number->english *max-values-to-display*)
+                              values)
 
-                       ;; Even though the sandbox runs with strict
-                       ;; memory and time limits, we use
-                       ;; call-with-limits here anyway, because it's
-                       ;; possible that the sandbox can, without
-                       ;; exceeding its limits, return a value that
-                       ;; will require a lot of time and memory to
-                       ;; convert into a string!  (make-list 100000)
-                       ;; is an example.
-                       (call-with-limits
-                        2 20
-                        (lambda ()
-                          (when (not (void? (car values)))
-                            (when (positive? displayed)
-                              (sleep 1))
-                            (reply
-                             "; Value: ~s"
-                             (car values)))
-                          (loop (cdr values)
-                                (add1 displayed)))))))))
+                             ;; Even though the sandbox runs with strict
+                             ;; memory and time limits, we use
+                             ;; call-with-limits here anyway, because it's
+                             ;; possible that the sandbox can, without
+                             ;; exceeding its limits, return a value that
+                             ;; will require a lot of time and memory to
+                             ;; convert into a string!  (make-list 100000)
+                             ;; is an example.
+                             (call-with-limits
+                              2 20
+                              (lambda ()
+                                (when (not (void? (car values)))
+                                  (when (positive? displayed)
+                                    (sleep 1))
+                                  (reply
+                                   "; Value: ~s"
+                                   (car values)))
+                                (loop (cdr values)
+                                      (add1 displayed)))))))))
 
-           (let ((stdout (sandbox-get-stdout s))
-                 (stderr (sandbox-get-stderr s)))
-             (when (and (string? stdout)
-                        (positive? (string-length stdout)))
-               (reply "; stdout: ~s" stdout))
-             (when (and (string? stderr)
-                        (positive? (string-length stderr)))
-               (reply  "; stderr: ~s" stderr)))))]
+                 (let ((stdout (sandbox-get-stdout s))
+                       (stderr (sandbox-get-stderr s)))
+                   (when (and (string? stdout)
+                              (positive? (string-length stdout)))
+                     (reply "; stdout: ~s" stdout))
+                   (when (and (string? stderr)
+                              (positive? (string-length stderr)))
+                     (reply  "; stderr: ~s" stderr)))))]
 
-      [(version)
-       (reply "~a" (git-version))]
-      [else #f]))
+            [(version)
+             (reply "~a" (git-version))]
+            [else #f])
+          (note-we-did-something-for! for-whom))))
 
   (log "<= ~s" line)
   (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
@@ -324,7 +340,7 @@
                             nick
                             (string-join (cons first-word rest)))
 
-                       (do-cmd nick nick (cons first-word rest)))
+                       (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))
                      (begin
 
                        (match first-word
@@ -348,7 +364,9 @@
                                               (cons garbage rest)
                                               rest)))
                               (when (not (null? words))
-                                (do-cmd target nick words))))]
+                                (do-cmd target nick words #:rate_limit?
+                                        (and (not (regexp-match #rx"^offby1" nick))
+                                             (equal? target "#emacs" ))))))]
                          [",..."
                           (when (equal? target "#emacs")
                             (pm target "Arooooooooooo"))]
