@@ -36,18 +36,25 @@
                                            "big-log"
                                            #:mode 'text
                                            #:exists 'append))))
-(for ((op (in-list (*log-ports*))))
-  (fprintf (current-error-port)
-           "Whopping port ~a~%" op)
-  (with-handlers
-      ([exn:fail? values])
-    (file-stream-buffer-mode op 'line)))
 
-(define (log . args)
-  (for ((op (in-list (*log-ports*))))
-    (fprintf op "~a " (zdate))
-    (apply fprintf op args)
-    (newline op)))
+(define log #f)
+(let ((ports-whopped? #f))
+  (set! log
+        (lambda args
+
+          (unless ports-whopped?
+            (for ((op (in-list (*log-ports*))))
+              (fprintf (current-error-port)
+                       "Whopping port ~a~%" op)
+              (with-handlers
+                  ([exn:fail? values])
+                (file-stream-buffer-mode op 'line)))
+            (set! ports-whopped? #t))
+
+          (for ((op (in-list (*log-ports*))))
+            (fprintf op "~a " (zdate))
+            (apply fprintf op args)
+            (newline op)))))
 
 ;; Maybe I should use rnrs/enums-6 to guard against typos
 (define *authentication-state* 'havent-even-tried)
