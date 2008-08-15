@@ -384,7 +384,8 @@
 (define (connect-and-run
          server-maker
          (consecutive-failed-connections 0)
-         #:retry-on-hangup? (retry-on-hangup? #t))
+         #:retry-on-hangup? [retry-on-hangup? #t]
+         #:retry-on-error?  [retry-on-error?  #t])
 
   (*connection-start-time* (current-seconds))
   (set! *authentication-state* 'havent-even-tried)
@@ -423,13 +424,17 @@
                       (retry))]
                    [(regexp #rx"^ERROR :(.*)$" (list _ whine))
                     (log "Hmm, error: ~s" whine)
-                    (retry)]
+                    (when retry-on-error?
+                      (retry))]
                    [_
                     (slightly-more-sophisticated-line-proc line op)
                     (do-one-line 0)])))))))))
 (provide/contract
  [connect-and-run
-  (->* (procedure?) (natural-number/c #:retry-on-hangup? boolean?) void?)])
+  (->* (procedure?) (natural-number/c
+                     #:retry-on-hangup? boolean?
+                     #:retry-on-error?  boolean?
+                     ) void?)])
 (provide
  log
  *irc-server-hostname*
