@@ -1,0 +1,7 @@
+2008-08-15T04:52:40Z <= ":lavaramano!i=mauro@main10105.dc8.debconf.org QUIT :\"Lost terminal\""
+...
+2008-08-15T04:59:16Z <= ":offby1!n=user@q-static-138-125.avvanta.com PRIVMSG #emacs :rudybot: seen lavaramano"
+2008-08-15T04:59:16Z Doing ("seen" "lavaramano")
+2008-08-15T04:59:16Z => "PRIVMSG #emacs :offby1: lavaramano was seen quitting in/on main10102.dc8.debconf.org twenty-three hours, twenty minutes ago, saying \"\"leaving\"\", and then lavaramano was seen joining in/on :#emacs eleven hours, eleven minutes ago"
+
+So why didn't it describe the QUIT that happened 6 minutes earlier?!
