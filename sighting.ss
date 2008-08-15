@@ -25,9 +25,9 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
    (*sightings-database-directory-name*)
    (canonicalize-nick n)))
 
-(define (safe-take lst pos)
+(define (safe-take-right lst pos)
   (let ((pos (min pos (length lst))))
-    (take lst pos)))
+    (take-right lst pos)))
 
 (define (false-if-null x)
   (and (not (null? x))
@@ -60,7 +60,7 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 
 (define (lookup-sightings who)
   (aif dirname (directory-exists/ci? (nick->dirpath who))
-       (safe-take
+       (safe-take-right
         (sort
          (map (lambda (fn)
                 (call-with-input-file (build-path dirname fn) read))
