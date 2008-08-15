@@ -7,7 +7,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (require (planet "numspell.ss" ("neil" "numspell.plt"))
          (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
-         (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
+         (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
          (planet "util.ss"    ("schematics" "schemeunit.plt" 2)))
 
 (define (seconds->english secs)

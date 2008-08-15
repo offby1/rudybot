@@ -4,9 +4,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 #lang scheme
 (require (lib "trace.ss")
-         (planet "test.ss"    ("schematics" "schemeunit.plt" ))
-         (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" ))
+         (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
+         (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
+         (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
          "sighting.ss")
 
 (require/expose "sighting.ss" (*sightings-database-directory-name*
