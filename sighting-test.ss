@@ -9,8 +9,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
          "sighting.ss")
 
-(require/expose "sighting.ss" (*sightings-database-directory-name*
-                               *downcase-nicks*))
+(require/expose "sighting.ss" (*downcase-nicks*))
 
 
 (define sighting-tests

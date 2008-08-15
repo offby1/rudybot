@@ -112,4 +112,4 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (provide/contract
  [make-tiny-url
   ((string?) (#:user-agent boolean?)  . ->* . string?)])
-(provide url-regexp)
+(provide url-regexp main)
