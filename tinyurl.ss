@@ -11,9 +11,9 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet "sxml.ss" ("lizorkin"    "sxml.plt"))
          (lib "uri-codec.ss" "net")
          (lib "url.ss" "net")
-         (planet "test.ss"    ("schematics" "schemeunit.plt" ))
-         (planet "text-ui.ss" ("schematics" "schemeunit.plt" ))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" )))
+         (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
+         (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
+         (planet "util.ss"    ("schematics" "schemeunit.plt" 2)))
 
 (define *tinyurl-url-length-threshold* (make-parameter 75))
 
