@@ -25,9 +25,9 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
    (*sightings-database-directory-name*)
    (canonicalize-nick n)))
 
-(define (safe-take-right lst pos)
+(define (safe-take lst pos)
   (let ((pos (min pos (length lst))))
-    (take-right lst pos)))
+    (take lst pos)))
 
 (define (false-if-null x)
   (and (not (null? x))
@@ -43,6 +43,9 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
                     f
                     newest))))
 
+;; This is typically slow, because PATH is a nick, and we've noted a
+;; couple of thousand other nicks.  Can't cache it, though, since new
+;; people join all the time :-|
 (define (siblings path)
   (let ((parent (apply build-path (drop-right (explode-path (simple-form-path path)) 1))))
     (map (lambda (p)
@@ -59,58 +62,47 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
               (siblings name))))))
 
 (define (lookup-sightings who)
-  (aif dirname (directory-exists/ci? (nick->dirpath who))
-       (safe-take-right
-        (sort
-         (map (lambda (fn)
-                (call-with-input-file (build-path dirname fn) read))
-              (directory-list dirname))
-         (lambda (s1 s2)
-           (< (sighting-when s1)
-              (sighting-when s2))))
-        2)
-       '()))
+  (map (lambda (p)
+         (call-with-input-file p read))
+       (let ((dirname (nick->dirpath who)))
+         (if (directory-exists? dirname)
+             (safe-take
+              (dirlist-newest-first dirname)
+              2)
+             '()))))
+
+;; files whose names are numbers are sorted numerically; all other
+;; files are sorted as if their numbers were 0 (i.e., at the end).
+(define (dirlist-newest-first [path (current-directory)])
+  (map
+   (lambda (entry)
+     (build-path path entry))
+   (sort
+    (directory-list path)
+    >
+    #:key
+    (lambda (p)
+      (or (string->number (path->string p)) 0)))))
 
 (define (note-sighting s)
   (let ((dirname (nick->dirpath (sighting-who s))))
 
-    (define-struct both (path number) #:transparent)
-
     (make-directory* dirname)
 
     ;; first, prune old existing sightings.
-    (let* ((existing-increasing-order
-            (sort
-             (filter both-number
-                     (map (lambda (entry)
-                            (make-both (build-path dirname entry)
-                                       (string->number (path->string entry))))
-                          (directory-list dirname)))
-             <
-             #:key both-number))
+    (let ((max-to-keep 2))
+      (for ([i (in-naturals)]
+            [file (dirlist-newest-first dirname)]
+            #:when (<= max-to-keep i))
+        (delete-file file)))
 
-           (new-name
-            (build-path
-             dirname
-             (number->string
-              (if (null? existing-increasing-order)
-                  0
-                  (add1
-                   (both-number (last  existing-increasing-order))))))))
-
-      (define max-to-keep 2)
-      (let nuke ((e  existing-increasing-order)
-                 (num-files (length existing-increasing-order)))
-        (when (< max-to-keep num-files)
-          (delete-file (both-path (car e)))
-          (nuke (cdr e)
-                (sub1 num-files))))
-
-      (call-with-output-file
-          new-name
-        (lambda (op)
-          (write s op)
-          (newline op))))))
+    (call-with-output-file
+        (build-path
+         dirname
+         (number->string (sighting-when s)))
+      (lambda (op)
+        (fprintf op "~s~%" s))
+      #:exists 'truncate)))
 
 (provide *sightings-database-directory-name*)
 (provide/contract
