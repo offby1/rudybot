@@ -14,7 +14,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (file-stream-buffer-mode op 'line)
     (values ip op)))
 
-(define (make-preloaded-server op)
+(define (make-preloaded-server)
   (lambda ()
     (values (let-values (((ip op)
                           (make-pipe)))
@@ -35,8 +35,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                   `(
                     ,(c (format "eval (error \"foo\\r\\nQUIT bar\")"))
                     ":freenode-connect!freenode@freenode/bot/connect PRIVMSG upstartbot :\u0001VERSION\u0001"
-                    "foO!"
-                    "PING :localhost."
                     ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
                     ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
 
@@ -88,10 +86,21 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                           (p (format "eval ~s" expr)))))
 
                     ,@(map c (list "quote" "uptime"))))
+                 "ERROR : you suck"
+                 "PING :localhost."
 
                  (close-output-port op)))
               ip)
-            op)))
+            (open-output-nowhere))))
+
+(define (preload-main . args)
+  (log "Main starting.")
+  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
+                 (*log-ports* (list (current-error-port))))
+    (connect-and-run
+     (make-preloaded-server)
+     #:retry-on-hangup? #f
+     #:retry-on-error? #f)))
 
 (define (make-log-replaying-ip-port log-file-name (max-lines 'all))
   (let-values (((ip op)
@@ -106,7 +115,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                (when (equal? lines-handled max-lines)
                  (return))
                (match line
-                 [(regexp #px"^<= (\".*\")" (list _ datum))
+                 [(regexp #px"^(.{21}?)<= (\".*\")" (list _ timestamp datum))
                   (display (read (open-input-string datum)) op)
                   (display #\return op)
                   (newline op)]
@@ -184,15 +193,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (log "Main starting.")
     (connect-and-run
      (make-log-replaying-server "big-log")
-     #:retry-on-hangup? #f)))
-
-(define (preload-main . args)
-  (log "Main starting.")
-  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-                 (*log-ports* (list (current-error-port))))
-    (connect-and-run
-     (make-preloaded-server (open-output-nowhere))
-     #:retry-on-hangup? #f)))
+     #:retry-on-hangup? #f
+     #:retry-on-error?  #f)))
 
 (define (localhost-main . args)
   (log "Main starting: ~a" (git-version))
