@@ -16,7 +16,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
            ([exn:fail:read?
              (lambda (e)
                (fprintf op
-                "Guess not: ~s~%" (exn-message e)))])
+                "Can't parse ~s: ~s~%" line
+                                       (exn-message e)))])
 
       (fprintf op "~s" (read ip)))
       (flush-output op)
@@ -25,7 +26,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
           (fprintf
            (current-error-port)
            "Leftover crud in ~a: ~s~%" ip leftovers))))))
-
+
 (define (one-test inp expected)
   (let ((results (open-output-string)))
     (process (open-input-string inp) results)
@@ -43,6 +44,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      "The Big Suite"
      (one-test "yo ho ho" "yo")
      (one-test " (+ 2 3) " "(+ 2 3)")
-     (one-test "\"ya ha ha" #rx"^Guess not:")))))
+     (one-test "\"ya ha ha" #rx"^Can't parse")))))
 
 (provide main)
