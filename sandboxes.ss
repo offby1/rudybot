@@ -21,7 +21,22 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      (make-evaluator '(begin)))
    0))
 
+(define *server* #f)
+(define *out* #f)
+(define *in* #f)
+(define *err* #f)
+
+(define (send-to-eval-server string-to-read op-for-results)
+  (display "Dunno how to eval yet.  I'm broken." op-for-results)
+  (newline op-for-results))
+
 (define (sandbox-eval sb string)
+  (when (not *server*)
+    (set!-values (*server* *out* *in* *err*)
+                 (subprocess *out* *in* *err* "/bin/cat")))
+  (display string *in*)
+  (newline *in*)
+
   (set-sandbox-last-used-time! sb (current-milliseconds))
   ((sandbox-evaluator sb) string))
 ;(trace sandbox-eval)
@@ -126,13 +141,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
           (lambda () (sandbox-eval keiths-sandbox))
           "keith's sandbox didn't gack when I referenced 'x' -- even though we never defined it.")))))))
 
-(provide get-sandbox-by-name
-         sandbox-eval
-         sandbox-get-stderr
-         sandbox-get-stdout
-         sandboxes-tests
-         main
-         (rename-out [public-make-sandbox make-sandbox]))
+(provide/contract
+ [send-to-eval-server
+  (-> string? output-port? any)])
+(provide main)
 
 (define (main . args)
   (printf "Main running ...~%")

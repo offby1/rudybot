@@ -154,67 +154,27 @@
                     (describe-since *start-time*)
                     (describe-since (*connection-start-time*)))]
             [(eval)
-             (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
-               (with-handlers
-                   (
-                    ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
-                    ;; killing this thread.
-                    [void
-                     (lambda (v)
-                       (let ((whine (if (exn? v)
-                                        (exn-message v)
-                                        (format "~s" v))))
-                         (apply reply
-                                ;; make sure our error message begins with "error: ".
-                                (if (regexp-match #rx"^error: " whine)
-                                    (list "~a" whine)
-                                    (list "error: ~a" whine)))))])
+             (let (((ip op) (make-pipe)))
+               (send-to-eval-server
+                (string-join (cdr words))
+                op)
+               (for ((line (in-lines ip))
+                     (displayed (in-naturals))
 
-                 (call-with-values
-                     (lambda ()
-                       (sandbox-eval
-                        s
-                        (string-join (cdr words))))
-                   (lambda values
-                     (let loop ((values values)
-                                (displayed 0))
-                       (when (not (null? values))
+                     ;; prevent flooding
+                     #:when (< displayed *max-values-to-display*))
 
-                         ;; prevent flooding
-                         (if (= displayed *max-values-to-display*)
-                             (reply
-                              "~a values is enough for anybody; here's the rest in a list: ~s"
-                              (number->english *max-values-to-display*)
-                              values)
-
-                             ;; Even though the sandbox runs with strict
-                             ;; memory and time limits, we use
-                             ;; call-with-limits here anyway, because it's
-                             ;; possible that the sandbox can, without
-                             ;; exceeding its limits, return a value that
-                             ;; will require a lot of time and memory to
-                             ;; convert into a string!  (make-list 100000)
-                             ;; is an example.
-                             (call-with-limits
-                              2 20
-                              (lambda ()
-                                (when (not (void? (car values)))
-                                  (when (positive? displayed)
-                                    (sleep 1))
-                                  (reply
-                                   "; Value: ~s"
-                                   (car values)))
-                                (loop (cdr values)
-                                      (add1 displayed)))))))))
-
-                 (let ((stdout (sandbox-get-stdout s))
-                       (stderr (sandbox-get-stderr s)))
-                   (when (and (string? stdout)
-                              (positive? (string-length stdout)))
-                     (reply "; stdout: ~s" stdout))
-                   (when (and (string? stderr)
-                              (positive? (string-length stderr)))
-                     (reply  "; stderr: ~s" stderr)))))]
+                 (call-with-limits
+                  2 20
+                  (lambda ()
+                    (when (not (void? (car values)))
+                      (when (positive? displayed)
+                        (sleep 1))
+                      (reply
+                       "; Value: ~s"
+                       (car values)))
+                    (loop (cdr values)
+                          (add1 displayed))))))]
 
             [(version)
              (reply "~a" (git-version))]
