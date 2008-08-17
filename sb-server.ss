@@ -11,7 +11,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (define (process ip op)
   (for ((line (in-lines ip)))
-    (fprintf op "Let's see if we can parse this line ... ")
     (let ((ip (open-input-string line)))
       (with-handlers
            ([exn:fail:read?
@@ -19,7 +18,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                (fprintf op
                 "Guess not: ~s~%" (exn-message e)))])
 
-      (fprintf op "~s~%" (read ip)))
+      (fprintf op "~s" (read ip)))
+      (flush-output op)
       (let ((leftovers (read-line ip)))
         (when (string? leftovers)
           (fprintf
@@ -29,9 +29,20 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (define (one-test inp expected)
   (let ((results (open-output-string)))
     (process (open-input-string inp) results)
-    (check-equal? (get-output-string results) expected)))
+    (let ((results (get-output-string results)))
+      (cond
+       ((string? expected)
+        (check-equal? results expected))
+       ((regexp? expected)
+        (check-regexp-match expected results ))))))
 
 (define (main . args)
-  (one-test  "yo ho ho"  "Everything went peachy!!"))
+  (exit
+   (run-tests
+    (test-suite
+     "The Big Suite"
+     (one-test "yo ho ho" "yo")
+     (one-test " (+ 2 3) " "(+ 2 3)")
+     (one-test "\"ya ha ha" #rx"^Guess not:")))))
 
 (provide main)
