@@ -7,19 +7,48 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (require
  (planet schematics/schemeunit:3)
- (planet schematics/schemeunit:3/text-ui))
+ (planet schematics/schemeunit:3/text-ui)
+ mzlib/trace)
 
+(define *server* #f)
+(define *out* #f)
+(define *in* #f)
+(define *err* #f)
+
+(define (drain-port ip)
+  (let loop ((so-far '()))
+    (if (sync/timeout 1/100 ip)
+        (loop (cons (read-string 100 ip) so-far))
+        (apply string-append (reverse so-far))
+        )))
+(trace drain-port)
+(define (sandbox-eval string)
+  (when (not *server*)
+    (set!-values (*server* *out* *in* *err*)
+                 (subprocess *out* *in* *err* "/bin/cat"
+                             ;; "--number"
+                             ))
+    (fprintf
+     (current-error-port)
+     "Fired up sandbox server.  PID is ~a; status is ~a~%"
+     (subprocess-pid *server*)
+     (subprocess-status *server*)))
+  (display string *in*)
+  (newline *in*)
+  (flush-output *in*)
+  (drain-port *out*))
+(trace sandbox-eval)
 (define (process ip op)
   (for ((line (in-lines ip)))
     (let ((ip (open-input-string line)))
       (with-handlers
-           ([exn:fail:read?
-             (lambda (e)
-               (fprintf op
-                "Can't parse ~s: ~s~%" line
-                                       (exn-message e)))])
+          ([exn:fail:read?
+            (lambda (e)
+              (fprintf op
+                       "Can't parse ~s: ~s~%" line
+                       (exn-message e)))])
 
-      (fprintf op "~s" (read ip)))
+        (fprintf op "~a" (sandbox-eval (read ip))))
       (flush-output op)
       (let ((leftovers (read-line ip)))
         (when (string? leftovers)
