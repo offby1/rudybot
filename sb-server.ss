@@ -17,10 +17,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (define (drain-port ip)
   (let loop ((so-far '()))
-    (if (sync/timeout 1/100 ip)
-        (loop (cons (read-string 100 ip) so-far))
-        (apply string-append (reverse so-far))
-        )))
+    (if (sync/timeout 1/10 ip)
+        (loop (cons (read-char ip) so-far))
+        (apply string (reverse so-far)))))
+
 (trace drain-port)
 (define (sandbox-eval string)
   (when (not *server*)
