@@ -21,26 +21,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      (make-evaluator '(begin)))
    0))
 
-(define *server* #f)
-(define *out* #f)
-(define *in* #f)
-(define *err* #f)
-
-(define (send-to-eval-server string-to-read op-for-results)
-  (display "Dunno how to eval yet.  I'm broken." op-for-results)
-  (newline op-for-results))
-
-(define (sandbox-eval sb string)
-  (when (not *server*)
-    (set!-values (*server* *out* *in* *err*)
-                 (subprocess *out* *in* *err* "/bin/cat")))
-  (display string *in*)
-  (newline *in*)
-
-  (set-sandbox-last-used-time! sb (current-milliseconds))
-  ((sandbox-evaluator sb) string))
-;(trace sandbox-eval)
-
 (define (get-sandbox-by-name ht name)
   (hash-ref ht name
     (lambda ()
