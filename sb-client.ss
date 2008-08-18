@@ -71,8 +71,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
    (run-tests
     (test-suite
      "The Big Suite"
-     (one-test "yo ho ho" "yo")
-     (one-test " (+ 2 3) " "(+ 2 3)")
+     (one-test "yo ho ho" "yo\n")
+     (one-test " (+ 2 3) " "(+ 2 3)\n")
      (one-test "\"ya ha ha" #rx"^Can't parse")))))
 
 (provide main)
