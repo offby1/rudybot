@@ -106,7 +106,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                (when (equal? lines-handled max-lines)
                  (return))
                (match line
-                 [(regexp #px"^<= (\".*\")" (list _ datum))
+                 [(regexp #px"<= (\".*\")" (list _ datum))
                   (display (read (open-input-string datum)) op)
                   (display #\return op)
                   (newline op)]
@@ -224,8 +224,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 ;;  flaky-main
 ;;;   hanging-up-main
 ;;;   localhost-main
-   preload-main
+;;;   preload-main
 ;;;   random-main
-;;;   replay-main
+   replay-main
   )
 (provide (all-defined-out))
