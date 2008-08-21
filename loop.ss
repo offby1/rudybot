@@ -122,7 +122,7 @@
                       (if notice? "NOTICE" "PRIVMSG")
                       target (apply format fmt args))))
 
-  (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #t])
+  (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #f])
     (define (reply fmt . args)
       (let ((response-prefix (if (equal? response-target for-whom)
                                  ""
@@ -364,7 +364,8 @@
                                               rest)))
                               (when (not (null? words))
                                 (do-cmd target nick words #:rate_limit?
-                                        (and (not (regexp-match #rx"^offby1" nick))
+                                        (and #f
+                                             (not (regexp-match #rx"^offby1" nick))
                                              (equal? target "#emacs" ))))))]
                          [",..."
                           (when (equal? target "#emacs")
