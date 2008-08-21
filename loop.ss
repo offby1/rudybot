@@ -10,7 +10,7 @@
          "sighting.ss"
          "spelled-out-time.ss"
          (except-in "quotes.ss" main)
-         "tinyurl.ss"
+         (except-in "tinyurl.ss" main)
          (lib "13.ss" "srfi")
          (lib "14.ss" "srfi")
          (only-in (planet "zdate.ss" ("offby1" "offby1.plt")) zdate)
@@ -76,11 +76,10 @@
                         (aif it (sighting-action? info) (string-append it " ") "")
                         (sighting-where info)
                         (describe-since (sighting-when  info))
-                        (aif it (sighting-words info)
-                             (if (not (null? it))
-                                 (format ", saying \"~a\"" (string-join it))
-                                 "")
-                             "")))
+                        (let ((words (string-join (sighting-words info))))
+                          (if (positive? (string-length words))
+                              (format ", saying \"~a\"" words)
+                              ""))))
               ss)
          ", and then "))))
 
