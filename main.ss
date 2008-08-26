@@ -22,11 +22,11 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                (lambda ()
                  (define (c str)
                    (format ":n!n@n PRIVMSG #c :~a: ~a"
-                           *my-nick*
+                           (*my-nick*)
                            str))
                  (define (p str)
                    (format ":n!n@n PRIVMSG ~a :~a"
-                           *my-nick*
+                           (*my-nick*)
                            str))
                  (for-each
                   (lambda (line)
@@ -58,12 +58,12 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
                     ,(c "version")
                     ,(c "quote")
-                    ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" *my-nick*)
+                    ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" (*my-nick*))
                     ,(format ":jordanb!n@n PRIVMSG #c :Let's say something memorable")
                     ,(format ":n!n@n PRIVMSG #emacs :,...")
                     ,(format ":n!n@n PRIVMSG #not-emacs :,...")
-                    ,(format ":n!n@n PRIVMSG #c :~a:~a" *my-nick* "lookboynospaces")
-                    ,(format ":n!n@n PRIVMSG #c :~a:" *my-nick* )
+                    ,(format ":n!n@n PRIVMSG #c :~a:~a" (*my-nick*) "lookboynospaces")
+                    ,(format ":n!n@n PRIVMSG #c :~a:" (*my-nick*) )
                     ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
                         (c (format "seen ~a" action)))
 
@@ -71,7 +71,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
                     ,(format
                       ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
-                      *my-nick*)
+                      (*my-nick*))
 
                     ,@(apply
                        append
@@ -224,8 +224,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 ;;  flaky-main
 ;;;   hanging-up-main
 ;;;   localhost-main
-;;;   preload-main
+   preload-main
 ;;;   random-main
-   replay-main
+;;;   replay-main
   )
 (provide (all-defined-out))
