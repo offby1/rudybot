@@ -19,7 +19,7 @@
 
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
-(define *my-nick* "rudybot")
+(define *my-nick* (make-parameter "rudybot"))
 
 (define *nickserv-password* (make-parameter #f))
 
@@ -228,7 +228,7 @@
 
       ["NOTICE"
        (when (eq? *authentication-state* 'havent-even-tried)
-         (out "NICK ~a" *my-nick*)
+         (out "NICK ~a" (*my-nick*))
          ;; RFC 1459 suggests that most of this data is ignored.
          (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
               (git-version))
@@ -246,7 +246,7 @@
            (current-seconds)
            action
            words)))
-       (if (equal? nick *my-nick*)
+       (if (equal? nick (*my-nick*))
            (log "I seem to have said ~s" (cdr toks))
            (match (cdr toks)
              [(list
@@ -307,7 +307,7 @@
                 (pm #:notice? #t
                     nick
                     "\u0001VERSION ~a (offby1@blarg.net):v4.~a:PLT scheme version ~a on ~a\0001"
-                    *my-nick*
+                    (*my-nick*)
                     (git-version)
                     (version)
                     (system-type 'os)))]
@@ -316,7 +316,7 @@
 
               ;; fledermaus points out that people may be surprised
               ;; to find "private" messages -- those where "target"
-              ;; is *my-nick* -- recorded in the sightings log.
+              ;; is (*my-nick*) -- recorded in the sightings log.
               (espy target #f (cons first-word rest))
               ;; look for long URLs to tiny-ify
               (for ((word (in-list (cons first-word rest))))
@@ -333,7 +333,7 @@
                  (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
                       nick)]
                 [_
-                 (if (equal? target *my-nick*)
+                 (if (equal? target (*my-nick*))
                      (begin
                        (log "~a privately said ~a to me"
                             nick
@@ -357,8 +357,8 @@
                          ;; character -- that way people can use, say,
                          ;; a semicolon after our nick, rather than
                          ;; just the comma and colon I've hard-coded here.
-                         [(regexp #px"^([[:alnum:]]+)[,:](.*)" (list _ addressee garbage))
-                          (when (equal? addressee *my-nick*)
+                         [(regexp #px"^([[:alnum:]_]+)[,:](.*)" (list _ addressee garbage))
+                          (when (equal? addressee (*my-nick*))
                             (let ((words  (if (positive? (string-length garbage))
                                               (cons garbage rest)
                                               rest)))
@@ -394,8 +394,8 @@
                   (car blather)))
             ((|433|)
              (log "Nuts, gotta try a different nick")
-             (set! *my-nick* (string-append *my-nick* "_"))
-             (out "NICK ~a" *my-nick*)))])]
+             (*my-nick* (string-append (*my-nick*) "_"))
+             (out "NICK ~a" (*my-nick*))))])]
       [_ (log "Duh?")])
     ))
 
