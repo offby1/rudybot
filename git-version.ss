@@ -7,7 +7,7 @@
 (define/memo (git-version)
   (match-define
    (list stdout-ip stdin-op pid stderr-ip controller)
-   (process "git log --pretty=format:%p%n -1"))
+   (process "git log --pretty=format:%h%n -1"))
 
   (controller 'wait)
 
