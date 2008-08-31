@@ -18,7 +18,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(2 20)))
 
-     (make-evaluator '(begin)))
+     (make-evaluator '(begin (require scheme))))
    0))
 
 (define (sandbox-eval sb string)
