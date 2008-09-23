@@ -14,8 +14,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (define (main . args)
   (log "Main starting: ~a" (git-version))
   (parameterize ((*irc-server-hostname* "irc.freenode.org")
-                 (*sightings-database-directory-name* "sightings.db")
-                 (*mute-privmsgs?* #f))
+                 (*sightings-database-directory-name* "sightings.db"))
     (command-line
      #:program "rudybot"
      #:once-each

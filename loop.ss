@@ -51,12 +51,6 @@
 ;; Maybe I should use rnrs/enums-6 to guard against typos
 (define *authentication-state* 'havent-even-tried)
 
-;; Normally this would be #f, so that when we issue a PRIVMSG, it
-;; really gets sent.  But during development, I have the bot lurking
-;; silently in a couple of channels, and this is #t, so that it
-;; doesn't say anything.
-(define *mute-privmsgs?* (make-parameter #f))
-
 (define-match-expander colon
   (syntax-rules ()
     [(colon w)
@@ -102,7 +96,7 @@
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line op)
-  (define (out #:for-real? [for-real? #t] format-string . args)
+  (define (out format-string . args)
     (let* ((str (apply format format-string args))
            (str (if (> (string-length str) *max-output-line*)
                     (string-append (substring str 0 (- *max-output-line* 4)) " ...")
@@ -113,12 +107,10 @@
 
 
       (log "=> ~s" str)
-      (when for-real?
-        (fprintf op "~a~%" str))))
+      (fprintf op "~a~%" str)))
 
   (define (pm #:notice? [notice? #f] target fmt . args)
-    (out #:for-real? (not (*mute-privmsgs?*))
-         "~a" (format "~a ~a :~a"
+    (out "~a" (format "~a ~a :~a"
                       (if notice? "NOTICE" "PRIVMSG")
                       target (apply format fmt args))))
 
@@ -455,5 +447,5 @@
  *my-nick*
  *nickserv-password*
  *bot-gives-up-after-this-many-silent-seconds*
- *log-ports*
- *mute-privmsgs?*)
+ *log-ports*)
+
