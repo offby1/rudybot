@@ -13,7 +13,6 @@
          (except-in "tinyurl.ss" main)
          (lib "13.ss" "srfi")
          (lib "14.ss" "srfi")
-         (only-in (planet "zdate.ss" ("offby1" "offby1.plt")) zdate)
          (planet "macro.ss" ("schematics" "macro.plt"))
          (planet "numspell.ss" ("neil" "numspell.plt")))
 
@@ -44,7 +43,9 @@
 
 (define (log . args)
   (for ((op (in-list (*log-ports*))))
-    (fprintf op "~a " (zdate))
+    (fprintf op "~a "
+             (parameterize ([date-display-format 'iso-8601])
+               (date->string (seconds->date (current-seconds)) #t)))
     (apply fprintf op args)
     (newline op)))
 
