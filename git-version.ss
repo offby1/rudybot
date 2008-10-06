@@ -1,10 +1,9 @@
 #!/usr/bin/env mzscheme
 #lang scheme
 
-(require scheme/system
-         (planet "memoize.ss" ("dherman" "memoize.plt")))
+(require scheme/system)
 
-(define/memo (git-version)
+(define (git-version)
   (match-define
    (list stdout-ip stdin-op pid stderr-ip controller)
    (process "git log --pretty=format:%h%n -1"))
