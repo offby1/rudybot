@@ -80,7 +80,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                                                    (let loop ()
                                                      (printf "Yaa!!")
                                                      (loop))
-                                                   (require (lib "1.ss" "srfi"))
+                                                   (require srfi/1)
                                                    (make-list 100000)
                                                    (apply values (make-list 100000))))))
                          (list
