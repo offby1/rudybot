@@ -1,0 +1,7 @@
+A couple of times I've found the bot dead, with something like this in the console:
+
+    2008-10-16 22:27:18 <= ":klutometis!i=klutomet@pdpc/supporter/active/klutometis PRIVMSG #scheme :duncanm: interesting"
+    2008-10-16 22:27:52 <= ":klutometis!i=klutomet@pdpc/supporter/active/klutometis PRIVMSG #scheme :rudybot: eval (format #t \"harro, mein ~A\" '(freunds))"
+    2008-10-16 22:27:52 Doing ("eval" "(format" "#t" "\"harro," "mein" "~A\"" "'(freunds))")
+    with-limit: out of time
+
