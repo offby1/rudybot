@@ -11,10 +11,12 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (only-in "sighting.ss" *sightings-database-directory-name*)
          scheme/port)
 
+(require mzlib/trace)
 (define (main . args)
   (log "Main starting: ~a" (git-version))
   (parameterize ((*irc-server-hostname* "irc.freenode.org")
-                 (*sightings-database-directory-name* "sightings.db"))
+                 (*sightings-database-directory-name* "sightings.db")
+                 (current-trace-notify (lambda (string) (log-debug string))))
     (command-line
      #:program "rudybot"
      #:once-each
