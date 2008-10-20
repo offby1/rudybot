@@ -136,7 +136,7 @@
                   (pm response-target "~a" q)]
                  [_ (reply "~a" q)])
                )]
-            [(source) (reply "~a" "http://rudybot.ath.cx:1234")]
+            [(source) (reply "~a" "http://github.com/offby1/rudybot")]
             [(seen)
              (when (not (null? (cdr words)))
                (reply "~a" (nick->sighting-string (second words)))
