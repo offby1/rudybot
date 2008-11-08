@@ -11,8 +11,7 @@
     (call/ec
      (lambda (return)
        (define (hash-table-increment! table key)
-         (hash-set! table key
-                    (add1 (hash-ref table key 0))))
+         (hash-update! table key add1 0))
        (let ((counts-by-quote (make-hash) )
              (histogram (make-hash)))
          (for ((line (in-lines ip)))
