@@ -24,7 +24,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (trace public-make-sandbox)
 
 (define (sandbox-eval sb string)
-  (set-sandbox-last-used-time! sb (current-milliseconds))
+  (set-sandbox-last-used-time! sb (current-inexact-milliseconds))
   ((sandbox-evaluator sb) string))
 (trace sandbox-eval)
 
