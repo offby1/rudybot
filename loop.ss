@@ -2,9 +2,9 @@
 |#
 #lang scheme
 
-(require scheme/date
-         scheme/port
+(require scheme/port
          scheme/sandbox
+         srfi/19
          (except-in "sandboxes.ss" main)
          "git-version.ss"
          "sighting.ss"
@@ -43,9 +43,7 @@
 
 (define (log . args)
   (for ((op (in-list (*log-ports*))))
-    (fprintf op "~a "
-             (parameterize ([date-display-format 'iso-8601])
-               (date->string (seconds->date (current-seconds)) #t)))
+    (fprintf op "~a " (date->string (current-date) "~4"))
     (apply fprintf op args)
     (newline op)))
 
@@ -270,12 +268,17 @@
                      (string-join (cons first-word rest)))
                     '())]
              [(list "JOIN" target)
+              ;; Alas, this pretty much never triggers, since duncanm
+              ;; keeps his client session around for ever
               (when (regexp-match #rx"^duncanm" nick)
                 (pm target "la la la"))
+
               (espy target
                     (format "joining")
                     '())]
              [(list "NICK" (colon new-nick))
+              ;; TODO -- call espy with the old nick, or the new one,
+              ;; or both?
               (log "~a wants to be known as ~a" nick new-nick)]
              [(list "PART" target (colon first-word) rest ...)
               (espy target
@@ -291,6 +294,8 @@
                             (string-join
                              (append inner-words (list trailing))))
                     '())]
+             ;; Hard to see how this will ever match, given that the
+             ;; above clause would seem to match VERSION
              [(list "PRIVMSG"
                     target
                     (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
