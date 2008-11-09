@@ -144,22 +144,26 @@
                     (describe-since *start-time*)
                     (describe-since (*connection-start-time*)))]
             [(eval)
-             (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
-               (with-handlers
-                   (
-                    ;; catch _all_ exceptions from the sandbox, to
-                    ;; prevent "eval (raise 1)" from killing this
-                    ;; thread.
-                    [void
-                     (lambda (v)
-                       (let ((whine (if (exn? v)
-                                        (exn-message v)
-                                        (format "~s" v))))
-                         (apply reply
-                                ;; make sure our error message begins with "error: ".
-                                (if (regexp-match #rx"^error: " whine)
-                                    (list "~a" whine)
-                                    (list "error: ~a" whine)))))])
+             (with-handlers
+
+                 (
+                  ;; catch _all_ exceptions from the sandbox, to
+                  ;; prevent "eval (raise 1)" from killing this
+                  ;; thread.
+                  [void
+                   (lambda (v)
+                     (let ((whine (if (exn? v)
+                                      (exn-message v)
+                                      (format "~s" v))))
+                       (apply reply
+                              ;; make sure our error message begins with "error: ".
+                              (if (regexp-match #rx"^error: " whine)
+                                  (list "~a" whine)
+                                  (list "error: ~a" whine)))))])
+
+               ;; get-sandbox-by-name can raise an exception, so it's
+               ;; important to have it inside the with-handlers.
+               (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
 
                  (call-with-values
                      (lambda ()
@@ -197,6 +201,7 @@
                                    (car values)))
                                 (loop (cdr values)
                                       (add1 displayed)))))))))
+
 
                  (let ((stdout (sandbox-get-stdout s))
                        (stderr (sandbox-get-stderr s)))
