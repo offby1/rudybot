@@ -147,8 +147,9 @@
              (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
                (with-handlers
                    (
-                    ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
-                    ;; killing this thread.
+                    ;; catch _all_ exceptions from the sandbox, to
+                    ;; prevent "eval (raise 1)" from killing this
+                    ;; thread.
                     [void
                      (lambda (v)
                        (let ((whine (if (exn? v)
