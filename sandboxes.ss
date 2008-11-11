@@ -19,6 +19,9 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(2 20)))
 
+     ;; TODO -- concoct a namespace that undefines the identifiers for
+     ;; the FFI procedures, so that people cannot eval code that reads
+     ;; (say) the environment.  (And undefine 'getenv', too.)
      (make-evaluator '(begin (require scheme))))
    0))
 (trace public-make-sandbox)
