@@ -2,9 +2,9 @@
 |#
 #lang scheme
 
-(require scheme/date
-         scheme/port
+(require scheme/port
          scheme/sandbox
+         srfi/19
          (except-in "sandboxes.ss" main)
          "git-version.ss"
          "sighting.ss"
@@ -43,9 +43,7 @@
 
 (define (log . args)
   (for ((op (in-list (*log-ports*))))
-    (fprintf op "~a "
-             (parameterize ([date-display-format 'iso-8601])
-               (date->string (seconds->date (current-seconds)) #t)))
+    (fprintf op "~a " (date->string (current-date) "~4"))
     (apply fprintf op args)
     (newline op)))
 
@@ -136,7 +134,7 @@
                   (pm response-target "~a" q)]
                  [_ (reply "~a" q)])
                )]
-            [(source) (reply "~a" "http://rudybot.ath.cx:1234")]
+            [(source) (reply "~a" "http://github.com/offby1/rudybot")]
             [(seen)
              (when (not (null? (cdr words)))
                (reply "~a" (nick->sighting-string (second words)))
@@ -146,21 +144,26 @@
                     (describe-since *start-time*)
                     (describe-since (*connection-start-time*)))]
             [(eval)
-             (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
-               (with-handlers
-                   (
-                    ;; catch _all_ exceptions, to prevent "eval (raise 1)" from
-                    ;; killing this thread.
-                    [void
-                     (lambda (v)
-                       (let ((whine (if (exn? v)
-                                        (exn-message v)
-                                        (format "~s" v))))
-                         (apply reply
-                                ;; make sure our error message begins with "error: ".
-                                (if (regexp-match #rx"^error: " whine)
-                                    (list "~a" whine)
-                                    (list "error: ~a" whine)))))])
+             (with-handlers
+
+                 (
+                  ;; catch _all_ exceptions from the sandbox, to
+                  ;; prevent "eval (raise 1)" from killing this
+                  ;; thread.
+                  [void
+                   (lambda (v)
+                     (let ((whine (if (exn? v)
+                                      (exn-message v)
+                                      (format "~s" v))))
+                       (apply reply
+                              ;; make sure our error message begins with "error: ".
+                              (if (regexp-match #rx"^error: " whine)
+                                  (list "~a" whine)
+                                  (list "error: ~a" whine)))))])
+
+               ;; get-sandbox-by-name can raise an exception, so it's
+               ;; important to have it inside the with-handlers.
+               (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
 
                  (call-with-values
                      (lambda ()
@@ -198,6 +201,7 @@
                                    (car values)))
                                 (loop (cdr values)
                                       (add1 displayed)))))))))
+
 
                  (let ((stdout (sandbox-get-stdout s))
                        (stderr (sandbox-get-stderr s)))
@@ -270,12 +274,17 @@
                      (string-join (cons first-word rest)))
                     '())]
              [(list "JOIN" target)
+              ;; Alas, this pretty much never triggers, since duncanm
+              ;; keeps his client session around for ever
               (when (regexp-match #rx"^duncanm" nick)
                 (pm target "la la la"))
+
               (espy target
                     (format "joining")
                     '())]
              [(list "NICK" (colon new-nick))
+              ;; TODO -- call espy with the old nick, or the new one,
+              ;; or both?
               (log "~a wants to be known as ~a" nick new-nick)]
              [(list "PART" target (colon first-word) rest ...)
               (espy target
@@ -291,6 +300,8 @@
                             (string-join
                              (append inner-words (list trailing))))
                     '())]
+             ;; Hard to see how this will ever match, given that the
+             ;; above clause would seem to match VERSION
              [(list "PRIVMSG"
                     target
                     (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))

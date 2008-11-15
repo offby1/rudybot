@@ -8,7 +8,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (require scheme/sandbox
          (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" 2)))
+         (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
+         mzlib/trace)
 
 (define-struct sandbox (evaluator
                         last-used-time) #:transparent #:mutable)
@@ -20,11 +21,12 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
      (make-evaluator '(begin (require scheme))))
    0))
+(trace public-make-sandbox)
 
 (define (sandbox-eval sb string)
-  (set-sandbox-last-used-time! sb (current-milliseconds))
+  (set-sandbox-last-used-time! sb (current-inexact-milliseconds))
   ((sandbox-evaluator sb) string))
-;(trace sandbox-eval)
+(trace sandbox-eval)
 
 (define (get-sandbox-by-name ht name)
   (hash-ref ht name
@@ -44,7 +46,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
         (hash-set! ht name sb)
         sb))))
 
-;(trace get-sandbox-by-name)
+(trace get-sandbox-by-name)
 
 (define (sandbox-get-stdout s)
   (get-output (sandbox-evaluator s)))
@@ -134,6 +136,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          main
          (rename-out [public-make-sandbox make-sandbox]))
 
+(require (except-in "log.ss" main))
 (define (main . args)
   (printf "Main running ...~%")
-  (exit (test/text-ui sandboxes-tests 'verbose)))
+  (parameterize
+      ;; log-debug is syntax, so we need the "lambda"
+      ((current-trace-notify (lambda (string) (log-debug string))))
+    (exit (test/text-ui sandboxes-tests 'verbose))))
