@@ -8,8 +8,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (require scheme/sandbox
          (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
          (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
-         mzlib/trace)
+         (planet "util.ss"    ("schematics" "schemeunit.plt" 2)))
 
 (define-struct sandbox (evaluator
                         last-used-time) #:transparent #:mutable)
@@ -19,17 +18,22 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(2 20)))
 
-     ;; TODO -- concoct a namespace that undefines the identifiers for
-     ;; the FFI procedures, so that people cannot eval code that reads
-     ;; (say) the environment.  (And undefine 'getenv', too.)
-     (make-evaluator '(begin (require scheme))))
+     ;; Here we undefine some dangerous identifiers.  TODO: prevent
+     ;; all of scheme/foreign from being required ... but how?
+     (make-evaluator
+      '(begin
+         (require scheme)
+         (define getenv
+           (lambda args
+             (raise (make-exn:fail:contract:variable
+                     "ain't no function by that name here!!"
+                     (current-continuation-marks)
+                     'getenv)))))))
    0))
-(trace public-make-sandbox)
 
 (define (sandbox-eval sb string)
   (set-sandbox-last-used-time! sb (current-inexact-milliseconds))
   ((sandbox-evaluator sb) string))
-(trace sandbox-eval)
 
 (define (get-sandbox-by-name ht name)
   (hash-ref ht name
@@ -49,8 +53,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
         (hash-set! ht name sb)
         sb))))
 
-(trace get-sandbox-by-name)
-
 (define (sandbox-get-stdout s)
   (get-output (sandbox-evaluator s)))
 
@@ -61,12 +63,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 
 (print-hash-table #t)
-(define silly-tests
-  (test-suite
-   "silly"
-   (test-case
-    "very silly"
-    (check-equal? (+ 2 2) 5))))
 
 (define sandboxes-tests
 
@@ -129,7 +125,11 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (check-exn
           exn:fail?
           (lambda () (sandbox-eval keiths-sandbox))
-          "keith's sandbox didn't gack when I referenced 'x' -- even though we never defined it.")))))))
+          "keith's sandbox didn't gack when I referenced 'x' -- even though we never defined it."))))
+     (test-case
+      "environment"
+      (let ((s (get-sandbox-by-name *sandboxes-by-nick* "yow")))
+        (check-exn exn:fail:contract:variable? (lambda () (sandbox-eval s "(getenv \"HOME\")"))))))))
 
 (provide get-sandbox-by-name
          sandbox-eval
@@ -142,7 +142,4 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (require (except-in "log.ss" main))
 (define (main . args)
   (printf "Main running ...~%")
-  (parameterize
-      ;; log-debug is syntax, so we need the "lambda"
-      ((current-trace-notify (lambda (string) (log-debug string))))
-    (exit (test/text-ui sandboxes-tests 'verbose))))
+  (exit (test/text-ui sandboxes-tests 'verbose)))
