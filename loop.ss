@@ -218,7 +218,7 @@
           (note-we-did-something-for! for-whom))))
 
   (log "<= ~s" line)
-  (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
+  (let loop ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
     (match (car toks)
       ["ERROR"
        (log "Uh oh!")]
@@ -399,8 +399,11 @@
             ((|433|)
              (log "Nuts, gotta try a different nick")
              (*my-nick* (string-append (*my-nick*) "_"))
-             (out "NICK ~a" (*my-nick*))))])]
-      [_ (log "Duh?")])
+             (out "NICK ~a" (*my-nick*)))
+            (else
+             (log "Don't know what to do with ~s; discarding first token and trying again" line)
+             (loop (cdr toks))))])]
+      [_ (log "Don't know what to do with ~s." line)])
     ))
 
 (define (connect-and-run

@@ -14,8 +14,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (require mzlib/trace)
 (define (main . args)
   (log "Main starting: ~a" (git-version))
-  (parameterize ((*irc-server-hostname* "irc.freenode.org")
-                 (*sightings-database-directory-name* "sightings.db")
+  (parameterize ((*irc-server-hostname* "irc.cl")
+                 (*sightings-database-directory-name* "debianchile-sightings.db")
                  (current-trace-notify (lambda (string) (log-debug string))))
     (command-line
      #:program "rudybot"
