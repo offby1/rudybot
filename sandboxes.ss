@@ -21,12 +21,10 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
      (make-evaluator '(begin (require scheme))))
    0))
-(trace public-make-sandbox)
 
 (define (sandbox-eval sb string)
   (set-sandbox-last-used-time! sb (current-inexact-milliseconds))
   ((sandbox-evaluator sb) string))
-(trace sandbox-eval)
 
 (define (get-sandbox-by-name ht name)
   (hash-ref ht name
@@ -45,8 +43,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
       (let ([sb (public-make-sandbox)])
         (hash-set! ht name sb)
         sb))))
-
-(trace get-sandbox-by-name)
 
 (define (sandbox-get-stdout s)
   (get-output (sandbox-evaluator s)))
