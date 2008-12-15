@@ -36,14 +36,10 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
                 ,@(apply
                    append
-                   (for/list ((expr (in-list '((+ 2 1)
-                                               (begin (display (+ 2 1)) (newline))
+                   (for/list ((expr (in-list '(
                                                (let loop ()
                                                  (printf "Yaa!!")
-                                                 (loop))
-                                               (require srfi/1)
-                                               (make-list 100000)
-                                               (apply values (make-list 100000))))))
+                                                 (loop))))))
                      (list
                       (c (format "eval ~s" expr))
                       (p (format "eval ~s" expr)))))))
