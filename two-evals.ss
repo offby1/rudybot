@@ -20,29 +20,19 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
           (thread
            (lambda ()
              (define (c str)
-               (format ":n!n@n PRIVMSG #c :~a: ~a"
-                       (*my-nick*)
-                       str))
+               (fprintf op ":n!n@n PRIVMSG #c :~a: ~a\r\n"
+                        (*my-nick*)
+                        str))
              (define (p str)
-               (format ":n!n@n PRIVMSG ~a :~a"
-                       (*my-nick*)
-                       str))
-             (for-each
-              (lambda (line)
-                (display line op)
-                (display "\r\n" op))
-              `(
-                ,(c (format "eval (error \"foo\\r\\nQUIT bar\")"))
-
-                ,@(apply
-                   append
-                   (for/list ((expr (in-list '(
-                                               (let loop ()
-                                                 (printf "Yaa!!")
-                                                 (loop))))))
-                     (list
-                      (c (format "eval ~s" expr))
-                      (p (format "eval ~s" expr)))))))
+               (fprintf op ":n!n@n PRIVMSG ~a :~a\r\n"
+                        (*my-nick*)
+                        str))
+             (c (format "eval ~s" '(let loop ()
+                                     (printf "Yaa!!")
+                                     (loop))))
+             (p (format "eval ~s" '(let loop ()
+                                     (printf "Yaa!!")
+                                     (loop))))
 
              (close-output-port op)))
           ip)
