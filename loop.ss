@@ -176,7 +176,7 @@
                        (when (not (null? values))
 
                          ;; prevent flooding
-                         (if (= displayed *max-values-to-display*)
+                         (if (>= displayed *max-values-to-display*)
                              (reply
                               "~a values is enough for anybody; here's the rest in a list: ~s"
                               (number->english *max-values-to-display*)
