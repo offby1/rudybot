@@ -202,7 +202,6 @@
                                 (loop (cdr values)
                                       (add1 displayed)))))))))
 
-
                  (let ((stdout (sandbox-get-stdout s))
                        (stderr (sandbox-get-stderr s)))
                    (when (and (string? stdout)
@@ -460,4 +459,3 @@
  *nickserv-password*
  *bot-gives-up-after-this-many-silent-seconds*
  *log-ports*)
-

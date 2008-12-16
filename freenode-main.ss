@@ -8,8 +8,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (require "loop.ss"
          "git-version.ss"
          (only-in "main.ss" real-server)
-         (only-in "sighting.ss" *sightings-database-directory-name*)
-         scheme/port)
+         (only-in "sighting.ss" *sightings-database-directory-name*))
 
 (require mzlib/trace)
 (define (main . args)
