@@ -1,7 +1,9 @@
-<leppie> not sure how you would feed a top level R6RS program to rudybot                   [08:48]
-<chandler> rudybot needs an eval-paste                                                     [08:49]
+<leppie> not sure how you would feed a top level R6RS program to rudybot
+<chandler> rudybot needs an eval-paste
 <leppie> eval-paste?
 <Daemmerung> eval contents of a pastebin.
 <chandler> yeah, something like rudybot: eval-paste 70573
 <leppie> ahh
-<chandler> offby1: make it so!                                                             [08:50]
+<chandler> offby1: make it so!
+
+<leppie> maybe rudybot can have a r6rs-eval call?
