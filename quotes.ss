@@ -5,7 +5,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 #lang scheme
 
-(require (planet offby1/offby1/fys))
+(require (planet offby1/offby1/shuffle))
 
 (define *the-channel* (make-channel))
 
@@ -15,7 +15,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      (let re-read ()
        (fprintf (current-error-port)
                 "Reading quotes file~%")
-       (let push-one ((all (fisher-yates-shuffle (call-with-input-file "quotes" read))))
+       (let push-one ((all (shuffle (call-with-input-file "quotes" read))))
          (if (null? all)
              (re-read)
              (begin
