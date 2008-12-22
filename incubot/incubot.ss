@@ -8,6 +8,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (require srfi/13
          (lib "thread.ss")
+         (lib "etc.ss")
          (except-in "progress.ss" main))
 
 (define-struct db (stuff) #:prefab)
@@ -34,13 +35,12 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
            (loop)))))))
 
 (define (irc-lines->db filename)
-  (cwif
+  (call-with-input-file
    filename
    (lambda (ip)
      (port->db
       (strip-irc-protocol-chatter
-       (strip-logging-artifacts ip))))
-   (lambda (fn) (format "Reading ~s" fn))))
+       (strip-logging-artifacts ip))))))
 
 (provide/contract [port->db [input-port? . -> . db?]])
 (define (port->db ip)
@@ -88,28 +88,15 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
            (newline op)
            (loop)))))))
 
-(define (cwif fn proc message-fn)
-  (call-with-input-file fn
-    (lambda (ip)
-      (fprintf (current-error-port) "~a ... " (message-fn fn))
-      (begin0
-          (proc ip)
-        (fprintf (current-error-port) "done~%")))))
-
-;; echo system | nc -q 1 localhost 2222
 (provide main)
 (define (main . args)
   (let ((db (irc-lines->db
-             "../big-log")))
+             (build-path
+              (this-expression-source-directory)
+              'up "big-log"))))
     (fprintf
      (current-error-port)
      "Server starting!~%")
-    (run-server
-     2222
-     (lambda (ip op)
-       (for ([word (in-lines ip)])
-         (display (lookup word db) op)
-         (newline op)
-         (flush-output op)))
-     #f
-     raise)))
+    (for ([word (in-lines (current-input-port))])
+      (display (lookup word db))
+      (newline))))
