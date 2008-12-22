@@ -12,13 +12,34 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (define-struct db (stuff) #:prefab)
 
+;; ip -> ip
+(define (make-filter writer)
+  (let-values (((ip op)
+                (make-pipe 500)))
+    (thread
+     (lambda ()
+       (writer op)
+       (close-output-port op)))
+    ip))
+
+(define (strip-logging-artifacts ip)
+  (make-filter
+   (lambda (op)
+     (let loop ()
+       (regexp-match #px"^.*? <= " ip)
+       (let ((datum (read ip)))
+         (when (not (eof-object? datum))
+           (display datum op)
+           (newline op)
+           (loop)))))))
+
 (define (irc-lines->db filename)
   (cwif
    filename
    (lambda (ip)
      (port->db
       (strip-irc-protocol-chatter
-       ip)))
+       (strip-logging-artifacts ip))))
    (lambda (fn) (format "Reading ~s" fn))))
 
 (provide/contract [port->db [input-port? . -> . db?]])
@@ -47,10 +68,8 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 (define (lookup word db)
    (hash-ref (db-stuff db) word #f))
 
-;; ip -> ip
 ;; input lines look like this:
-":|tommie|!n=~@93.190.182.214 PRIVMSG #scheme :hello."
-;; i.e., they're quoted Scheme strings.
+;; :|tommie|!n=~@93.190.182.214 PRIVMSG #scheme :hello.
 (define (strip-irc-protocol-chatter ip)
   (define (transform line)
     (regexp-replace
@@ -60,18 +79,14 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
       line
       "")
      ""))
-  (let-values (((pipe-ip pipe-op)
-                (make-pipe 500)))
-    (thread (lambda ()
-              (let loop ()
-                (let ((line (read ip)))
-                  (if (eof-object? line)
-                      (close-output-port pipe-op)
-                      (begin
-                        (display (transform line) pipe-op)
-                        (newline pipe-op)
-                        (loop)))))))
-    pipe-ip))
+  (make-filter
+   (lambda (op)
+     (let loop ()
+       (let ((line (read-line ip)))
+         (when (not (eof-object? line))
+           (display (transform line) op)
+           (newline op)
+           (loop)))))))
 
 (define (cwif fn proc message-fn)
   (call-with-input-file fn
@@ -85,7 +100,10 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 (provide main)
 (define (main . args)
   (let ((db (irc-lines->db
-             "irc-lines")))
+             "../big-log")))
+    (fprintf
+     (current-error-port)
+     "Server starting!~%")
     (run-server
      2222
      (lambda (ip op)
