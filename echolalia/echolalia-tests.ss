@@ -8,9 +8,9 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (require (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui)
-         (except-in "echolalia.ss" main))
-
-(require/expose "echolalia.ss" (make-db db?))
+         (except-in "echolalia.ss" main)
+         "db.ss"
+         "read-db.ss")
 
 (define hmm-tests
 
