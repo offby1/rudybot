@@ -1,0 +1,15 @@
+Inspired by "incubot" (sorry, no URL), a bot in #scheme on freenode.org in 2008.
+
+The general idea is: you give it a word, and it finds and echoes some
+sentence from IRC logs that contains that word.
+
+Actually the original incubot took a whole sentence, and (somehow)
+chose a word from that sentence.
+
+For example:
+
+    <proq> incubot: if they don't have internet, there's always the paper
+    <incubot> business networking in an internet chat room for scheme programmers is hilarious
+
+Here incubot chose the word "internet", and spewed forth a sentence
+containing that word.
