@@ -44,8 +44,8 @@
            (newline op)
            (loop)))))))
 
-(provide/contract [port->db [input-port? . -> . db?]])
-(define (port->db ip)
+(provide/contract [prefiltered-port->db [input-port? . -> . db?]])
+(define (prefiltered-port->db ip)
   (let ((note!
          (make-notifier
           (lambda (times-called)
@@ -65,12 +65,13 @@
                                         string
                                         existing))
                           ""))))))
+
 (provide/contract [irc-lines->db [(or/c string? path?) . -> . db?]])
 (define (irc-lines->db filename)
   (call-with-input-file
    filename
    (lambda (ip)
-     (port->db
+     (prefiltered-port->db
       (strip-irc-protocol-chatter
        (strip-logging-artifacts ip))))))
 

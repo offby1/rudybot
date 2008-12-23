@@ -17,15 +17,15 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
   (test-suite
    "loop"
    (check-false
-    (lookup "snord" (port->db (open-input-string ""))))
+    (lookup "snord" (prefiltered-port->db (open-input-string ""))))
    (check-equal?
-    (lookup "snord" (port->db (open-input-string "The snord horde")))
+    (lookup "snord" (prefiltered-port->db (open-input-string "The snord horde")))
     "The snord horde")
 
    (test-case
     "Returns longest of multiple matching strings"
     (check-equal?
-     (lookup "snord" (port->db (open-input-string (string-join (list "snord" "The snord horde" "my snord") "\n"))))
+     (lookup "snord" (prefiltered-port->db (open-input-string (string-join (list "snord" "The snord horde" "my snord") "\n"))))
      "The snord horde"))))
 
 (define (main . args)
