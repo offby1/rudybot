@@ -12,9 +12,9 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 (unsafe!)
 
 (define (clearenv)
-  (let* ((libc (ffi-lib #f))
-         (func (get-ffi-obj 'clearenv #f (_fun  ->  _void))))
-    (func)))
+  (let ((func (get-ffi-obj 'clearenv #f (_fun  ->  _void))))
+    (when (procedure? func)
+      (func))))
 
 (define hmm-tests
 
