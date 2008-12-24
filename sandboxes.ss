@@ -17,8 +17,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(3 20)))
 
-     ;; Here we undefine some dangerous identifiers.  TODO: prevent
-     ;; all of scheme/foreign from being required ... but how?
+     ;; Here we undefine some dangerous identifiers.
      (make-evaluator
       '(begin
          (require scheme)

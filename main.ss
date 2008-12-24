@@ -7,6 +7,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (require "loop.ss"
          "git-version.ss"
+         (except-in "clearenv.ss" main)
          scheme/port)
 
 (define (real-server)
@@ -220,11 +221,14 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (connect-and-run
      (make-hanging-up-server))))
 
-(define main
+(define (main . args)
+  (fprintf (current-error-port) "Say goodbye to your environment ...")
+  (clearenv)
+  (fprintf (current-error-port) " poof~%")
 ;;  flaky-main
 ;;;   hanging-up-main
 ;;;   localhost-main
-   preload-main
+   (preload-main)
 ;;;   random-main
 ;;;   replay-main
   )

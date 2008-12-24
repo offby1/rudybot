@@ -7,11 +7,13 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (require "loop.ss"
          "git-version.ss"
+         (except-in "clearenv.ss" main)
          (only-in "main.ss" real-server)
          (only-in "sighting.ss" *sightings-database-directory-name*))
 
 (require mzlib/trace)
 (define (main . args)
+  (clearenv)
   (log "Main starting: ~a" (git-version))
   (parameterize ((*irc-server-hostname* "irc.freenode.org")
                  (*sightings-database-directory-name* "sightings.db")
