@@ -34,22 +34,26 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   ((sandbox-evaluator sb) string))
 
 (define (get-sandbox-by-name ht name)
-  (hash-ref ht name
-    (lambda ()
-      (when (>= (hash-count ht) (*max-sandboxes*))
-        ;; evict the sandbox that has been unused the longest
-        (let ([moldiest #f])
-          (hash-for-each ht
-            (lambda (name sb)
-              (let ([t (sandbox-last-used-time sb)])
-                (unless (and moldiest (> t (car moldiest)))
-                  (set! moldiest (cons t name))))))
-          (when (not moldiest)
-            (error 'assertion-failure))
-          (hash-remove! ht (cdr moldiest))))
-      (let ([sb (public-make-sandbox)])
-        (hash-set! ht name sb)
-        sb))))
+  (let ([sb (hash-ref ht name #f)])
+    (if (and sb (evaluator-alive? (sandbox-evaluator sb)))
+      sb
+      (begin
+        (when (and (not sb) (>= (hash-count ht) (*max-sandboxes*)))
+          ;; evict the sandbox that has been unused the longest, don't do this
+          ;; if we have a dead sandbox -- since we'll just replace it.
+          (let ([moldiest #f])
+            (hash-for-each ht
+                           (lambda (name sb)
+                             (let ([t (sandbox-last-used-time sb)])
+                               (unless (and moldiest (> t (car moldiest)))
+                                 (set! moldiest (cons t name))))))
+            (when (not moldiest)
+              (error 'assertion-failure))
+            (hash-remove! ht (cdr moldiest))))
+        ;; (when sb ...inform user about reset...)
+        (let ([sb (public-make-sandbox)])
+          (hash-set! ht name sb)
+          sb)))))
 
 (define (sandbox-get-stdout s)
   (get-output (sandbox-evaluator s)))
@@ -67,6 +71,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (let ((*sandboxes-by-nick* (make-hash)))
     (test-suite
      "sandboxes"
+
      (test-case
       "simple get"
       (let ((s  (get-sandbox-by-name *sandboxes-by-nick*"charlie")))
@@ -131,14 +136,17 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
      (test-case
       "immediately recycles dead sandbox"
-      (sandbox-eval
-       (get-sandbox-by-name *sandboxes-by-nick* "yow")
-       "(kill-thread (current-thread))")
+      (check-exn exn:fail:sandbox-terminated?
+                 (lambda ()
+                   (sandbox-eval
+                    (get-sandbox-by-name *sandboxes-by-nick* "yow")
+                    "(kill-thread (current-thread))")))
       (check-equal?
        (sandbox-eval
         (get-sandbox-by-name *sandboxes-by-nick* "yow")
         "3")
-       3))
+       3)
+      )
      )))
 
 (provide get-sandbox-by-name
