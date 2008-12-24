@@ -127,7 +127,19 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      (test-case
       "environment"
       (let ((s (get-sandbox-by-name *sandboxes-by-nick* "yow")))
-        (check-exn exn:fail:contract:variable? (lambda () (sandbox-eval s "(getenv \"HOME\")"))))))))
+        (check-exn exn:fail:contract:variable? (lambda () (sandbox-eval s "(getenv \"HOME\")")))))
+
+     (test-case
+      "immediately recycles dead sandbox"
+      (sandbox-eval
+       (get-sandbox-by-name *sandboxes-by-nick* "yow")
+       "(kill-thread (current-thread))")
+      (check-equal?
+       (sandbox-eval
+        (get-sandbox-by-name *sandboxes-by-nick* "yow")
+        "3")
+       3))
+     )))
 
 (provide get-sandbox-by-name
          sandbox-eval
