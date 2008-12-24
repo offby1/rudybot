@@ -5,7 +5,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 #lang scheme
 
-(require (planet offby1/offby1/shuffle))
+(require (planet offby1/offby1:2:1/shuffle))
 
 (define *the-channel* (make-channel))
 
