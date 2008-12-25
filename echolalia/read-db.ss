@@ -17,6 +17,10 @@
   (make-filter
    (lambda (op)
      (let loop ()
+       ;; This is a bit weird.  First we consume the timestamp and a
+       ;; bit more from the port by calling regexp-match ... then we
+       ;; "read" the remainder, which we're assuming is a quoted
+       ;; Scheme string.
        (regexp-match #px"^.*? <= " ip)
        (let ((datum (read ip)))
          (when (not (eof-object? datum))
@@ -37,12 +41,8 @@
      ""))
   (make-filter
    (lambda (op)
-     (let loop ()
-       (let ((line (read-line ip)))
-         (when (not (eof-object? line))
-           (display (transform line) op)
-           (newline op)
-           (loop)))))))
+     (for ([line (in-lines ip)])
+       (fprintf op "~a~%" (transform line))))))
 
 (provide/contract [prefiltered-port->db [input-port? . -> . db?]])
 (define (prefiltered-port->db ip)
