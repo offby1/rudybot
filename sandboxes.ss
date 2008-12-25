@@ -17,16 +17,9 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(3 20)))
 
-     ;; Here we undefine some dangerous identifiers.
      (make-evaluator
       '(begin
-         (require scheme)
-         (define getenv
-           (lambda args
-             (raise (make-exn:fail:contract:variable
-                     "ain't no function by that name here!!"
-                     (current-continuation-marks)
-                     'getenv)))))))
+         (require scheme))))
    0))
 
 (define (sandbox-eval sb string)
@@ -129,10 +122,16 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
           exn:fail?
           (lambda () (sandbox-eval keiths-sandbox))
           "keith's sandbox didn't gack when I referenced 'x' -- even though we never defined it."))))
-     (test-case
-      "environment"
-      (let ((s (get-sandbox-by-name *sandboxes-by-nick* "yow")))
-        (check-exn exn:fail:contract:variable? (lambda () (sandbox-eval s "(getenv \"HOME\")")))))
+     ;; I'm not sure what I want to do here.  On the one hand, I want
+     ;; all calls to "getenv" to fail in the sandbox; on the other
+     ;; hand, I cannot think of an elegant way to have the sandbox
+     ;; itself ensure that (currently I'm counting on the bot's "main"
+     ;; function to clear the environment).
+
+;;;      (test-case
+;;;       "environment"
+;;;       (let ((s (get-sandbox-by-name *sandboxes-by-nick* "yow")))
+;;;         (check-false (sandbox-eval s "(getenv \"HOME\")"))))
 
      (test-case
       "immediately recycles dead sandbox"
@@ -161,4 +160,4 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (define (main . args)
   (printf "Main running ...~%")
 
-  (exit (run-tests sandboxes-tests 'verbose)))
+  (exit (run-tests sandboxes-tests)))
