@@ -50,7 +50,7 @@
          (make-notifier
           (lambda (times-called)
             (fprintf (current-error-port)
-                     "Read ~a lines from ~s~%" times-called ip)))))
+                     "Read ~a lines~%" times-called)))))
     (make-db
      (for/fold ([db (make-immutable-hash '())])
          ([string (in-lines ip)])
@@ -71,7 +71,16 @@
   (call-with-input-file
    filename
    (lambda (ip)
-     (prefiltered-port->db
-      (strip-irc-protocol-chatter
-       (strip-logging-artifacts ip))))))
+     (port-count-lines! ip)
+     (begin0
+         (prefiltered-port->db
+          (strip-irc-protocol-chatter
+           (strip-logging-artifacts ip)))
+       (fprintf
+        (current-error-port)
+        "Read ~a lines from ~a~%"
+        (call-with-values (lambda ()
+                            (port-next-location ip))
+          (lambda args (car args)))
+        ip)))))
 
