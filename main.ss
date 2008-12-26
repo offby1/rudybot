@@ -88,7 +88,9 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                           (c (format "eval ~s" expr))
                           (p (format "eval ~s" expr)))))
 
-                    ,@(map c (list "quote" "uptime"))))
+                    ,@(map c (list "quote" "uptime"))
+                    ,@(map p (list "This is a private utterance, and I certainly hope you don't divulge it!!"))
+                    ,(c "seen n")))
 
                  (close-output-port op)))
               ip)

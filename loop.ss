@@ -320,7 +320,8 @@
               ;; fledermaus points out that people may be surprised
               ;; to find "private" messages -- those where "target"
               ;; is (*my-nick*) -- recorded in the sightings log.
-              (espy target #f (cons first-word rest))
+              (when (not (equal? target (*my-nick*)))
+                (espy target #f (cons first-word rest)))
               ;; look for long URLs to tiny-ify
               (for ((word (in-list (cons first-word rest))))
                 (match word
