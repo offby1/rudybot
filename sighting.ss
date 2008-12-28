@@ -14,11 +14,15 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 (define-struct sighting (who where when action? words) #:prefab)
 
 (define (canonicalize-nick n)
-  ((if (*downcase-nicks*) string-downcase values)
-   (match n
-     [(regexp #px"(.*?)([`_]*)$" (list _ base suffixes))
-      base]
-     [_ n])))
+  (let ((sans-trailing-crap
+         ((if (*downcase-nicks*) string-downcase values)
+          (match n
+            [(regexp #px"(.*?)([`_]*)$" (list _ base suffixes))
+             base]
+            [_ n]))))
+    (if (string=? sans-trailing-crap "")
+        "_"
+        sans-trailing-crap)))
 
 (define (nick->dirpath n)
   (build-path
