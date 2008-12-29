@@ -1,6 +1,5 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-#$Id: progress.ss 5880 2008-12-22 01:07:10Z erich $
 exec  mzscheme --require "$0" --main -- ${1+"$@"}
 |#
 
