@@ -7,3 +7,11 @@
 <chandler> offby1: make it so!
 
 <leppie> maybe rudybot can have a r6rs-eval call?
+
+Roll the log file over: that is, don't let it grow without bound, but
+instead, once it gets to a certain size, rename it and start a new
+file.
+
+Have the "source" command return a URL that includes the version
+number, so that you get taken to the github page for that particular
+commit.
