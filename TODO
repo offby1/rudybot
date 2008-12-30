@@ -7,3 +7,8 @@
 <chandler> offby1: make it so!
 
 <leppie> maybe rudybot can have a r6rs-eval call?
+
+The sightings.db directory currently has about 8,000 entries, which is
+kind of alarming.  Maybe reorganize it so that, e.g., sightings for
+"fred" go into f/fred (that way sightings.db will contain at most
+perhaps 100 entries).
