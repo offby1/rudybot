@@ -7,3 +7,7 @@
 <chandler> offby1: make it so!
 
 <leppie> maybe rudybot can have a r6rs-eval call?
+
+Have the "source" command return a URL not just to the repo on github,
+but to the very version that's currently running.  I.e., incorporate
+the "version" info into it.
