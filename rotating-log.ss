@@ -9,18 +9,26 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
          (planet schematics/schemeunit:3/text-ui)
          mzlib/trace)
 
-(define (create-logger . args)
-  'nada)
+(define (create-logger dirname max-bytes)
+  (lambda (string)
+    (call-with-output-file
+        (build-path dirname "log")
+      (lambda (op)
+        (display string op)
+        (newline op)
+        (fprintf (current-error-port)
+                 "Wrote ~s to ~s~%" string op))
+      #:exists 'append)))
 
-(define (rotating-log . stuff)
-  "dude, maybe you should write some tests")
 
 
 (define (sorted-pathlist dir)
   (sort
-   (pathlist-closure (list dir))
+   (map (lambda (rfn)
+          (build-path dir rfn))
+        (directory-list dir))
    string<? #:key path->string))
-
+(trace sorted-pathlist)
 (define (fold-sorted-files proc init dir)
   (for/fold ([return-value init])
       ([fn (in-list (sorted-pathlist dir))])
@@ -48,12 +56,12 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
   (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory)))
     (test-suite
      "loop"
-     #:after (lambda () (delete-directory dir))
+     #:after (lambda () (delete-directory/files dir))
      (test-begin
       (let* (
              (logger (create-logger dir 10))
              (data "Hey doodz!  Lookit me getting all logged and shit!!"))
-        (log-info data)
+        (logger data)
         ;; concatenation of all files yields our input data
         (check-equal? (all-file-content dir) data)
 
@@ -68,4 +76,4 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (define (main . args)
   (exit (run-tests rotating-log-tests 'verbose)))
-(provide rotating-log main)
+(provide main)
