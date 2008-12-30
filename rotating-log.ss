@@ -1,7 +1,7 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id: v4-script-template.ss 5863 2008-12-21 17:13:36Z erich $
-exec  mzscheme --require "$0" --main -- ${1+"$@"}
+exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme
@@ -62,11 +62,17 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 
 
+;; Like directory-list, but returns _useful_ information -- namely,
+;; paths with "dir" prepended.  I wish there were a built-in function
+;; that did this.
+(define (dirlist dir)
+  (map (lambda (rfn)
+         (build-path dir rfn))
+       (directory-list dir)))
+
 (define (sorted-pathlist dir)
   (sort
-   (map (lambda (rfn)
-          (build-path dir rfn))
-        (directory-list dir))
+   (dirlist dir)
    string<? #:key path->string))
 
 (define (fold-sorted-files proc init dir)
@@ -81,7 +87,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
                        (string-append accum (call-with-input-file fn port->string)))
                      ""
                      dir))
-
+(trace all-file-content)
 (define (file-sizes dir)
   (reverse
    (fold-sorted-files  (lambda (accum fn)
@@ -89,45 +95,74 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
                        '()
                        dir)))
 
-(define (too-big fn)
-  (error 'too-big "unimplemented"))
+(define (too-big fn max-bytes)
+  (call-with-input-file
+      fn
+    (lambda (ip)
+      (let ((sizes
+             (for/fold ([sizes-by-line '()])
+                 ([line (in-lines ip)])
+                 (cons (string-length line) sizes-by-line))))
+        (cond
+         ;; If the file has no lines at all, it's not too big.
+         ((null? sizes)
+          #f)
+
+         ;; If it has only one line, it's not too big, no matter how
+         ;; big that line is.  (Since we don't want to break big log
+         ;; records apart.)
+         ((= 1 (length sizes))
+          #f)
+
+         ;; If it has a bunch of lines, then all but the last must
+         ;; clock in at under max-bytes.  We can ignore all but the
+         ;; _second_-to-last, since those are all smaller; if the
+         ;; second-to-last is small enough, then we're not too big.
+         (else
+          (< max-bytes (last (drop-right sizes 1)))))))))
 
 (define rotating-log-tests
-
   (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory))
-        (max-bytes 10))
-    (test-suite
-     "loop"
-     #:after
-     (lambda ()
-       (if #f
-           (delete-directory/files dir)
-           (fprintf (current-error-port)
-                    "Not deleting directory ~a~%" dir))
-       )
-     (test-begin
-      (let-values (((logger-op logging-thread)
-                    (create-logging-op dir max-bytes))
-                   ((data) "Hey doodz!\nLookit me getting all logged and shit!!"))
+        (max-bytes 10) )
+    (let-values (((logger-op logging-thread)
+                  (create-logging-op dir max-bytes))
+                 ((data) "Hey doodz!\nLookit me getting all logged and shit!!"))
 
-        (display data logger-op)
-        (close-output-port logger-op)
-        (sync logging-thread)
+      (test-suite
+       "I hate that I'm forced to give it a name"
+       #:before
+       (lambda ()
+         (fprintf (current-error-port) "Before thunk starting ...~%")
+         (display data logger-op)
+         (close-output-port logger-op)
+         (sync logging-thread)
+         (fprintf (current-error-port) "Before thunk done.~%"))
+       #:after
+       (lambda ()
+         (if #f
+             (delete-directory/files dir)
+             (fprintf (current-error-port)
+                      "Not deleting directory ~a~%" dir)))
 
-        (check-equal? (all-file-content dir)
-                      (string-append data "\n")
-                      "concatenation of all files yields our input data")
+       (check-not-false (fprintf (current-error-port) "First check running~%"))
 
-        ;; In other words: each file allows -at most one- record
-        ;; (namely, the last record) to cause it to exceed the maximum
-        ;; size.
-        (check-true (andmap (compose not too-big) (directory-list dir))
-                    "_if_ any file is bigger than max-bytes, _then_
+       (check-equal? (all-file-content dir)
+                     (string-append data "\n")
+                     "concatenation of all files yields our input data")
+
+       ;; In other words: each file allows -at most one- record
+       ;; (namely, the last record) to cause it to exceed the maximum
+       ;; size.
+       (check-true (andmap (compose not (lambda (fn)
+                                          (too-big fn max-bytes)))
+                           (dirlist dir))
+                   "_if_ any file is bigger than max-bytes, _then_
 it'd have been smaller if you ignored the last record.")
 
-        (check-true (<= (length (filter (lambda (x) (< x max-bytes)) (file-sizes dir)))
-                        1)
-                    "at most one file is < max-bytes bytes"))))))
+       (check-true #f)
+       (check-true (<= (length (filter (lambda (x) (< x max-bytes)) (file-sizes dir)))
+                       1)
+                   "at most one file is < max-bytes bytes")))))
 
 (define (main . args)
   (exit (run-tests rotating-log-tests 'verbose)))
