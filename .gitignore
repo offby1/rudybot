@@ -4,4 +4,5 @@ TAGS
 big-log
 big-log.*
 compiled
+logrotate.state
 sandbox-log
