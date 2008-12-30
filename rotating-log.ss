@@ -25,10 +25,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                   (build-path dirname (format "log-~a" counter))
                 (set! counter (add1 counter))))))
 
-        (fprintf
-         (current-error-port)
-         "Thread ~s running~%" (current-thread))
-
         (let loop ()
           (let ((ready (sync (peek-bytes-evt 1 0 #f pipe-ip))))
             (when (not (eof-object? ready))
@@ -37,9 +33,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
               ;; isn't already used.
               (call-with-output-file (generate-file-name)
                 (lambda (file-op)
-                  (fprintf
-                   (current-error-port)
-                   "Writing to ~s~%" file-op)
 
                   ;; To prevent accidental creation of a zillion empty
                   ;; files while I'm debugging this code
@@ -54,11 +47,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                        (when (<= max-bytes (file-position file-op))
                          (done)))))))
 
-              (loop))))
-
-        (fprintf
-         (current-error-port)
-         "Thread ~s exiting~%" (current-thread)))))))
+              (loop)))))))))
 
 
 
@@ -87,7 +76,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                        (string-append accum (call-with-input-file fn port->string)))
                      ""
                      dir))
-(trace all-file-content)
+
 (define (file-sizes dir)
   (reverse
    (fold-sorted-files  (lambda (accum fn)
@@ -132,20 +121,15 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
        "I hate that I'm forced to give it a name"
        #:before
        (lambda ()
-         (fprintf (current-error-port) "Before thunk starting ...~%")
          (display data logger-op)
          (close-output-port logger-op)
-         (sync logging-thread)
-         (fprintf (current-error-port) "Before thunk done.~%"))
+         (sync logging-thread))
        #:after
        (lambda ()
-         (if #f
+         (if #t
              (delete-directory/files dir)
              (fprintf (current-error-port)
                       "Not deleting directory ~a~%" dir)))
-
-       (test-case "first"
-                  (check-not-false (fprintf (current-error-port) "First check running~%")))
 
        (test-case "concatenation of all files yields our input data"
                   (check-equal? (all-file-content dir)
@@ -163,7 +147,6 @@ it'd have been smaller if you ignored the last record."
        (test-case "at most one file is < max-bytes bytes"
                   (check-true (<= (length (filter (lambda (x) (< x max-bytes)) (file-sizes dir)))
                                   1)))))))
-
 
 (define (main . args)
   (exit (run-tests rotating-log-tests 'verbose)))
