@@ -72,6 +72,11 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
         (check-equal? (sandbox-eval s "3") 3)))
 
      (test-case
+      "command line args inaccessible"
+      (let ((s  (get-sandbox-by-name *sandboxes-by-nick* "charlie")))
+        (check-pred zero? (vector-length (sandbox-eval s "(current-command-line-arguments)")) )))
+
+     (test-case
       "output"
       (let ((s  (get-sandbox-by-name *sandboxes-by-nick*"charlie")))
         (sandbox-eval s "(display \"You bet!\")")
