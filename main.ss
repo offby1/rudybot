@@ -58,6 +58,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ":topic!n=javachat@cpe-74-71-143-65.twcny.res.rr.com TOPIC #emacs :-=[ www.WHAK.com ]=- Make Free/Fun Graphics Online At http://www.ImageGenerator.org =)"
 
                     ,(c "version")
+                    ,(c "SOURCE")
                     ,(c "quote")
                     ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" (*my-nick*))
                     ,(format ":jordanb!n@n PRIVMSG #c :Let's say something memorable")
@@ -68,7 +69,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
                         (c (format "seen ~a" action)))
 
-                    ,(c "SOURCE")
                     ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
                     ,(format
                       ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"

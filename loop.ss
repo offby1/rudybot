@@ -134,7 +134,9 @@
                   (pm response-target "~a" q)]
                  [_ (reply "~a" q)])
                )]
-            [(source) (reply "~a" "http://github.com/offby1/rudybot")]
+            [(source) (reply
+                       "http://github.com/offby1/rudybot/commit/~a"
+                       (git-version 'complete))]
             [(seen)
              (when (not (null? (cdr words)))
                (reply "~a" (nick->sighting-string (second words)))
