@@ -9,16 +9,51 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
          (planet schematics/schemeunit:3/text-ui)
          mzlib/trace)
 
-(define (create-logger dirname max-bytes)
-  (lambda (string)
-    (call-with-output-file
-        (build-path dirname "log")
-      (lambda (op)
-        (display string op)
-        (newline op)
-        (fprintf (current-error-port)
-                 "Wrote ~s to ~s~%" string op))
-      #:exists 'append)))
+(define (create-logging-op dirname max-bytes)
+  (let-values (((pipe-ip pipe-op) (make-pipe)))
+    (thread
+     (lambda ()
+
+       (define generate-file-name
+         (let ((counter 0))
+           (lambda ()
+             (begin0
+                 (build-path dirname (format "log-~a" counter))
+               (set! counter (add1 counter))))))
+
+       (fprintf
+        (current-error-port)
+        "Thread ~s running~%" (current-thread))
+
+       (let loop ()
+         (let ((ready (sync (peek-bytes-evt 1 0 #f pipe-ip))))
+           (when (not (eof-object? ready))
+             (call-with-output-file (generate-file-name)
+               (lambda (file-op)
+                 (fprintf
+                  (current-error-port)
+                  "Writing to ~s~%" file-op)
+
+                 ;; To prevent accidental creation of a zillion empty
+                 ;; files while I'm debugging this code
+                 (sleep 1/10)
+
+                 (file-stream-buffer-mode file-op 'line)
+                 (call/ec
+                  (lambda (done)
+                    (for ([line (in-lines pipe-ip)])
+                      (display line file-op)
+                      (newline file-op)
+                      (when (<= max-bytes (file-position file-op))
+                        (done)))))))
+
+             (loop))))
+
+       (fprintf
+        (current-error-port)
+        "Thread ~s exiting~%" (current-thread))))
+
+    pipe-op))
 
 
 
@@ -28,7 +63,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
           (build-path dir rfn))
         (directory-list dir))
    string<? #:key path->string))
-(trace sorted-pathlist)
+
 (define (fold-sorted-files proc init dir)
   (for/fold ([return-value init])
       ([fn (in-list (sorted-pathlist dir))])
@@ -42,7 +77,6 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
                      ""
                      dir))
 
-(trace all-file-content)
 (define (file-sizes dir)
   (reverse
    (fold-sorted-files  (lambda (accum fn)
@@ -50,29 +84,34 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
                        '()
                        dir)))
 
-(trace file-sizes)
 (define rotating-log-tests
 
-  (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory)))
+  (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory))
+        (max-bytes 10))
     (test-suite
      "loop"
-     #:after (lambda () (delete-directory/files dir))
+     #:after
+     (lambda ()
+       (if #f
+           (delete-directory/files dir)
+           (fprintf (current-error-port)
+                    "Not deleting directory ~a~%" dir))
+       )
      (test-begin
       (let* (
-             (logger (create-logger dir 10))
-             (data "Hey doodz!  Lookit me getting all logged and shit!!"))
-        (logger data)
-        ;; concatenation of all files yields our input data
-        (check-equal? (all-file-content dir) (string-append data "\n"))
+             (logger-op (create-logging-op dir max-bytes))
+             (data "Hey doodz!\nLookit me getting all logged and shit!!"))
+        (display data logger-op)
+        (close-output-port logger-op)
+        (sleep 1)
 
-        ;; no file is > 10 bytes
-        (check-true (andmap (lambda (x)
-                              (<= x 10))
-                            (file-sizes dir)))
+        (check-equal? (all-file-content dir)
+                      (string-append data "\n")
+                      "concatenation of all files yields our input data")
 
-        ;; at most one file is < 10 bytes
-        (check-true (<= (length (filter (lambda (x) (< x 10)) (file-sizes dir)))
-                        1)))))))
+        (check-true (<= (length (filter (lambda (x) (< x max-bytes)) (file-sizes dir)))
+                        1)
+                    "at most one file is < max-bytes bytes"))))))
 
 (define (main . args)
   (exit (run-tests rotating-log-tests 'verbose)))
