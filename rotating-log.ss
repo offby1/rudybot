@@ -144,25 +144,26 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
              (fprintf (current-error-port)
                       "Not deleting directory ~a~%" dir)))
 
-       (check-not-false (fprintf (current-error-port) "First check running~%"))
+       (test-case "first"
+                  (check-not-false (fprintf (current-error-port) "First check running~%")))
 
-       (check-equal? (all-file-content dir)
-                     (string-append data "\n")
-                     "concatenation of all files yields our input data")
+       (test-case "concatenation of all files yields our input data"
+                  (check-equal? (all-file-content dir)
+                                (string-append data "\n")))
 
-       ;; In other words: each file allows -at most one- record
-       ;; (namely, the last record) to cause it to exceed the maximum
-       ;; size.
-       (check-true (andmap (compose not (lambda (fn)
-                                          (too-big fn max-bytes)))
-                           (dirlist dir))
-                   "_if_ any file is bigger than max-bytes, _then_
-it'd have been smaller if you ignored the last record.")
+       (test-case "_if_ any file is bigger than max-bytes, _then_
+it'd have been smaller if you ignored the last record."
+                  ;; In other words: each file allows -at most one- record
+                  ;; (namely, the last record) to cause it to exceed the maximum
+                  ;; size.
+                  (check-true (andmap (compose not (lambda (fn)
+                                                     (too-big fn max-bytes)))
+                                      (dirlist dir))))
 
-       (check-true #f)
-       (check-true (<= (length (filter (lambda (x) (< x max-bytes)) (file-sizes dir)))
-                       1)
-                   "at most one file is < max-bytes bytes")))))
+       (test-case "at most one file is < max-bytes bytes"
+                  (check-true (<= (length (filter (lambda (x) (< x max-bytes)) (file-sizes dir)))
+                                  1)))))))
+
 
 (define (main . args)
   (exit (run-tests rotating-log-tests 'verbose)))
