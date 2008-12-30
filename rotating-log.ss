@@ -14,6 +14,8 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
     (thread
      (lambda ()
 
+       ;; TODO -- perhaps examine the directory to see what files
+       ;; already exist, and start with the first available name.
        (define generate-file-name
          (let ((counter 0))
            (lambda ()
@@ -28,6 +30,9 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
        (let loop ()
          (let ((ready (sync (peek-bytes-evt 1 0 #f pipe-ip))))
            (when (not (eof-object? ready))
+
+             ;; TODO -- keep generating names until we find one that
+             ;; isn't already used.
              (call-with-output-file (generate-file-name)
                (lambda (file-op)
                  (fprintf
