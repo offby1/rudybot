@@ -63,7 +63,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
              (data "Hey doodz!  Lookit me getting all logged and shit!!"))
         (logger data)
         ;; concatenation of all files yields our input data
-        (check-equal? (all-file-content dir) data)
+        (check-equal? (all-file-content dir) (string-append data "\n"))
 
         ;; no file is > 10 bytes
         (check-true (andmap (lambda (x)
