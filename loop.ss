@@ -135,7 +135,7 @@
                  [_ (reply "~a" q)])
                )]
             [(source) (reply
-                       "http://github.com/offby1/rudybot/commit/~a"
+                       "http://github.com/offby1/rudybot/tree/~a"
                        (git-version 'complete))]
             [(seen)
              (when (not (null? (cdr words)))
