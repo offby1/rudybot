@@ -11,54 +11,54 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (define (create-logging-op dirname max-bytes)
   (let-values (((pipe-ip pipe-op) (make-pipe)))
-    (thread
-     (lambda ()
+    (values
+     pipe-op
+     (thread
+      (lambda ()
 
-       ;; TODO -- perhaps examine the directory to see what files
-       ;; already exist, and start with the first available name.
-       (define generate-file-name
-         (let ((counter 0))
-           (lambda ()
-             (begin0
-                 (build-path dirname (format "log-~a" counter))
-               (set! counter (add1 counter))))))
+        ;; TODO -- perhaps examine the directory to see what files
+        ;; already exist, and start with the first available name.
+        (define generate-file-name
+          (let ((counter 0))
+            (lambda ()
+              (begin0
+                  (build-path dirname (format "log-~a" counter))
+                (set! counter (add1 counter))))))
 
-       (fprintf
-        (current-error-port)
-        "Thread ~s running~%" (current-thread))
+        (fprintf
+         (current-error-port)
+         "Thread ~s running~%" (current-thread))
 
-       (let loop ()
-         (let ((ready (sync (peek-bytes-evt 1 0 #f pipe-ip))))
-           (when (not (eof-object? ready))
+        (let loop ()
+          (let ((ready (sync (peek-bytes-evt 1 0 #f pipe-ip))))
+            (when (not (eof-object? ready))
 
-             ;; TODO -- keep generating names until we find one that
-             ;; isn't already used.
-             (call-with-output-file (generate-file-name)
-               (lambda (file-op)
-                 (fprintf
-                  (current-error-port)
-                  "Writing to ~s~%" file-op)
+              ;; TODO -- keep generating names until we find one that
+              ;; isn't already used.
+              (call-with-output-file (generate-file-name)
+                (lambda (file-op)
+                  (fprintf
+                   (current-error-port)
+                   "Writing to ~s~%" file-op)
 
-                 ;; To prevent accidental creation of a zillion empty
-                 ;; files while I'm debugging this code
-                 (sleep 1/10)
+                  ;; To prevent accidental creation of a zillion empty
+                  ;; files while I'm debugging this code
+                  (sleep 1/10)
 
-                 (file-stream-buffer-mode file-op 'line)
-                 (call/ec
-                  (lambda (done)
-                    (for ([line (in-lines pipe-ip)])
-                      (display line file-op)
-                      (newline file-op)
-                      (when (<= max-bytes (file-position file-op))
-                        (done)))))))
+                  (file-stream-buffer-mode file-op 'line)
+                  (call/ec
+                   (lambda (done)
+                     (for ([line (in-lines pipe-ip)])
+                       (display line file-op)
+                       (newline file-op)
+                       (when (<= max-bytes (file-position file-op))
+                         (done)))))))
 
-             (loop))))
+              (loop))))
 
-       (fprintf
-        (current-error-port)
-        "Thread ~s exiting~%" (current-thread))))
-
-    pipe-op))
+        (fprintf
+         (current-error-port)
+         "Thread ~s exiting~%" (current-thread)))))))
 
 
 
@@ -89,6 +89,9 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
                        '()
                        dir)))
 
+(define (too-big fn)
+  (error 'too-big "unimplemented"))
+
 (define rotating-log-tests
 
   (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory))
@@ -103,16 +106,24 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
                     "Not deleting directory ~a~%" dir))
        )
      (test-begin
-      (let* (
-             (logger-op (create-logging-op dir max-bytes))
-             (data "Hey doodz!\nLookit me getting all logged and shit!!"))
+      (let-values (((logger-op logging-thread)
+                    (create-logging-op dir max-bytes))
+                   ((data) "Hey doodz!\nLookit me getting all logged and shit!!"))
+
         (display data logger-op)
         (close-output-port logger-op)
-        (sleep 1)
+        (sync logging-thread)
 
         (check-equal? (all-file-content dir)
                       (string-append data "\n")
                       "concatenation of all files yields our input data")
+
+        ;; In other words: each file allows -at most one- record
+        ;; (namely, the last record) to cause it to exceed the maximum
+        ;; size.
+        (check-true (andmap (compose not too-big) (directory-list dir))
+                    "_if_ any file is bigger than max-bytes, _then_
+it'd have been smaller if you ignored the last record.")
 
         (check-true (<= (length (filter (lambda (x) (< x max-bytes)) (file-sizes dir)))
                         1)
