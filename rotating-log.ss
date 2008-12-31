@@ -146,8 +146,32 @@ it'd have been smaller if you ignored the last record."
 
        (test-case "at most one file is < max-bytes bytes"
                   (check-true (<= (length (filter (lambda (x) (< x max-bytes)) (file-sizes dir)))
-                                  1)))))))
+                                  1)))
+
+       ))))
+
+(define some-more-tests
+  (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory)))
+    (let-values (((logger-op logging-thread)
+                  (create-logging-op dir (expt 10 6)))
+                 ((data) "Hey doodz!\nLookit me getting all logged and shit!!"))
+      (test-suite
+       "Kevin"
+       (test-case
+        "Skips over existing log files"
+        (let ((another-dir (make-temporary-file "rotating-log-tests~a" 'directory)))
+          ;; somehow create a file that has the same name that the
+          ;; first log file will have.
+
+          ;; now log something.
+
+          ;; Now check that our first file is unmolested, and the log
+          ;; stuff is in the second file.
+          (check-false "Maybe I should actually write this test")
+          )))
+      ))
+  )
 
 (define (main . args)
-  (exit (run-tests rotating-log-tests 'verbose)))
+  (exit (run-tests (test-suite "El Grande" rotating-log-tests some-more-tests) 'verbose)))
 (provide main)
