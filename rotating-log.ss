@@ -7,7 +7,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 #lang scheme
 (require (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui)
-         mzlib/trace)
+         mzlib/trace
+         srfi/26)
 
 (define (create-logging-op dirname max-bytes)
   (let-values (((pipe-ip pipe-op) (make-pipe)))
@@ -55,8 +56,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 ;; paths with "dir" prepended.  I wish there were a built-in function
 ;; that did this.
 (define (dirlist dir)
-  (map (lambda (rfn)
-         (build-path dir rfn))
+  (map (cut build-path dir <>)
        (directory-list dir)))
 
 (define (sorted-pathlist dir)
