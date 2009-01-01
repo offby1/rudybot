@@ -120,7 +120,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
       (dynamic-wind
           values
-          (lambda () (proc logger-op))
+          (lambda () (proc logger-op dir))
           (lambda ()
             (close-output-port logger-op)
             (sync logging-thread)
@@ -167,12 +167,11 @@ it'd have been smaller if you ignored the last record."
        ))))
 
 (define some-more-tests
-  (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory))
-        (template "snorkly-~a-yodelay-ee-hoo"))
+  (let ((template "snorkly-~a-yodelay-ee-hoo"))
     (test-suite
      "Kevin"
      (with-logging-thingy
-      (lambda (logger-op)
+      (lambda (logger-op dir)
         (test-case
          "Log files are named as we specify"
          (display "yoo hoo" logger-op)
