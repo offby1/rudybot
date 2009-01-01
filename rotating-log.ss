@@ -10,7 +10,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          mzlib/trace
          srfi/26)
 
-(define (create-logging-op dirname max-bytes)
+(define (create-logging-op dirname max-bytes [format-template "log-~a"])
   (let-values (((pipe-ip pipe-op) (make-pipe)))
     (values
      pipe-op
@@ -23,7 +23,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
           (let ((counter 0))
             (lambda ()
               (begin0
-                  (build-path dirname (format "log-~a" counter))
+                  (build-path dirname (format format-template counter))
                 (set! counter (add1 counter))))))
 
         (let loop ()
@@ -151,12 +151,19 @@ it'd have been smaller if you ignored the last record."
        ))))
 
 (define some-more-tests
-  (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory)))
+  (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory))
+        (template "snorkly-~a-yodelay-ee-hoo"))
     (let-values (((logger-op logging-thread)
-                  (create-logging-op dir (expt 10 6)))
-                 ((data) "Hey doodz!\nLookit me getting all logged and shit!!"))
+                  (create-logging-op dir (expt 10 6) template)))
       (test-suite
        "Kevin"
+       (test-case
+        "Log files are named as we specify"
+        (display "yoo hoo" logger-op)
+        (sleep 1/10)                    ;TODO -- have some way to
+                                        ;avoid sleeping here
+        (check-equal? (list (format template 0))
+                      (map path->string (directory-list dir))))
        (test-case
         "Skips over existing log files"
         (let ((another-dir (make-temporary-file "rotating-log-tests~a" 'directory)))
@@ -167,10 +174,7 @@ it'd have been smaller if you ignored the last record."
 
           ;; Now check that our first file is unmolested, and the log
           ;; stuff is in the second file.
-          (check-false "Maybe I should actually write this test")
-          )))
-      ))
-  )
+          (check-false "Maybe I should actually write this test")))))))
 
 (define (main . args)
   (exit (run-tests (test-suite "El Grande" rotating-log-tests some-more-tests) 'verbose)))
