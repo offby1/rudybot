@@ -110,6 +110,22 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (else
           (< max-bytes (last (drop-right sizes 1)))))))))
 
+(define (with-logging-thingy
+         proc
+         #:max-bytes [max-bytes 10]
+         #:template  [template "log.~a"])
+  (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory)))
+    (let-values (((logger-op logging-thread)
+                  (create-logging-op dir max-bytes template)))
+
+      (dynamic-wind
+          values
+          (lambda () (proc logger-op))
+          (lambda ()
+            (close-output-port logger-op)
+            (sync logging-thread)
+            (delete-directory/files dir))))))
+
 (define rotating-log-tests
   (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory))
         (max-bytes 10) )
@@ -153,28 +169,30 @@ it'd have been smaller if you ignored the last record."
 (define some-more-tests
   (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory))
         (template "snorkly-~a-yodelay-ee-hoo"))
-    (let-values (((logger-op logging-thread)
-                  (create-logging-op dir (expt 10 6) template)))
-      (test-suite
-       "Kevin"
-       (test-case
-        "Log files are named as we specify"
-        (display "yoo hoo" logger-op)
-        (sleep 1/10)                    ;TODO -- have some way to
+    (test-suite
+     "Kevin"
+     (with-logging-thingy
+      (lambda (logger-op)
+        (test-case
+         "Log files are named as we specify"
+         (display "yoo hoo" logger-op)
+         (sleep 1/10)                   ;TODO -- have some way to
                                         ;avoid sleeping here
-        (check-equal? (list (format template 0))
-                      (map path->string (directory-list dir))))
-       (test-case
-        "Skips over existing log files"
-        (let ((another-dir (make-temporary-file "rotating-log-tests~a" 'directory)))
-          ;; somehow create a file that has the same name that the
-          ;; first log file will have.
+         (check-equal? (list (format template 0))
+                       (map path->string (directory-list dir))))
+        (test-case
+         "Skips over existing log files"
+         (let ((another-dir (make-temporary-file "rotating-log-tests~a" 'directory)))
+           ;; somehow create a file that has the same name that the
+           ;; first log file will have.
 
-          ;; now log something.
+           ;; now log something.
 
-          ;; Now check that our first file is unmolested, and the log
-          ;; stuff is in the second file.
-          (check-false "Maybe I should actually write this test")))))))
+           ;; Now check that our first file is unmolested, and the log
+           ;; stuff is in the second file.
+           (check-false "Maybe I should actually write this test"))))
+      #:max-bytes (expt 10 6)
+      #:template template))))
 
 (define (main . args)
   (exit (run-tests (test-suite "El Grande" rotating-log-tests some-more-tests) 'verbose)))
