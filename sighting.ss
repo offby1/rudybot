@@ -25,9 +25,11 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
         sans-trailing-crap)))
 
 (define (nick->dirpath n)
+  (let ((cn (canonicalize-nick n)))
   (build-path
    (*sightings-database-directory-name*)
-   (canonicalize-nick n)))
+   (substring cn 0 1)
+   cn)))
 
 (define (safe-take-right lst pos)
   (let ((pos (min pos (length lst))))
