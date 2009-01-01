@@ -112,59 +112,65 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define (with-logging-thingy
          proc
+         #:name [name "unknown"]
          #:max-bytes [max-bytes 10]
          #:template  [template "log.~a"])
-  (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory)))
-    (let-values (((logger-op logging-thread)
-                  (create-logging-op dir max-bytes template)))
+  (define dir (make-parameter #f))
+  (let-values (((logger-op logging-thread)
+                (create-logging-op dir max-bytes template)))
 
-      (dynamic-wind
-          values
-          (lambda () (proc logger-op dir))
-          (lambda ()
-            (close-output-port logger-op)
-            (sync logging-thread)
-            (delete-directory/files dir))))))
+    (dynamic-wind
+        (lambda ()
+          (dir (make-temporary-file "rotating-log-tests~a" 'directory))
+          (fprintf
+           (current-error-port)
+           "~a: dynamic-wind: entering~%" name))
+        (lambda ()
+          (fprintf
+           (current-error-port)
+           "~a: dynamic-wind: before calling proc~%" name)
+          (begin0
+              (proc logger-op dir)
+            (fprintf
+             (current-error-port)
+             "~a: dynamic-wind: after calling proc~%" name)))
+        (lambda ()
+          (close-output-port logger-op)
+          (sync logging-thread)
+          (delete-directory/files (dir))
+          (fprintf
+           (current-error-port)
+           "~a: dynamic-wind: cleaned up~%" name)))))
 
 (define rotating-log-tests
-  (let ((dir (make-temporary-file "rotating-log-tests~a" 'directory))
-        (max-bytes 10) )
-    (let-values (((logger-op logging-thread)
-                  (create-logging-op dir max-bytes))
-                 ((data) "Hey doodz!\nLookit me getting all logged and shit!!"))
+  (let ((data "Hey doodz!\nLookit me getting all logged and shit!!")
+        (max-bytes 10))
+    (test-suite
+     "I hate that I'm forced to give it a name"
+     (with-logging-thingy
+      (lambda (logger-op dir)
+        (test-suite
+         "oh well"
+         (test-case "concatenation of all files yields our input data"
+                    (check-equal? (all-file-content (dir))
+                                  (string-append data "\n")))
 
-      (test-suite
-       "I hate that I'm forced to give it a name"
-       #:before
-       (lambda ()
-         (display data logger-op)
-         (close-output-port logger-op)
-         (sync logging-thread))
-       #:after
-       (lambda ()
-         (if #t
-             (delete-directory/files dir)
-             (fprintf (current-error-port)
-                      "Not deleting directory ~a~%" dir)))
-
-       (test-case "concatenation of all files yields our input data"
-                  (check-equal? (all-file-content dir)
-                                (string-append data "\n")))
-
-       (test-case "_if_ any file is bigger than max-bytes, _then_
+         (test-case "_if_ any file is bigger than max-bytes, _then_
 it'd have been smaller if you ignored the last record."
-                  ;; In other words: each file allows -at most one- record
-                  ;; (namely, the last record) to cause it to exceed the maximum
-                  ;; size.
-                  (check-true (andmap (compose not (lambda (fn)
-                                                     (too-big fn max-bytes)))
-                                      (dirlist dir))))
+                    ;; In other words: each file allows -at most one- record
+                    ;; (namely, the last record) to cause it to exceed the maximum
+                    ;; size.
+                    (check-true (andmap (compose not (lambda (fn)
+                                                       (too-big fn max-bytes)))
+                                        (dirlist (dir)))))
 
-       (test-case "at most one file is < max-bytes bytes"
-                  (check-true (<= (length (filter (lambda (x) (< x max-bytes)) (file-sizes dir)))
-                                  1)))
-
-       ))))
+         (test-case "at most one file is < max-bytes bytes"
+                    (check-true (<= (length
+                                     (filter (lambda (x) (< x max-bytes))
+                                             (file-sizes (dir))))
+                                    1)))))
+      #:max-bytes max-bytes
+      #:name "rotating-log-tests"))))
 
 (define some-more-tests
   (let ((template "snorkly-~a-yodelay-ee-hoo"))
@@ -178,7 +184,7 @@ it'd have been smaller if you ignored the last record."
          (sleep 1/10)                   ;TODO -- have some way to
                                         ;avoid sleeping here
          (check-equal? (list (format template 0))
-                       (map path->string (directory-list dir))))
+                       (map path->string (directory-list (dir)))))
         (test-case
          "Skips over existing log files"
          (let ((another-dir (make-temporary-file "rotating-log-tests~a" 'directory)))
@@ -191,7 +197,8 @@ it'd have been smaller if you ignored the last record."
            ;; stuff is in the second file.
            (check-false "Maybe I should actually write this test"))))
       #:max-bytes (expt 10 6)
-      #:template template))))
+      #:template template
+      #:name "some-more-tests"))))
 
 (define (main . args)
   (exit (run-tests (test-suite "El Grande" rotating-log-tests some-more-tests) 'verbose)))
