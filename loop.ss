@@ -224,6 +224,9 @@
       ["ERROR"
        (log "Uh oh!")]
 
+      ;; Here we wait for a NOTICE before authenticating.  I suspect
+      ;; this doesn't work for all servers; in particular,
+      ;; ngircd-0.10.3 doesn't say anything when we connect.
       ["NOTICE"
        (when (eq? *authentication-state* 'havent-even-tried)
          (out "NICK ~a" (*my-nick*))

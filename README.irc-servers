@@ -1,5 +1,12 @@
--*-text-*-
+-*-org-*-
 
-The only servers I've tested this against are: whatever runs on
-freenode (some version of dancer-ircd, I think), and whatever version
-of dancer-ircd comes with Ubuntu (1.0.36-8 or thereabouts).
+* dancer-ircd
+
+Works fine agains whatever runs on freenode, and the version tha comes
+with Ubuntu (1.0.36-8 or thereabouts).
+
+* ngircd-0.10.3
+
+Since it doesn't emit "NICK" or "USER" until the server emits a NOTICE
+... but since the server doesn't emit anything until we authenticate
+... we get hung up on, and keep retrying endlessly.
