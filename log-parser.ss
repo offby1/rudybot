@@ -9,21 +9,16 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 (require (lib "etc.ss")
          (except-in (file "echolalia/progress.ss") main))
 
-(define-struct logline (timestamp to-server? string) #:prefab)
-
-(define (string->logline s)
-  (match s
-    [(regexp #px"^ *([[:print:]]*?) ([<>])= +\"(.*)\"" (list _ timestamp direction string))
-     (make-logline timestamp (equal? ">" direction) string)]
-    [_ #f]))
-
-(define-struct utterance (speaker target text) #:prefab)
+(define-struct utterance (timestamp to-server? speaker target text) #:prefab)
 
 (define (string->utterance s)
   (match s
-    [(regexp #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+) :(.*)"
-             (list _ nick id host target text))
-     (make-utterance nick target text)]
+    [(regexp #px"^ *([[:print:]]*?) ([<>])= +\"(.*)\"" (list _ timestamp direction string))
+     (match string
+       [(regexp #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+) :(.*)"
+                (list _ nick id host target text))
+        (make-utterance timestamp  (equal? ">" direction) nick target text)]
+       [_ #f])]
     [_ #f]))
 
 (provide main)
@@ -48,15 +43,9 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
                ([line (in-lines ip)])
                (note-progress!)
              (cond
-              ((string->logline line)
+              ((string->utterance line)
                =>
-               (lambda (l)
-                 (cond
-                  ((string->utterance
-                   (logline-string l))
-                   =>
-                   (lambda (u) (cons u result)))
-                  (else result))))
+               (lambda (u) (cons u result)))
               (else
                result)))
            op)
