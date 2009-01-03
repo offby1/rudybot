@@ -1,0 +1,5 @@
+-*-text-*-
+
+The only servers I've tested this against are: whatever runs on
+freenode (some version of dancer-ircd, I think), and whatever version
+of dancer-ircd comes with Ubuntu (1.0.36-8 or thereabouts).
