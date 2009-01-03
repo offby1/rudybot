@@ -9,15 +9,15 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 (require (lib "etc.ss")
          (except-in (file "echolalia/progress.ss") main))
 
-(define-struct utterance (timestamp to-server? speaker target text) #:prefab)
+(define-struct utterance (timestamp speaker target text) #:prefab)
 
 (define (string->utterance s)
   (match s
-    [(regexp #px"^ *([[:print:]]*?) ([<>])= +\"(.*)\"" (list _ timestamp direction string))
+    [(regexp #px"^ *([[:print:]]*?) <= +\"(.*)\"" (list _ timestamp string))
      (match string
        [(regexp #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+) :(.*)"
                 (list _ nick id host target text))
-        (make-utterance timestamp  (equal? ">" direction) nick target text)]
+        (make-utterance timestamp nick target text)]
        [_ #f])]
     [_ #f]))
 
