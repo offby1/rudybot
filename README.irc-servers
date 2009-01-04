@@ -10,3 +10,7 @@ with Ubuntu (1.0.36-8 or thereabouts).
 Since it doesn't emit "NICK" or "USER" until the server emits a NOTICE
 ... but since the server doesn't emit anything until we authenticate
 ... we get hung up on, and keep retrying endlessly.
+
+* inspircd 1.1.20+dfsg-1ubuntu1
+
+I was too lazy to figure out how to configure it, so I don't know.
