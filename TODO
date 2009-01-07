@@ -15,3 +15,6 @@ file.
 Consider making the log a sequence of sexprs, rather than lines: this
 will make it easier for programs to parse ... and it seems I'm writing
 more programs that want to parse it.
+
+Get rid of "in/on" in the output of the "seen" command; surely I can
+figure out which preposition is appropriate.
