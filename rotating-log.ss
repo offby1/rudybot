@@ -17,21 +17,26 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
      (thread
       (lambda ()
 
-        ;; TODO -- perhaps examine the directory to see what files
-        ;; already exist, and start with the first available name.
         (define generate-file-name
           (let ((counter 0))
             (lambda ()
-              (begin0
-                  (build-path dirname (format format-template counter))
-                (set! counter (add1 counter))))))
+              (let ((candidate (build-path dirname (format format-template counter))))
+                (set! counter (add1 counter))
+                (if (or (file-exists? candidate)
+                        (directory-exists? candidate)
+                        (link-exists? candidate))
+                    (generate-file-name)
+                    candidate)))))
 
         (let loop ()
+          ;; I don't want to call call-with-output-file unless there's
+          ;; actually some data to read -- otherwise I'll create an
+          ;; empty file.  But I don't want to consume any data from
+          ;; ip, either, since that would require somewhat complex
+          ;; code ... so here I wait until there is some data, but
+          ;; don't actually consume it.
           (let ((ready (sync (peek-bytes-evt 1 0 #f pipe-ip))))
             (when (not (eof-object? ready))
-
-              ;; TODO -- keep generating names until we find one that
-              ;; isn't already used.
               (call-with-output-file (generate-file-name)
                 (lambda (file-op)
 
@@ -47,7 +52,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                        (newline file-op)
                        (when (<= max-bytes (file-position file-op))
                          (done)))))))
-
               (loop)))))))))
 
 
