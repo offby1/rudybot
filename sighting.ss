@@ -14,6 +14,8 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 (define-struct sighting (who where when action? words) #:prefab)
 
 (define (canonicalize-nick n)
+  ;; TODO -- consider nixing _leading_ underscores as well; I've seen
+  ;; those in the wild.
   (let ((sans-trailing-crap
          ((if (*downcase-nicks*) string-downcase values)
           (match n
