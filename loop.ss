@@ -147,12 +147,9 @@
                     (describe-since (*connection-start-time*)))]
             [(eval)
              (with-handlers
-
-                 (
-                  ;; catch _all_ exceptions from the sandbox, to
-                  ;; prevent "eval (raise 1)" from killing this
-                  ;; thread.
-                  [void
+                 ;; catch _all_ exceptions from the sandbox, to prevent "eval
+                 ;; (raise 1)" or any other error from killing this thread.
+                 ([void
                    (lambda (v)
                      (let ((whine (if (exn? v)
                                       (exn-message v)
@@ -165,50 +162,48 @@
 
                ;; get-sandbox-by-name can raise an exception, so it's
                ;; important to have it inside the with-handlers.
-               (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
-
-                 (call-with-values
+               (define s (get-sandbox-by-name *sandboxes* for-whom))
+               (call-with-values
+                   (lambda ()
+                     (sandbox-eval s (string-join (cdr words))))
+                 (lambda values
+                   ;; Even though the sandbox runs with strict memory and time
+                   ;; limits, we use call-with-limits here anyway, because it's
+                   ;; possible that the sandbox can, without exceeding its
+                   ;; limits, return a value that will require a lot of time
+                   ;; and memory to convert into a string!  (make-list 100000)
+                   ;; is an example.
+                   (call-with-limits 10 20 ; 15sec, 20mb
                      (lambda ()
-                       (sandbox-eval s (string-join (cdr words))))
-                   (lambda values
-                     ;; Even though the sandbox runs with strict memory and
-                     ;; time limits, we use call-with-limits here anyway,
-                     ;; because it's possible that the sandbox can, without
-                     ;; exceeding its limits, return a value that will require
-                     ;; a lot of time and memory to convert into a string!
-                     ;; (make-list 100000) is an example.
-                     (call-with-limits 15 20 ; 15sec, 20mb
-                       (lambda ()
-                         (let loop ((values values)
-                                    (displayed 0))
-                           (define (next)
-                             (loop (cdr values) (add1 displayed)))
-                           (cond
-                             ((null? values) (void))
-                             ((void? (car values)) (next))
-                             ;; prevent flooding
-                             ((>= displayed *max-values-to-display*)
-                              (reply
-                               "; ~a values is enough for anybody; here's the rest in a list: ~s"
-                               (number->english *max-values-to-display*)
-                               (filter (lambda (x) (not (void? x))) values)))
-                             (else
-                              (reply "; Value~a: ~s"
-                                     (if (positive? displayed)
-                                       (format "#~a" (add1 displayed))
-                                       "")
-                                     (car values))
-                              (sleep 1)
-                              (next))))))))
-
-                 (let ((stdout (sandbox-get-stdout s))
-                       (stderr (sandbox-get-stderr s)))
-                   (when (and (string? stdout)
-                              (positive? (string-length stdout)))
-                     (reply "; stdout: ~s" stdout))
-                   (when (and (string? stderr)
-                              (positive? (string-length stderr)))
-                     (reply  "; stderr: ~s" stderr)))))]
+                       (define (display-values values displayed)
+                         (define (next)
+                           (display-values (cdr values) (add1 displayed)))
+                         (cond
+                           ((null? values) (void))
+                           ((void? (car values)) (next))
+                           ;; prevent flooding
+                           ((>= displayed *max-values-to-display*)
+                            (reply
+                             "; ~a values is enough for anybody; here's the rest in a list: ~s"
+                             (number->english *max-values-to-display*)
+                             (filter (lambda (x) (not (void? x))) values)))
+                           (else
+                            (reply "; Value~a: ~s"
+                                   (if (positive? displayed)
+                                     (format "#~a" (add1 displayed))
+                                     "")
+                                   (car values))
+                            (sleep 1)
+                            (next))))
+                       (define (display-output name output-getter)
+                         (let ((output (output-getter s)))
+                           (when (and (string? output)
+                                      (positive? (string-length output)))
+                             (reply "; ~a: ~s" name output)
+                             (sleep 1))))
+                       (display-values values 0)
+                       (display-output 'stdout sandbox-get-stdout)
+                       (display-output 'stderr sandbox-get-stderr))))))]
 
             [(version)
              (reply "~a" (git-version))]
