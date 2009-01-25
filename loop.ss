@@ -223,7 +223,7 @@
                              (else
                               (sandbox-give s give-to (car values))
                               (let ((msg "has given you a value, use (GRAB) in an eval to get it (case sensitive)")
-                                    (msg* "you got a value, use (GRAB)"))
+                                    (msg* "has given you a value, use (GRAB)"))
                                 (if (not (regexp-match? #rx"^#" response-target))
                                   ;; announce privately if given privately
                                   (pm give-to "~a ~a" for-whom msg)
