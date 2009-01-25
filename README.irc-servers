@@ -2,8 +2,11 @@
 
 * dancer-ircd
 
-Works fine agains whatever runs on freenode, and the version tha comes
-with Ubuntu (1.0.36-8 or thereabouts).
+Works fine against whatever runs on freenode, and the version that
+comes with Ubuntu (1.0.36-8 or thereabouts).  I think it's good to
+have "nullidentd" installed: that might reduce the delay between
+"NOTICE AUTH :*** Checking ident" and ":localhost. 001
+rudybot :Welcome to the Debian ..."
 
 * ngircd-0.10.3
 
