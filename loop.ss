@@ -169,40 +169,37 @@
 
                  (call-with-values
                      (lambda ()
-                       (sandbox-eval
-                        s
-                        (string-join (cdr words))))
+                       (sandbox-eval s (string-join (cdr words))))
                    (lambda values
-                     (let loop ((values values)
-                                (displayed 0))
-                       (when (not (null? values))
-
-                         ;; prevent flooding
-                         (if (>= displayed *max-values-to-display*)
-                             (reply
-                              "~a values is enough for anybody; here's the rest in a list: ~s"
-                              (number->english *max-values-to-display*)
-                              values)
-
-                             ;; Even though the sandbox runs with strict
-                             ;; memory and time limits, we use
-                             ;; call-with-limits here anyway, because it's
-                             ;; possible that the sandbox can, without
-                             ;; exceeding its limits, return a value that
-                             ;; will require a lot of time and memory to
-                             ;; convert into a string!  (make-list 100000)
-                             ;; is an example.
-                             (call-with-limits
-                              2 20
-                              (lambda ()
-                                (when (not (void? (car values)))
-                                  (when (positive? displayed)
-                                    (sleep 1))
-                                  (reply
-                                   "; Value: ~s"
-                                   (car values)))
-                                (loop (cdr values)
-                                      (add1 displayed)))))))))
+                     ;; Even though the sandbox runs with strict memory and
+                     ;; time limits, we use call-with-limits here anyway,
+                     ;; because it's possible that the sandbox can, without
+                     ;; exceeding its limits, return a value that will require
+                     ;; a lot of time and memory to convert into a string!
+                     ;; (make-list 100000) is an example.
+                     (call-with-limits 15 20 ; 15sec, 20mb
+                       (lambda ()
+                         (let loop ((values values)
+                                    (displayed 0))
+                           (define (next)
+                             (loop (cdr values) (add1 displayed)))
+                           (cond
+                             ((null? values) (void))
+                             ((void? (car values)) (next))
+                             ;; prevent flooding
+                             ((>= displayed *max-values-to-display*)
+                              (reply
+                               "; ~a values is enough for anybody; here's the rest in a list: ~s"
+                               (number->english *max-values-to-display*)
+                               (filter (lambda (x) (not (void? x))) values)))
+                             (else
+                              (reply "; Value~a: ~s"
+                                     (if (positive? displayed)
+                                       (format "#~a" (add1 displayed))
+                                       "")
+                                     (car values))
+                              (sleep 1)
+                              (next))))))))
 
                  (let ((stdout (sandbox-get-stdout s))
                        (stderr (sandbox-get-stderr s)))
