@@ -45,6 +45,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
             (hash-remove! ht (cdr moldiest))))
         ;; (when sb ...inform user about reset...)
         (let ([sb (public-make-sandbox)])
+          (add-grabber name sb)
           (hash-set! ht name sb)
           sb)))))
 
@@ -55,6 +56,58 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (get-error-output (sandbox-evaluator s)))
 
 (define *max-sandboxes* (make-parameter 3))
+
+;; A subtle point here is memory that is accessible from the sandbox:
+;; the value shouldn't be accessible outside the originating sandbox to
+;; prevent this from being a security hole (use `give' to avoid being
+;; charged for the allocated memory).  Solve this by registering the
+;; value with a gensym handle in the sending sandbox's namespace, and
+;; make the handle accessible in the other sandbox.  The handle is
+;; available in the receiving sandbox and weakly held in the giving
+;; sandbox, so if the receiver dies the handle can be GCed and with it
+;; the value.
+(define given-handles (gensym 'given-values))
+(define (sandbox->given-registry sb)
+  (call-in-sandbox-context (sandbox-evaluator sb)
+    (lambda ()
+      (namespace-variable-value given-handles #f
+        (lambda ()
+          (let ([t (make-weak-hasheq)])
+            (namespace-set-variable-value! given-handles t)
+            t))))
+    #t))
+
+(define name->grabber (make-hash))
+
+;; give : Sandbox String Any -> Void
+(define (sandbox-give from to val)
+  ;; Evaluate the expression (all the usual things apply: should catch errors,
+  ;; and require a single value too).  See above for an explanation for the
+  ;; handle.
+  (define handle (gensym 'given))
+  (hash-set! (sandbox->given-registry from) handle val)
+  ;; Note: removing registered values depends on the handle being released, so
+  ;; (a) the following should be done only for existing nicks (otherwise
+  ;; error), (b) when a nick leaves it should be removed from this table
+  (hash-set!
+   name->grabber to
+   (lambda ()
+     (if (evaluator-alive? (sandbox-evaluator from))
+       ;; note: this could be replaced with `val' -- but then this
+       ;; closure will keep a reference for the value, making it
+       ;; available from the receiving thread!
+       (hash-ref (sandbox->given-registry from) handle
+                 (lambda ()
+                   (error 'grab "internal error (the value disappeared)")))
+       (error 'grab "the sending evaluator died")))))
+
+;; adds the GRAB binding to a given sandbox
+(define (add-grabber name sb)
+  (call-in-sandbox-context (sandbox-evaluator sb)
+    (lambda ()
+      (namespace-set-variable-value! 'GRAB
+        (lambda ()
+          ((hash-ref name->grabber name (lambda () void))))))))
 
 
 (print-hash-table #t)
@@ -157,6 +210,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          sandbox-eval
          sandbox-get-stderr
          sandbox-get-stdout
+         sandbox-give
          sandboxes-tests
          main
          (rename-out [public-make-sandbox make-sandbox]))
