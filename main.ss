@@ -229,8 +229,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (fprintf (current-error-port) " poof~%")
 ;;  flaky-main
 ;;;   hanging-up-main
-  (localhost-main)
-;;;    (preload-main)
+;;;  (localhost-main)
+    (preload-main)
 ;;;   random-main
 ;;;   replay-main
   )
