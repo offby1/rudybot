@@ -187,7 +187,7 @@
                    ;; limits, return a value that will require a lot of time
                    ;; and memory to convert into a string!  (make-list 100000)
                    ;; is an example.
-                   (call-with-limits 10 20 ; 15sec, 20mb
+                   (call-with-limits 10 20 ; 10sec, 20mb
                      (lambda ()
                        (define (display-values values displayed)
                          (define (next)
