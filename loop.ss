@@ -19,7 +19,7 @@
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
 (define *my-nick* (make-parameter "rudybot"))
-
+(define *initial-channels* (make-parameter '("#scheme" "#emacs")))
 (define *nickserv-password* (make-parameter #f))
 
 (define *irc-server-hostname* (make-parameter "localhost"))
@@ -395,8 +395,7 @@
             ((|001|)
              (log "Yay, we're in")
              (set! *authentication-state* 'succeeded)
-             (out "JOIN #scheme")
-             (out "JOIN #emacs"))
+             (for ([c (*initial-channels*)]) (out "JOIN ~a" c)))
             ((|366|)
              (log "I, ~a, seem to have joined channel ~a."
                   mynick
