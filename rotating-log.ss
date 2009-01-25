@@ -108,9 +108,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
           #f)
 
          ;; If it has a bunch of lines, then all but the last must
-         ;; clock in at under max-bytes.  We can ignore all but the
-         ;; _second_-to-last, since those are all smaller; if the
-         ;; second-to-last is small enough, then we're not too big.
+         ;; clock in at under max-bytes.  We only need check the
+         ;; _second_-to-last, since all the lines before it are
+         ;; smaller.
          (else
           (< max-bytes (last (drop-right sizes 1)))))))))
 
