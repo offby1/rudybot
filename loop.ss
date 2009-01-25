@@ -170,7 +170,7 @@
                (define-values (give-to words*)
                  (cond ((or (eq? verb 'eval) (null? words))
                         (values #f words))
-                       ((equal? for-whom (*my-nick*))
+                       ((equal? (car words) (*my-nick*))
                         (error "I'm full, thanks."))
                        ((equal? for-whom (car words))
                         ;; allowing giving a value to yourself can lead to a
