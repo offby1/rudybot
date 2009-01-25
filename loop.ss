@@ -228,13 +228,13 @@
                                   ;; announce privately if given privately
                                   (pm give-to "~a ~a" for-whom msg)
                                   ;; cheap no-nag feature
-                                  (let ((l last-give-instructions)
-                                        (msg (if (and l
-                                                      (equal? (car l) response-target)
-                                                      (< (- (current-seconds) (cdr l))
-                                                         120))
-                                               msg*
-                                               msg)))
+                                  (let* ((l last-give-instructions)
+                                         (msg (if (and l
+                                                       (equal? (car l) response-target)
+                                                       (< (- (current-seconds) (cdr l))
+                                                          120))
+                                                  msg*
+                                                  msg)))
                                     (set! last-give-instructions
                                           (cons response-target (current-seconds)))
                                     (pm response-target
