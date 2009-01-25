@@ -92,6 +92,11 @@
 (define (note-we-did-something-for! for-whom)
   (hash-set! *action-times-by-nick* for-whom (current-seconds)))
 
+;; Cheap global bit to avoid nagging channels with grab instructions (doesn't
+;; work when give is used in several channels at the same time, no care for
+;; races)
+(define last-give-instructions #f)
+
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line op)
@@ -122,9 +127,10 @@
     (if (and rate_limit?
              (we-recently-did-something-for for-whom))
         (log "Not doing anything for ~a, since we recently did something for them." for-whom)
-        (begin
-          (log "Doing ~s" words)
-          (case (string->symbol (string-downcase (first words)))
+        (let ((verb (string->symbol (string-downcase (first words))))
+              (words (cdr words)))
+          (log "Doing ~a ~s" verb words)
+          (case verb
             [(quote)
              (let ((q (one-quote)))
                ;; special case: jordanb doesn't want quotes prefixed with
@@ -132,20 +138,18 @@
                (match for-whom
                  [(regexp #rx"^jordanb")
                   (pm response-target "~a" q)]
-                 [_ (reply "~a" q)])
-               )]
+                 [_ (reply "~a" q)]))]
             [(source) (reply
                        "http://github.com/offby1/rudybot/tree/~a"
                        (git-version 'complete))]
             [(seen)
-             (when (not (null? (cdr words)))
-               (reply "~a" (nick->sighting-string (second words)))
-               )]
+             (when (not (null? words))
+               (reply "~a" (nick->sighting-string (car words))))]
             [(uptime)
              (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
                     (describe-since *start-time*)
                     (describe-since (*connection-start-time*)))]
-            [(eval)
+            [(eval give)
              (with-handlers
                  ;; catch _all_ exceptions from the sandbox, to prevent "eval
                  ;; (raise 1)" or any other error from killing this thread.
@@ -163,9 +167,19 @@
                ;; get-sandbox-by-name can raise an exception, so it's
                ;; important to have it inside the with-handlers.
                (define s (get-sandbox-by-name *sandboxes* for-whom))
+               (define-values (give-to words*)
+                 (cond ((or (eq? verb 'eval) (null? words))
+                        (values #f words))
+                       ((equal? for-whom (*my-nick*))
+                        (error "I'm full, thanks."))
+                       ((equal? for-whom (car words))
+                        ;; allowing giving a value to yourself can lead to a
+                        ;; nested call to `call-in-sandbox-context' which will
+                        ;; deadlock.
+                        (error "Talk to yourself much too?"))
+                       (else (values (car words) (cdr words)))))
                (call-with-values
-                   (lambda ()
-                     (sandbox-eval s (string-join (cdr words))))
+                   (lambda () (sandbox-eval s (string-join words*)))
                  (lambda values
                    ;; Even though the sandbox runs with strict memory and time
                    ;; limits, we use call-with-limits here anyway, because it's
@@ -201,7 +215,31 @@
                                       (positive? (string-length output)))
                              (reply "; ~a: ~s" name output)
                              (sleep 1))))
-                       (display-values values 0)
+                       (cond ((not give-to) (display-values values 0))
+                             ((null? values)
+                              (error "no value to give"))
+                             ((not (null? (cdr values)))
+                              (error "you can only give one value"))
+                             (else
+                              (sandbox-give s give-to (car values))
+                              (let ((msg "has given you a value, use (GRAB) in an eval to get it (case sensitive)")
+                                    (msg* "you got a value, use (GRAB)"))
+                                (if (not (regexp-match? #rx"^#" response-target))
+                                  ;; announce privately if given privately
+                                  (pm give-to "~a ~a" for-whom msg)
+                                  ;; cheap no-nag feature
+                                  (let ((l last-give-instructions)
+                                        (msg (if (and l
+                                                      (equal? (car l) response-target)
+                                                      (< (- (current-seconds) (cdr l))
+                                                         120))
+                                               msg*
+                                               msg)))
+                                    (set! last-give-instructions
+                                          (cons response-target (current-seconds)))
+                                    (pm response-target
+                                        "~a: ~a ~a"
+                                        give-to for-whom msg))))))
                        (display-output 'stdout sandbox-get-stdout)
                        (display-output 'stderr sandbox-get-stderr))))))]
 
