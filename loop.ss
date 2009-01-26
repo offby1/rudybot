@@ -19,7 +19,7 @@
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
 (define *my-nick* (make-parameter "rudybot"))
-(define *initial-channels* (make-parameter '("#scheme" "#emacs")))
+(define *initial-channels* (make-parameter '("#scheme" "#emacs" "##SICP")))
 (define *nickserv-password* (make-parameter #f))
 
 (define *irc-server-hostname* (make-parameter "localhost"))
