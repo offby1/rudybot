@@ -287,15 +287,35 @@
 
 (define verbs (make-hasheq))
 (define verb-lines '())
-(define-syntax-rule (defverb (verb arg ...) body ...)
-  (begin (hash-set! verbs 'verb
-                    (match-lambda [(list arg ...) body ...] [_ (void)]))
-         (set! verb-lines (cons (string-join (list (symbol->string 'verb)
-                                                   (if (eq? 'arg '(... ...))
-                                                     "..."
-                                                     (format "<~a>" 'arg))
-                                                   ...))
-                                verb-lines))))
+(require (for-syntax (only-in scheme last drop-right)))
+(define-syntax (defverb stx)
+  (define (id->str id) (symbol->string (syntax-e id)))
+  (syntax-case stx ()
+    [(defverb (verb arg ...) desc body ...)
+     (and (andmap identifier? (syntax->list #'(verb arg ...)))
+          (string? (syntax-e #'desc)))
+     (let* ([args (map id->str (syntax->list #'(arg ...)))]
+            [formstr
+             (apply string-append
+                    (id->str #'verb)
+                    (map (lambda (a)
+                           (cond [(equal? a " ...") a]
+                                 [(regexp-match? #rx"^[?]" a)
+                                  (string-append " [<" (substring a 1) ">]")]
+                                 [else (string-append " <" a ">")]))
+                         args))])
+       (define clause
+         (if (and (pair? args) (regexp-match? #rx"^[?]" (last args)))
+           (let* ([args (syntax->list #'(arg ...))]
+                  [opt  (last args)]
+                  [args (drop-right args 1)])
+             #`[(list* #,@args (and #,opt (or (list _) '())))
+                (let ([#,opt (and (pair? #,opt) (car #,opt))]) body ...)])
+           #'[(list arg ...) body ...]))
+       #`(begin (hash-set! verbs 'verb
+                           (match-lambda #,clause
+                                         [_ (reply "Expecting: ~a" #,formstr)]))
+                (set! verb-lines (cons '(verb #,formstr desc) verb-lines))))]))
 
 (define (reply fmt . args)
   (let* ((response-target (*response-target*))
@@ -305,26 +325,28 @@
                             (format "~a: " for-whom))))
     (pm response-target "~a~a" response-prefix (apply format fmt args))))
 
-(defverb (help)
-  (reply "~a" (string-join (reverse verb-lines) ", ")))
+(defverb (help ?what) "what tricks can I do?"
+  (cond [(and ?what (assq (string->symbol ?what) verb-lines))
+         => (lambda (v) (reply "~a: ~a" (cadr v) (caddr v)))]
+        [else (reply "~a" (string-join (map cadr (reverse verb-lines)) ", "))]))
 
-(defverb (version)
+(defverb (version) "my source code version"
   (reply "~a" (git-version)))
 
-(defverb (quote)
+(defverb (quote) "words of wisdom"
   (let ((q (one-quote)))
     ;; special case: jordanb doesn't want quotes prefixed with his nick.
     (match (*for-whom*)
       [(regexp #rx"^jordanb") (pm (*response-target*) "~a" q)]
       [_ (reply "~a" q)])))
 
-(defverb (source)
+(defverb (source) "my source location"
   (reply "http://github.com/offby1/rudybot/tree/~a" (git-version 'complete)))
 
-(defverb (seen nick)
+(defverb (seen nick) "did I see someone?"
   (reply "~a" (nick->sighting-string nick)))
 
-(defverb (uptime)
+(defverb (uptime) "how long was I awake"
   (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
          (describe-since *start-time*)
          (describe-since (*connection-start-time*))))
@@ -408,8 +430,10 @@
               (display-output 'stdout sandbox-get-stdout)
               (display-output 'stderr sandbox-get-stderr))))))))
 
-(defverb (eval expr ...) (do-eval expr #f))
-(defverb (give to expr ...) (do-eval expr to))
+(defverb (eval expr ...) "evaluate an expression(s)"
+  (do-eval expr #f))
+(defverb (give to expr ...) "evaluate and give someone the result"
+  (do-eval expr to))
 
 (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #f])
   (parameterize ([*for-whom* for-whom] [*response-target* response-target])
