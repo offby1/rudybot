@@ -11,6 +11,7 @@
          "git-version.ss"
          "sighting.ss"
          "spelled-out-time.ss"
+         "reloadable.ss"
          (except-in "quotes.ss" main)
          (except-in "tinyurl.ss" main)
          srfi/13
@@ -479,6 +480,9 @@
   (call/whine do-eval expr #f))
 (defverb (give to expr ...) "evaluate and give someone the result"
   (call/whine do-eval expr to))
+
+(define foo (auto-reload-procedure "foo.ss" 'bar (lambda (m) (log "~a" m))))
+(defverb (x) "foo" (reply "foo => ~s" (foo)))
 
 (define *master-password* #f)
 (defverb #:hidden (authenticate ?passwd) "request a passwd, or use one"
