@@ -447,6 +447,8 @@
          (reply "Bad password, generate a new one now")]
         [else
          (set-box! *my-master* (*full-id*))
+         ;; in case the password was uttered publicly, avoid hijacks it
+         (set! *master-password* #f)
          (log "I am a mindless puppet")
          (reply "[bows deeply] Welcome, oh great master!")]))
 
