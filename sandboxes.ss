@@ -105,9 +105,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (define (add-grabber name sb)
   (call-in-sandbox-context (sandbox-evaluator sb)
     (lambda ()
-      (namespace-set-variable-value! 'GRAB
-        (lambda ()
-          ((hash-ref name->grabber name (lambda () void))))))))
+      (define (GRAB) ((hash-ref name->grabber name (lambda () void))))
+      (namespace-set-variable-value! 'GRAB GRAB))))
 
 
 (print-hash-table #t)
