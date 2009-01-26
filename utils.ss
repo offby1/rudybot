@@ -1,6 +1,6 @@
 #lang scheme/base
 
-(require scheme/match (for-syntax scheme/base))
+(require scheme/match (for-syntax scheme/base syntax/boundmap))
 (provide from-env defmatcher domatchers)
 
 ;; this is used when this module is loaded, before `clearenv' is called
@@ -11,12 +11,18 @@
       default)))
 
 ;; Allows defining matchers separately, easier to maintain code.
-(define-for-syntax matcher-patterns '())
+(define-for-syntax matcher-patterns (make-free-identifier-mapping))
 (define-syntax (defmatcher stx)
   (syntax-case stx ()
-    [(_ pattern body ...)
-     (begin (set! matcher-patterns (cons #'[pattern body ...] matcher-patterns))
+    [(_ name pattern body ...)
+     (begin (free-identifier-mapping-put!
+             matcher-patterns #'name
+             (cons #'[pattern body ...]
+                   (free-identifier-mapping-get matcher-patterns #'name
+                                                (lambda () '()))))
             #'(begin))]))
 (define-syntax (domatchers stx)
   (syntax-case stx ()
-    [(_ val) #`(match val #,@(reverse matcher-patterns))]))
+    [(_ name val)
+     #`(match val #,@(reverse (free-identifier-mapping-get matcher-patterns
+                                                           #'name)))]))

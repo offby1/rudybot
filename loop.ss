@@ -124,13 +124,13 @@
 
 ;; patterns for `slightly-more-sophisticated-line-proc'
 
-(defmatcher "ERROR"
+(defmatcher IRC-COMMAND "ERROR"
   (log "Uh oh!"))
 
 ;; Here we wait for a NOTICE before authenticating.  I suspect this doesn't
 ;; work for all servers; in particular, ngircd-0.10.3 doesn't say anything when
 ;; we connect.
-(defmatcher "NOTICE"
+(defmatcher IRC-COMMAND "NOTICE"
   (when (eq? *authentication-state* 'havent-even-tried)
     (out "NICK ~a" (*my-nick*))
     ;; RFC 1459 suggests that most of this data is ignored.
@@ -138,10 +138,10 @@
          (git-version))
     (set! *authentication-state* 'tried)))
 
-(defmatcher "PING"
+(defmatcher IRC-COMMAND "PING"
   (out "PONG ~a" (car (*current-words*))))
 
-(defmatcher (regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
+(defmatcher IRC-COMMAND (regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
   (define (espy target action words)
     (note-sighting (make-sighting nick target (current-seconds) action words)))
   (if (equal? nick (*my-nick*))
@@ -264,7 +264,7 @@
              (cons first-word rest))]
       [_ (log "~a said ~s, which I don't understand" nick (*current-words*))])))
 
-(defmatcher (colon host)
+(defmatcher IRC-COMMAND (colon host)
   (match (*current-words*)
     [(list digits mynick blather ...)
      (case (string->symbol digits)
@@ -281,7 +281,7 @@
         (*my-nick* (string-append (*my-nick*) "_"))
         (out "NICK ~a" (*my-nick*))))]))
 
-(defmatcher _ (log "Duh?"))
+(defmatcher IRC-COMMAND _ (log "Duh?"))
 
 (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #f])
   (define (reply fmt . args)
@@ -409,7 +409,7 @@
   (log "<= ~s" line)
   (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
     (parameterize ([*current-words* (cdr toks)])
-      (domatchers (car toks)))))
+      (domatchers IRC-COMMAND (car toks)))))
 
 (define (connect-and-run
          server-maker
