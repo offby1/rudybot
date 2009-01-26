@@ -429,9 +429,6 @@
 (defverb (give to expr ...) "evaluate and give someone the result"
   (call/whine do-eval expr to))
 
-(defverb (thanks) "express your gratitude"
-  (reply "You're welcome"))
-
 (define *master-password* #f)
 (defverb #:hidden (authenticate ?passwd) "request a passwd, or use one"
   (cond [(not ?passwd)

@@ -25,8 +25,7 @@
     (newline op)))
 
 (define irc-process-line
-  (auto-reload-procedure "irc-process-line.ss" 'irc-process-line
-                         (lambda (m) (log "~a" m))))
+  (auto-reload-procedure "irc-process-line.ss" 'irc-process-line log))
 
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
