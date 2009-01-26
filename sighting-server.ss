@@ -12,11 +12,10 @@
 ;; http://server:8080/servlets/sighting-server.ss
 #lang scheme
 
-(require (planet "zdate.ss" ("offby1" "offby1.plt"))
-         (lib "etc.ss")
-         (lib "servlet.ss" "web-server")
-         (lib "url.ss" "net")
-         "sighting.ss")
+(require (planet offby1/offby1/zdate)
+         mzlib/etc
+         web-server/servlet
+         net/url)
 
 (provide interface-version timeout start)
 

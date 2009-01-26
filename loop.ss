@@ -11,15 +11,15 @@
          "spelled-out-time.ss"
          (except-in "quotes.ss" main)
          (except-in "tinyurl.ss" main)
-         (lib "13.ss" "srfi")
-         (lib "14.ss" "srfi")
-         (planet "macro.ss" ("schematics" "macro.plt"))
-         (planet "numspell.ss" ("neil" "numspell.plt")))
+         srfi/13
+         srfi/14
+         (planet schematics/macro/macro)
+         (planet neil/numspell/numspell))
 
 ;; This value depends on the server; this seems to work for freenode
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
 (define *my-nick* (make-parameter "rudybot"))
-(define *initial-channels* (make-parameter '("#scheme" "#emacs")))
+(define *initial-channels* (make-parameter '("#barzilay" #;"!!#scheme" #;"!!#emacs")))
 (define *nickserv-password* (make-parameter #f))
 
 (define *irc-server-hostname* (make-parameter "localhost"))

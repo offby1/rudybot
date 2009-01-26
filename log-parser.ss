@@ -6,8 +6,8 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 
-(require (lib "etc.ss")
-         (except-in (file "echolalia/progress.ss") main))
+(require mzlib/etc
+         (except-in "echolalia/progress.ss" main))
 
 (define-struct utterance (timestamp speaker target text) #:prefab)
 
