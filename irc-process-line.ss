@@ -485,7 +485,9 @@
              (proc (or (hash-ref verbs verb #f)
                        (and (is-master?) (hash-ref master-verbs verb #f)))))
         (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
-        (when proc (proc (cdr words)))
+        (if proc
+          (proc (cdr words))
+          (reply "Eh? Speak up, sonny."))
         (note-we-did-something-for! for-whom)))))
 
 (define (irc-process-line line)
