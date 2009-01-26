@@ -21,9 +21,15 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (command-line
      #:program "rudybot"
      #:once-each
+
+     ;; BUGBUG -- pass this via the environment, rather than the
+     ;; command line.  We can retrieve the value before calling
+     ;; "clearenv".
      [("-p" "--nickserv-password") pw
       "Password to identify with NickServ"
-      (*nickserv-password* pw)])
+      (*nickserv-password* pw)]
+
+                               )
     (if (*nickserv-password*)
         (connect-and-run real-server)
         (error 'freenode-main "You didn't specify a NickServ password"))))
