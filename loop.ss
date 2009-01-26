@@ -6,6 +6,7 @@
          scheme/sandbox
          srfi/19
          (except-in "sandboxes.ss" main)
+         "utils.ss"
          "git-version.ss"
          "sighting.ss"
          "spelled-out-time.ss"
@@ -15,13 +16,6 @@
          srfi/14
          (planet schematics/macro/macro)
          (planet neil/numspell/numspell))
-
-;; this is used when this module is loaded, before `clearenv' is called
-(define (from-env var default [split #f])
-  (let ([val (getenv var)])
-    (if (and val (> (string-length val) 0))
-      (if split (regexp-split split val) val)
-      default)))
 
 ;; This value depends on the server; this seems to work for freenode
 (define *my-nick*
