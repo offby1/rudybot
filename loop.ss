@@ -259,8 +259,10 @@
           (note-we-did-something-for! for-whom))))
 
   (log "<= ~s" line)
-  (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
-    (match (car toks)
+  (let* ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001)))
+         (tok1 (car toks))
+         (toks (cdr toks)))
+    (match tok1
       ["ERROR"
        (log "Uh oh!")]
 
@@ -276,7 +278,7 @@
          (set! *authentication-state* 'tried))]
 
       ["PING"
-       (out "PONG ~a" (cadr toks))]
+       (out "PONG ~a" (car toks))]
 
       [(regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
        (define (espy target action words)
@@ -288,8 +290,8 @@
            action
            words)))
        (if (equal? nick (*my-nick*))
-           (log "I seem to have said ~s" (cdr toks))
-           (match (cdr toks)
+           (log "I seem to have said ~s" toks)
+           (match toks
              [(list
                "NOTICE"
                my-nick
@@ -426,10 +428,10 @@
               (espy host "quitting"
                 (cons first-word rest))]
              [_
-              (log "~a said ~s, which I don't understand" nick (cdr toks))]))]
+              (log "~a said ~s, which I don't understand" nick toks)]))]
 
       [(colon host)
-       (match (cdr toks)
+       (match toks
          [(list digits mynick blather ...)
           (case (string->symbol digits)
             ((|001|)
