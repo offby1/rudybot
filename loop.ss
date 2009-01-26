@@ -286,8 +286,16 @@
 (defmatcher IRC-COMMAND _ (log "Duh?"))
 
 (define verbs (make-hasheq))
-(define-syntax-rule (defverb verb body ...)
-  (hash-set! verbs 'verb (lambda () body ...)))
+(define verb-lines '())
+(define-syntax-rule (defverb (verb arg ...) body ...)
+  (begin (hash-set! verbs 'verb
+                    (match-lambda [(list arg ...) body ...] [_ (void)]))
+         (set! verb-lines (cons (string-join (list (symbol->string 'verb)
+                                                   (if (eq? 'arg '(... ...))
+                                                     "..."
+                                                     (format "<~a>" 'arg))
+                                                   ...))
+                                verb-lines))))
 
 (define (reply fmt . args)
   (let* ((response-target (*response-target*))
@@ -297,130 +305,122 @@
                             (format "~a: " for-whom))))
     (pm response-target "~a~a" response-prefix (apply format fmt args))))
 
-(defverb version
+(defverb (help)
+  (reply "~a" (string-join (reverse verb-lines) ", ")))
+
+(defverb (version)
   (reply "~a" (git-version)))
 
-(defverb quote
+(defverb (quote)
   (let ((q (one-quote)))
     ;; special case: jordanb doesn't want quotes prefixed with his nick.
     (match (*for-whom*)
       [(regexp #rx"^jordanb") (pm (*response-target*) "~a" q)]
       [_ (reply "~a" q)])))
 
-(defverb source
+(defverb (source)
   (reply "http://github.com/offby1/rudybot/tree/~a" (git-version 'complete)))
 
-(defverb seen
-  (when (pair? (*current-words*))
-    (reply "~a" (nick->sighting-string (car (*current-words*))))))
+(defverb (seen nick)
+  (reply "~a" (nick->sighting-string nick)))
 
-(defverb uptime
+(defverb (uptime)
   (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
          (describe-since *start-time*)
          (describe-since (*connection-start-time*))))
 
-(define (do-eval give?)
-  (define words    (*current-words*))
+(define (do-eval words give-to)
   (define for-whom (*for-whom*))
   (define response-target (*response-target*))
-  (define-values (give-to words*)
-    (cond ((or (not give?) (null? words))
-           (values #f words))
-          ((equal? (car words) (*my-nick*))
-           (error "I'm full, thanks."))
-          ((equal? for-whom (car words))
-           ;; allowing giving a value to yourself can lead to a nested call
-           ;; to `call-in-sandbox-context' which will deadlock.
-           (error "Talk to yourself much too?"))
-          (else (values (car words) (cdr words)))))
-  (with-handlers
-      ;; catch _all_ exceptions from the sandbox, to prevent "eval
-      ;; (raise 1)" or any other error from killing this thread.
-      ([void
-        (lambda (v)
-          (let ((whine (if (exn? v) (exn-message v) (format "~s" v))))
-            (apply reply
-                   ;; make sure our error message begins with "error: ".
-                   (if (regexp-match #rx"^error: " whine)
-                     (list "~a" whine)
-                     (list "error: ~a" whine)))))])
-
+  (define (on-error e)
+    (let ((whine (if (exn? e) (exn-message e) (format "~s" e))))
+      (apply reply
+             ;; make sure our error message begins with "error: ".
+             (if (regexp-match #rx"^error: " whine)
+               (list "~a" whine)
+               (list "error: ~a" whine)))))
+  ;; catch _all_ exceptions from the sandbox, to prevent "eval (raise 1)" or
+  ;; any other error from killing this thread.
+  (with-handlers ([void on-error])
+    (when give-to
+      (cond ((equal? give-to (*my-nick*)) (error "I'm full, thanks."))
+            ((equal? give-to for-whom)
+             ;; allowing giving a value to yourself can lead to a nested call
+             ;; to `call-in-sandbox-context' which will deadlock.
+             (error "Talk to yourself much too?"))))
     ;; get-sandbox-by-name can raise an exception, so it's important to have it
     ;; inside the with-handlers.
-    (define s (get-sandbox-by-name *sandboxes* for-whom))
-    (call-with-values (lambda () (sandbox-eval s (string-join words*)))
-      (lambda values
-        ;; Even though the sandbox runs with strict memory and time limits, we
-        ;; use call-with-limits here anyway, because it's possible that the
-        ;; sandbox can, without exceeding its limits, return a value that will
-        ;; require a lot of time and memory to convert into a string!
-        ;; (make-list 100000) is an example.
-        (call-with-limits 10 20 ; 10sec, 20mb
-          (lambda ()
-            (define (display-values values displayed)
-              (define (next) (display-values (cdr values) (add1 displayed)))
-              (cond ((null? values) (void))
-                    ((void? (car values)) (next))
-                    ;; prevent flooding
-                    ((>= displayed *max-values-to-display*)
-                     (reply
-                      "; ~a values is enough for anybody; here's the rest in a list: ~s"
-                      (number->english *max-values-to-display*)
-                      (filter (lambda (x) (not (void? x))) values)))
-                    (else (reply "; Value~a: ~s"
-                                 (if (positive? displayed)
-                                   (format "#~a" (add1 displayed))
-                                   "")
-                                 (car values))
-                          (sleep 1)
-                          (next))))
-            (define (display-output name output-getter)
-              (let ((output (output-getter s)))
-                (when (and (string? output) (positive? (string-length output)))
-                  (reply "; ~a: ~s" name output)
-                  (sleep 1))))
-            (cond ((not give-to) (display-values values 0))
-                  ((null? values)
-                   (error "no value to give"))
-                  ((not (null? (cdr values)))
-                   (error "you can only give one value"))
-                  (else
-                   (sandbox-give s give-to (car values))
-                   (let ((msg "has given you a value, use (GRAB) in an eval to get it (case sensitive)")
-                         (msg* "has given you a value, use (GRAB)"))
-                     (if (not (regexp-match? #rx"^#" response-target))
-                       ;; announce privately if given privately
-                       (pm give-to "~a ~a" for-whom msg)
-                       ;; cheap no-nag feature
-                       (let* ((l last-give-instructions)
-                              (msg (if (and l
-                                            (equal? (car l) response-target)
-                                            (< (- (current-seconds) (cdr l)) 120))
-                                     msg*
-                                     msg)))
-                         (set! last-give-instructions
-                               (cons response-target (current-seconds)))
-                         (pm response-target
-                             "~a: ~a ~a" give-to for-whom msg))))))
-            (display-output 'stdout sandbox-get-stdout)
-            (display-output 'stderr sandbox-get-stderr)))))))
+    (let ((s (get-sandbox-by-name *sandboxes* for-whom)))
+      (call-with-values (lambda () (sandbox-eval s (string-join words)))
+        (lambda values
+          ;; Even though the sandbox runs with strict memory and time limits, we
+          ;; use call-with-limits here anyway, because it's possible that the
+          ;; sandbox can, without exceeding its limits, return a value that will
+          ;; require a lot of time and memory to convert into a string!
+          ;; (make-list 100000) is an example.
+          (call-with-limits 10 20 ; 10sec, 20mb
+            (lambda ()
+              (define (display-values values displayed)
+                (define (next) (display-values (cdr values) (add1 displayed)))
+                (cond ((null? values) (void))
+                      ((void? (car values)) (next))
+                      ;; prevent flooding
+                      ((>= displayed *max-values-to-display*)
+                       (reply
+                        "; ~a values is enough for anybody; here's the rest in a list: ~s"
+                        (number->english *max-values-to-display*)
+                        (filter (lambda (x) (not (void? x))) values)))
+                      (else (reply "; Value~a: ~s"
+                                   (if (positive? displayed)
+                                     (format "#~a" (add1 displayed))
+                                     "")
+                                   (car values))
+                            (sleep 1)
+                            (next))))
+              (define (display-output name output-getter)
+                (let ((output (output-getter s)))
+                  (when (and (string? output) (positive? (string-length output)))
+                    (reply "; ~a: ~s" name output)
+                    (sleep 1))))
+              (cond ((not give-to) (display-values values 0))
+                    ((null? values)
+                     (error "no value to give"))
+                    ((not (null? (cdr values)))
+                     (error "you can only give one value"))
+                    (else
+                     (sandbox-give s give-to (car values))
+                     (let ((msg "has given you a value, use (GRAB) in an eval to get it (case sensitive)")
+                           (msg* "has given you a value, use (GRAB)"))
+                       (if (not (regexp-match? #rx"^#" response-target))
+                         ;; announce privately if given privately
+                         (pm give-to "~a ~a" for-whom msg)
+                         ;; cheap no-nag feature
+                         (let* ((l last-give-instructions)
+                                (msg (if (and l
+                                              (equal? (car l) response-target)
+                                              (< (- (current-seconds) (cdr l)) 120))
+                                       msg*
+                                       msg)))
+                           (set! last-give-instructions
+                                 (cons response-target (current-seconds)))
+                           (pm response-target
+                               "~a: ~a ~a" give-to for-whom msg))))))
+              (display-output 'stdout sandbox-get-stdout)
+              (display-output 'stderr sandbox-get-stderr))))))))
 
-(defverb eval (do-eval #f))
-(defverb give (do-eval #t))
+(defverb (eval expr ...) (do-eval expr #f))
+(defverb (give to expr ...) (do-eval expr to))
 
 (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #f])
   (parameterize ([*for-whom* for-whom] [*response-target* response-target])
     (if (and rate_limit? (we-recently-did-something-for for-whom))
       (log "Not doing anything for ~a, since we recently did something for them."
            for-whom)
-      (let ((verb (string->symbol (string-downcase (first words))))
-            (words (cdr words)))
-        (log "Doing ~a ~s" verb words)
-        (parameterize ([*current-words* words])
-          (case verb
-
-        [else (let ([verb (hash-ref verbs verb #f)]) (when verb (verb)))]))
-      (note-we-did-something-for! for-whom)))))
+      (let* ((verb (string->symbol (string-downcase (first words))))
+             (proc (hash-ref verbs verb #f)))
+        (log "~a ~a ~s" (if proc "Doing" "Not doing") verb words)
+        (when proc (proc (cdr words)))
+        (note-we-did-something-for! for-whom)))))
 
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
