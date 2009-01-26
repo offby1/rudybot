@@ -226,45 +226,38 @@
                   "~a"
                   (make-tiny-url url)))]
            [_ #f]))
-       (match nick
-         [(regexp "bot$")
+       (cond
+         [(regexp-match? #rx"bot$" nick)
           (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
                nick)]
-         [_
-          (if (equal? target (*my-nick*))
-            (begin
-              (log "~a privately said ~a to me"
-                   nick
-                   (string-join (cons first-word rest)))
-              (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))
-            (begin
-              (match first-word
-                [(regexp #rx"^(?i:let(')?s)" (list x y))
-                 (match nick
-                   [(regexp #rx"^(?i:jordanb)")
-                    (log "KOMEDY GOLD: ~s" (cons first-word rest))]
-                   [_ #f])]
-                [_ #f])
-              (match first-word
-                ;; TODO -- use a regex that matches just those characters that
-                ;; are legal in nicknames, followed by _any_ non-white
-                ;; character -- that way people can use, say, a semicolon after
-                ;; our nick, rather than just the comma and colon I've
-                ;; hard-coded here.
-                [(regexp #px"^([[:alnum:]_]+)[,:](.*)" (list _ addressee garbage))
-                 (when (equal? addressee (*my-nick*))
-                   (let ((words  (if (positive? (string-length garbage))
-                                   (cons garbage rest)
-                                   rest)))
-                     (when (not (null? words))
-                       (do-cmd target nick words #:rate_limit?
-                               (and #f
-                                    (not (regexp-match #rx"^offby1" nick))
-                                    (equal? target "#emacs" ))))))]
-                [",..."
-                 (when (equal? target "#emacs")
-                   (pm target "Arooooooooooo"))]
-                [_ #f])))])]
+         [(equal? target (*my-nick*))
+          (log "~a privately said ~a to me"
+               nick (string-join (cons first-word rest)))
+          (do-cmd nick nick (cons first-word rest) #:rate_limit? #f)]
+         [else
+          (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
+                     (regexp-match? #rx"^(?i:jordanb)" nick))
+            (log "KOMEDY GOLD: ~s" (cons first-word rest)))
+          (match first-word
+            ;; TODO -- use a regex that matches just those characters that
+            ;; are legal in nicknames, followed by _any_ non-white
+            ;; character -- that way people can use, say, a semicolon after
+            ;; our nick, rather than just the comma and colon I've
+            ;; hard-coded here.
+            [(regexp #px"^([[:alnum:]_]+)[,:](.*)" (list _ addressee garbage))
+             (when (equal? addressee (*my-nick*))
+               (let ((words (if (positive? (string-length garbage))
+                              (cons garbage rest)
+                              rest)))
+                 (when (not (null? words))
+                   (do-cmd target nick words #:rate_limit?
+                           (and #f
+                                (not (regexp-match #rx"^offby1" nick))
+                                (equal? target "#emacs" ))))))]
+            [",..."
+             (when (equal? target "#emacs")
+               (pm target "Arooooooooooo"))]
+            [_ #f])])]
 
       [(list "QUIT" (colon first-word) rest ...)
        (espy host "quitting"
