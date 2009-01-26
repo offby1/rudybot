@@ -22,7 +22,10 @@
 (define *my-nick*
   (make-parameter (from-env "BOTNICK" "rudybot")))
 (define *my-master*
-  (make-parameter (from-env "BOTMASTER" "offby1")))
+  #f
+  #; ; use authentication by default
+  (regexp (string-append
+           "^" (from-env "BOTMASTER" "offby1!n=.*\\.avvanta\\.com") "$")))
 (define *initial-channels* ; env var can be "#foo,#bar"
   (make-parameter (from-env "BOTCHANNELS" '("#scheme" "#emacs") #rx",")))
 (define *nickserv-password*
@@ -39,6 +42,7 @@
 (define *current-words*   (make-parameter #f))
 (define *response-target* (make-parameter #f))
 (define *for-whom*        (make-parameter #f))
+(define *full-id*         (make-parameter #f))
 
 (define *sandboxes* (make-hash))
 (define *max-values-to-display* 5)
@@ -49,10 +53,8 @@
                                            #:exists 'append))))
 
 (for ((op (in-list (*log-ports*))))
-  (fprintf (current-error-port)
-           "Whopping port ~a~%" op)
-  (with-handlers
-      ([exn:fail? values])
+  (fprintf (current-error-port) "Whopping port ~a~%" op)
+  (with-handlers ([exn:fail? values])
     (file-stream-buffer-mode op 'line)))
 
 (define (log . args)
@@ -60,6 +62,12 @@
     (fprintf op "~a " (date->string (current-date) "~4"))
     (apply fprintf op args)
     (newline op)))
+
+(define (is-master?)
+  (let ([mm *my-master*] [id (*full-id*)])
+    (cond [(regexp? mm) (regexp-match? mm id)]
+          [(string? mm) (equal? mm id)]
+          [else #f])))
 
 ;; Maybe I should use rnrs/enums-6 to guard against typos
 (define *authentication-state* 'havent-even-tried)
@@ -146,7 +154,8 @@
 (defmatcher IRC-COMMAND "PING"
   (out "PONG ~a" (car (*current-words*))))
 
-(defmatcher IRC-COMMAND (regexp #rx"^:(.*)!(.*)@(.*)$" (list _ nick id host))
+(defmatcher IRC-COMMAND (regexp #rx"^:(.*)!(.*)@(.*)$"
+                                (list full-id nick id host))
   (define (espy target action words)
     (note-sighting (make-sighting nick target (current-seconds) action words)))
   (if (equal? nick (*my-nick*))
@@ -238,7 +247,8 @@
          [(equal? target (*my-nick*))
           (log "~a privately said ~a to me"
                nick (string-join (cons first-word rest)))
-          (do-cmd nick nick (cons first-word rest) #:rate_limit? #f)]
+          (parameterize ([*full-id* full-id])
+            (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))]
          [else
           (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
                      (regexp-match? #rx"^(?i:jordanb)" nick))
@@ -255,10 +265,11 @@
                               (cons garbage rest)
                               rest)))
                  (when (not (null? words))
-                   (do-cmd target nick words #:rate_limit?
-                           (and #f
-                                (not (regexp-match #rx"^offby1" nick))
-                                (equal? target "#emacs" ))))))]
+                   (parameterize ([*full-id* full-id])
+                     (do-cmd target nick words #:rate_limit?
+                             (and #f
+                                  (not (regexp-match #rx"^offby1" nick))
+                                  (equal? target "#emacs" )))))))]
             [",..."
              (when (equal? target "#emacs")
                (pm target "Arooooooooooo"))]
@@ -325,10 +336,10 @@
   (syntax-rules ()
     [(_ #:master (verb arg ...) desc body ...)
      (*defverb master-verbs master-verb-lines (verb arg ...) desc body ...)]
+    [(_ #:hidden (verb arg ...) desc body ...)
+     (*defverb verbs master-verb-lines (verb arg ...) desc body ...)]
     [(_ (verb arg ...) desc body ...)
      (*defverb verbs verb-lines (verb arg ...) desc body ...)]))
-
-(define (for-my-master?) (equal? (*for-whom*) (*my-master*)))
 
 (define (reply fmt . args)
   (let* ((response-target (*response-target*))
@@ -340,7 +351,7 @@
 
 (defverb (help ?what) "what tricks can I do?"
   (let ([what (and ?what (string->symbol ?what))]
-        [master? (for-my-master?)])
+        [master? (is-master?)])
     (cond
       [(or (assq what verb-lines) (and master? (assq what master-verb-lines)))
        => (lambda (v) (reply "~a: ~a" (cadr v) (caddr v)))]
@@ -469,6 +480,27 @@
 (defverb (give to expr ...) "evaluate and give someone the result"
   (call/whine do-eval expr to))
 
+(define *master-password* #f)
+(defverb #:hidden (authenticate ?passwd) "request a passwd, or use one"
+  (cond [(not ?passwd)
+         (let ([passwd (random 1000000000)])
+           (set! *master-password* (cons (current-seconds) passwd))
+           (log "--->>> Temporary password: ~a <<<---" passwd)
+           (pm (*for-whom*) "Check the logs."))]
+        [(not *master-password*)
+         (reply "No password set")]
+        [(> (- (current-seconds) (car *master-password*)) 120)
+         (reply "Too late, generate a new password")]
+        [(not (equal? (string->number ?passwd) (cdr *master-password*)))
+         ;; avoid brute force attacks however unlikely
+         (set! *master-password* #f)
+         (log "Bad authentication attempt!")
+         (reply "Bad password, generate a new one now")]
+        [else
+         (set! *my-master* (*full-id*))
+         (log "I am a mindless puppet")
+         (reply "[bows deeply] Welcome, oh great master!")]))
+
 (defverb #:master (join channel) "ask me to join a channel"
   (if (regexp-match? #rx"^#" channel)
     (begin (out "JOIN ~a" channel) (reply "OK"))
@@ -495,14 +527,14 @@
                   my-namespace)))))
 
 (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #f])
-  (parameterize ([*for-whom* for-whom] [*response-target* response-target])
+  (parameterize ([*for-whom* for-whom]
+                 [*response-target* response-target])
     (if (and rate_limit? (we-recently-did-something-for for-whom))
       (log "Not doing anything for ~a, since we recently did something for them."
            for-whom)
       (let* ((verb (string->symbol (string-downcase (car words))))
              (proc (or (hash-ref verbs verb #f)
-                       (and (for-my-master?)
-                            (hash-ref master-verbs verb #f)))))
+                       (and (is-master?) (hash-ref master-verbs verb #f)))))
         (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
         (when proc (proc (cdr words)))
         (note-we-did-something-for! for-whom)))))
