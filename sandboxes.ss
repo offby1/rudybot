@@ -11,43 +11,44 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (define-struct sandbox (evaluator
                         last-used-time) #:transparent #:mutable)
-(define (public-make-sandbox)
+(define (public-make-sandbox [lang '(begin (require scheme))])
   (make-sandbox
    (parameterize ((sandbox-output       'string)
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(3 20)))
 
-     (make-evaluator
-      '(begin
-         (require scheme))))
+     (make-evaluator lang))
    0))
 
 (define (sandbox-eval sb string)
   (set-sandbox-last-used-time! sb (current-inexact-milliseconds))
   ((sandbox-evaluator sb) string))
 
-(define (get-sandbox-by-name ht name)
-  (let ([sb (hash-ref ht name #f)])
-    (if (and sb (evaluator-alive? (sandbox-evaluator sb)))
-      sb
-      (begin
-        (when (and (not sb) (>= (hash-count ht) (*max-sandboxes*)))
-          ;; evict the sandbox that has been unused the longest, don't do this
-          ;; if we have a dead sandbox -- since we'll just replace it.
-          (let ([moldiest #f])
-            (hash-for-each ht
-                           (lambda (name sb)
-                             (let ([t (sandbox-last-used-time sb)])
-                               (unless (and moldiest (> t (car moldiest)))
-                                 (set! moldiest (cons t name))))))
-            (when (not moldiest)
-              (error 'assertion-failure))
-            (hash-remove! ht (cdr moldiest))))
-        ;; (when sb ...inform user about reset...)
-        (let ([sb (public-make-sandbox)])
-          (add-grabber name sb)
-          (hash-set! ht name sb)
-          sb)))))
+(define (get-sandbox-by-name ht name lang force?)
+  (define sb (hash-ref ht name #f))
+  (define (make)
+    (let ([sb (public-make-sandbox lang)])
+       (add-grabber name sb)
+       (hash-set! ht name sb)
+       sb))
+  (cond
+    [(not (and sb (evaluator-alive? (sandbox-evaluator sb))))
+     (when (and (not sb) (>= (hash-count ht) (*max-sandboxes*)))
+       ;; evict the sandbox that has been unused the longest, don't do this
+       ;; if we have a dead sandbox -- since we'll just replace it.
+       (let ([moldiest #f])
+         (for ([(name sb) (in-hash ht)])
+           (let ([t (sandbox-last-used-time sb)])
+             (unless (and moldiest (> t (car moldiest)))
+               (set! moldiest (list t name sb)))))
+         (when (not moldiest)
+           (error "assertion-failure"))
+         (kill-evaluator (sandbox-evaluator (caddr moldiest)))
+         (hash-remove! ht (cadr moldiest))))
+     ;; (when sb ...inform user about reset...)
+     (make)]
+    [force? (kill-evaluator (sandbox-evaluator sb)) (make)]
+    [else sb]))
 
 (define (sandbox-get-stdout s)
   (get-output (sandbox-evaluator s)))
