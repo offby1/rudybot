@@ -4,6 +4,7 @@
 
 (require scheme/port
          scheme/sandbox
+         scheme/system
          srfi/19
          (except-in "sandboxes.ss" main)
          "utils.ss"
@@ -287,13 +288,15 @@
 
 (defmatcher IRC-COMMAND _ (log "Duh?"))
 
-(define verbs (make-hasheq))
-(define verb-lines '())
+(define verbs        (make-hasheq))
+(define master-verbs (make-hasheq))
+(define verb-lines        '())
+(define master-verb-lines '())
 (require (for-syntax (only-in scheme last drop-right)))
-(define-syntax (defverb stx)
+(define-syntax (*defverb stx)
   (define (id->str id) (symbol->string (syntax-e id)))
   (syntax-case stx ()
-    [(defverb (verb arg ...) desc body ...)
+    [(_ verbs verb-lines (verb arg ...) desc body ...)
      (and (andmap identifier? (syntax->list #'(verb arg ...)))
           (string? (syntax-e #'desc)))
      (let* ([args (map id->str (syntax->list #'(arg ...)))]
@@ -301,7 +304,7 @@
              (apply string-append
                     (id->str #'verb)
                     (map (lambda (a)
-                           (cond [(equal? a " ...") a]
+                           (cond [(equal? a "...") " ..."]
                                  [(regexp-match? #rx"^[?]" a)
                                   (string-append " [<" (substring a 1) ">]")]
                                  [else (string-append " <" a ">")]))
@@ -318,6 +321,14 @@
                            (match-lambda #,clause
                                          [_ (reply "Expecting: ~a" #,formstr)]))
                 (set! verb-lines (cons '(verb #,formstr desc) verb-lines))))]))
+(define-syntax defverb
+  (syntax-rules ()
+    [(_ #:master (verb arg ...) desc body ...)
+     (*defverb master-verbs master-verb-lines (verb arg ...) desc body ...)]
+    [(_ (verb arg ...) desc body ...)
+     (*defverb verbs verb-lines (verb arg ...) desc body ...)]))
+
+(define (for-my-master?) (equal? (*for-whom*) (*my-master*)))
 
 (define (reply fmt . args)
   (let* ((response-target (*response-target*))
@@ -328,9 +339,16 @@
     (pm response-target "~a~a" response-prefix (apply format fmt args))))
 
 (defverb (help ?what) "what tricks can I do?"
-  (cond [(and ?what (assq (string->symbol ?what) verb-lines))
-         => (lambda (v) (reply "~a: ~a" (cadr v) (caddr v)))]
-        [else (reply "~a" (string-join (map cadr (reverse verb-lines)) ", "))]))
+  (let ([what (and ?what (string->symbol ?what))]
+        [master? (for-my-master?)])
+    (cond
+      [(or (assq what verb-lines) (and master? (assq what master-verb-lines)))
+       => (lambda (v) (reply "~a: ~a" (cadr v) (caddr v)))]
+      [else (reply "~a"
+                   (string-join
+                    (map cadr (reverse `(,@(if master? master-verb-lines '())
+                                         ,@verb-lines)))
+                    ", "))])))
 
 (defverb (version) "my source code version"
   (reply "~a" (git-version)))
@@ -443,20 +461,38 @@
             (display-output 'stdout sandbox-get-stdout)
             (display-output 'stderr sandbox-get-stderr)))))))
 
-(defverb (init ?lang) "initialize a sandbox"
+(defverb (init ?lang)
+  "initialize a sandbox, <lang> can be 'r5rs, 'scheme, 'scheme/base, etc"
   (call/whine do-init ?lang #t))
 (defverb (eval expr ...) "evaluate an expression(s)"
   (call/whine do-eval expr #f))
 (defverb (give to expr ...) "evaluate and give someone the result"
   (call/whine do-eval expr to))
 
-(defverb (join channel) "ask me to join a channel"
-  (cond [(not (equal? (*for-whom*) (*my-master*)))
-         (reply "only if ~a wants me to" (*my-master*))]
-        [(not (regexp-match? #rx"^#" channel))
-         (reply "not a proper channel name")]
-        [else (out "JOIN ~a" channel)
-              (reply "OK")]))
+(defverb #:master (join channel) "ask me to join a channel"
+  (if (regexp-match? #rx"^#" channel)
+    (begin (out "JOIN ~a" channel) (reply "OK"))
+    (reply "not a proper channel name")))
+
+(defverb #:master (system command ...) "run something"
+  (let ([s (open-output-string)])
+    (parameterize ([current-output-port s] [current-error-port s])
+      (call/whine system (string-join command)))
+    (let* ([s (get-output-string s)]
+           [s (regexp-replace #rx"^[ \r\n]+" s "")]
+           [s (regexp-replace #rx"[ \r\n]+$" s "")]
+           [s (regexp-replace* #rx" *[\r\n] *" s " <NL> ")])
+      (reply "~a" (if (equal? s "") "OK" s)))))
+
+(define-namespace-anchor anchor)
+(define my-namespace (namespace-anchor->namespace anchor))
+(defverb #:master (top-eval expr ...) "evaluate something in the sandbox"
+  (call/whine
+   (lambda ()
+     (reply "~s"
+            (eval (read (open-input-string
+                         (string-append "(begin " (string-join expr) ")")))
+                  my-namespace)))))
 
 (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #f])
   (parameterize ([*for-whom* for-whom] [*response-target* response-target])
@@ -464,7 +500,9 @@
       (log "Not doing anything for ~a, since we recently did something for them."
            for-whom)
       (let* ((verb (string->symbol (string-downcase (car words))))
-             (proc (hash-ref verbs verb #f)))
+             (proc (or (hash-ref verbs verb #f)
+                       (and (for-my-master?)
+                            (hash-ref master-verbs verb #f)))))
         (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
         (when proc (proc (cdr words)))
         (note-we-did-something-for! for-whom)))))
