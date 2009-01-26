@@ -295,7 +295,7 @@
     (let ((response-prefix (if (equal? response-target for-whom)
                              ""
                              (format "~a: " for-whom))))
-      (pm response-target "~a" (string-append response-prefix (apply format fmt args)))))
+      (pm response-target "~a~a" response-prefix (apply format fmt args))))
   (if (and rate_limit? (we-recently-did-something-for for-whom))
     (log "Not doing anything for ~a, since we recently did something for them." for-whom)
     (let ((verb (string->symbol (string-downcase (first words))))
