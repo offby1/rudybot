@@ -51,3 +51,11 @@
             (set! proc (dynamic-require modspec procname))))))
     (reload)
     (lambda xs (reload) (apply proc xs))))
+
+;; TODO -- add a hook argument to auto-reload-procedure, so that its
+;; caller can specify arbitrary stuff to happen when we call
+;; reload-module.  In particular, I'd like the bot to run something
+;; like "git-version" whenever a module gets reloaded, so that the bot
+;; always outputs up-to-date information when someone says "version"
+;; to it.  (Currently, it runs git to determine the version only the
+;; first time it's called, and caches the info (via memoization)).
