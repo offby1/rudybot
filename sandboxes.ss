@@ -215,7 +215,6 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          main
          (rename-out [public-make-sandbox make-sandbox]))
 
-(require (except-in "log.ss" main))
 (define (main . args)
   (printf "Main running ...~%")
 
