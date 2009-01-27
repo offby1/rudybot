@@ -293,10 +293,12 @@
 (define (reply fmt . args)
   (let* ((response-target (*response-target*))
          (for-whom        (*for-whom*))
+         (master-prefix   (if (is-master?) "*" ""))
          (response-prefix (if (equal? response-target for-whom)
                             ""
                             (format "~a: " for-whom))))
-    (pm response-target "~a~a" response-prefix (apply format fmt args))))
+    (pm response-target "~a~a~a" master-prefix
+                                 response-prefix (apply format fmt args))))
 
 (defverb (help ?what) "what tricks can I do?"
   (let ([what (and ?what (string->symbol ?what))]
@@ -489,7 +491,7 @@
         (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
         (if proc
           (proc (cdr words))
-          (reply "Eh? Speak up, sonny."))
+          (reply "?"))
         (note-we-did-something-for! for-whom)))))
 
 (define (irc-process-line line)
