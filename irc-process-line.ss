@@ -459,6 +459,11 @@
     (begin (out "JOIN ~a" channel) (reply "OK"))
     (reply "not a proper channel name")))
 
+(defverb #:master (part channel) "ask me to part from a channel"
+  (if (regexp-match? #rx"^#" channel)
+    (begin (out "PART ~a" channel) (reply "OK"))
+    (reply "not a proper channel name")))
+
 (defverb #:master (system command ...) "run something"
   (let ([s (open-output-string)])
     (parameterize ([current-output-port s] [current-error-port s])
