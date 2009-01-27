@@ -1,0 +1,17 @@
+Version 3229d33:
+
+I did 
+
+        top-eval (out "NICK absurdlylongnick")
+
+, and thenceforth, it ignored all commands addressed to it with that
+new nick.  I then did
+                                                                                                
+        rudybot: top-eval (out "NICK rudybot")
+
+and that straightened it out.
+
+I assume it didn't realize that its own nick had changed.  I should
+monitor messages from the server, and if I see one that basically says
+"foo changed his nick to bar", and if my current nick is indeed foo, I
+should update it to bar.
