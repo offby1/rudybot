@@ -12,7 +12,7 @@
        (regexp (string-append
                 "^" (from-env "BOTMASTER" "offby1!n=.*\\.avvanta\\.com") "$"))))
 (define *initial-channels* ; env var can be "#foo,#bar"
-  (make-parameter (from-env "BOTCHANNELS" '("#scheme" "#emacs") #rx",")))
+  (make-parameter (from-env "BOTCHANNELS" '("#scheme" "#emacs" "##SICP") #rx",")))
 (define *nickserv-password*
   (make-parameter (from-env "BOTPASSWD" #f)))
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
