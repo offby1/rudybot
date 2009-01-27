@@ -9,6 +9,9 @@
 (define (git-version [style 'short])
   (git-version-internal style))
 
+;; TODO -- run "git diff-index --name-only HEAD --" (just as
+;; /usr/local/src/git/GIT-VERSION-GEN does) to see if the working tree
+;; is "dirty", and so indicate in our output.
 (define/memo (git-version-internal style)
   (match-define
    (list stdout-ip stdin-op pid stderr-ip controller)

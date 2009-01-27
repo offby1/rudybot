@@ -13,3 +13,6 @@ For example:
 
 Here incubot chose the word "internet", and spewed forth a sentence
 containing that word.
+
+I suspect that it chooses the "most interesting" word from the input
+sentence, where "interesting" basically means "rare in the corpus".
