@@ -1,32 +1,15 @@
-#!/usr/bin/env mzscheme
-#lang scheme
+#lang scheme/base
 
-(require scheme/system
-         (planet dherman/memoize:3:1))
+(require scheme/contract "utils.ss")
 
-;; We can't use default arguments with define/memo, so we need a silly
-;; wrapper.
 (define (git-version [style 'short])
-  (git-version-internal style))
-
-;; TODO -- run "git diff-index --name-only HEAD --" (just as
-;; /usr/local/src/git/GIT-VERSION-GEN does) to see if the working tree
-;; is "dirty", and so indicate in our output.
-(define/memo (git-version-internal style)
-  (match-define
-   (list stdout-ip stdin-op pid stderr-ip controller)
-   (process (format
-             "git log --pretty=format:%~a%n -1"
-             (case style
-               ((short) "h")
-               (else "H"))
-             )))
-
-  (controller 'wait)
-
-  (if (eq? 'done-ok (controller 'status))
-      (read-line stdout-ip)
-      "unknown"))
+  ;; TODO -- run "git diff-index --name-only HEAD --" (just as
+  ;; /usr/local/src/git/GIT-VERSION-GEN does) to see if the working
+  ;; tree is "dirty", and so indicate in our output.
+  (run-command "git" "log"
+               (format "--pretty=format:%~a"
+                       (case style ((short) "h") (else "H")))
+               "-1"))
 
 (provide/contract
  [git-version (->* () (symbol?) string?)])
