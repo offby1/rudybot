@@ -285,7 +285,7 @@
            #'[(list arg ...) body ...]))
        #`(begin (hash-set! verbs 'verb
                            (match-lambda #,clause
-                                         [_ (reply "Expecting: ~a" #,formstr)]))
+                                         [_ (reply "expecting: ~a" #,formstr)]))
                 (set! verb-lines (cons '(verb #,formstr desc) verb-lines))))]))
 ;; defverb defines a new verb:
 ;;   (defverb (verb arg ...) "description" body ...)
@@ -625,6 +625,9 @@
   (if (regexp-match? #rx"^#" channel)
     (begin (out "PART ~a" channel) (reply "OK"))
     (reply "not a proper channel name")))
+
+(defverb #:master (for who stuff ...) "tell me something in someone's name"
+  (do-cmd (*response-target*) who stuff))
 
 (defverb #:master (system command ...) "run something"
   (let ([s (open-output-string)])
