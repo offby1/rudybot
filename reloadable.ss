@@ -39,23 +39,17 @@
 ;; automatically reloads the module if the file was changed whenever the
 ;; procedure is used
 (provide auto-reload-procedure)
-(define (auto-reload-procedure modspec procname [notifier #f])
+(define (auto-reload-procedure
+         modspec procname #:notifier [notifier #f] #:on-reload [on-reload #f])
   (let ([path (resolve-module-path modspec #f)] [date #f] [proc #f] [poll #f])
     (define (reload)
       (unless (and proc (< (- (current-inexact-milliseconds) poll) poll-freq))
         (set! poll (current-inexact-milliseconds))
         (let ([cur (file-or-directory-modify-seconds path)])
           (unless (equal? cur date)
+            (when on-reload (on-reload))
             (set! date cur)
             (reload-module modspec path notifier)
             (set! proc (dynamic-require modspec procname))))))
     (reload)
     (lambda xs (reload) (apply proc xs))))
-
-;; TODO -- add a hook argument to auto-reload-procedure, so that its
-;; caller can specify arbitrary stuff to happen when we call
-;; reload-module.  In particular, I'd like the bot to run something
-;; like "git-version" whenever a module gets reloaded, so that the bot
-;; always outputs up-to-date information when someone says "version"
-;; to it.  (Currently, it runs git to determine the version only the
-;; first time it's called, and caches the info (via memoization)).

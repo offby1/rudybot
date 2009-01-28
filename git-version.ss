@@ -15,9 +15,8 @@
                               (format "--pretty=format:%~a"
                                       (case style ((short) "h") (else "H")))
                               "-1")])
-          (fprintf (current-output-port) "\n\n\nBOOM\n\n\n\n")
           (hash-set! git-versions style r)
           r))))
 
 (provide/contract
- [git-version (->* () ((or/c 'short 'complete 'reset!)) string?)])
+ [git-version (->* () ((or/c 'short 'complete 'reset!)) any)])
