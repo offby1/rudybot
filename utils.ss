@@ -1,7 +1,8 @@
 #lang scheme/base
 
-(require scheme/match scheme/system (for-syntax scheme/base syntax/boundmap))
-(provide from-env run-command defmatcher domatchers)
+(require scheme/match scheme/system scheme/promise
+         (for-syntax scheme/base syntax/boundmap))
+(provide from-env run-command defmatcher domatchers defautoloads)
 
 ;; this is used when this module is loaded, before `clearenv' is called
 (define (from-env var default [split #f])
@@ -40,3 +41,18 @@
      #`(match val #,@(reverse (free-identifier-mapping-get matcher-patterns
                                                            #'name)))]))
 
+;; used to delay loading libraries
+(define-syntax defautoloads
+  (syntax-rules ()
+    [(_ [lib var])
+     (begin (define hidden (delay (begin (printf "loading ~a:~a\n" 'lib 'var)
+                                         (dynamic-require 'lib 'var))))
+            (define-syntax var
+              (syntax-id-rules (set!)
+                [(set! . _) (error 'var "cannot mutate")]
+                [(x . xs) ((force hidden) . xs)]
+                [_ (force hidden)])))]
+    [(_ [lib var ...])
+     (begin (defautoloads (lib var)) ...)]
+    [(_ [lib var ...] ...)
+     (begin (defautoloads (lib var ...)) ...)]))

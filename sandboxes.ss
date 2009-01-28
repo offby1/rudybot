@@ -207,6 +207,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      )))
 
 (provide get-sandbox-by-name
+         sandbox-evaluator
          sandbox-eval
          sandbox-get-stderr
          sandbox-get-stdout

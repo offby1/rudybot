@@ -86,6 +86,9 @@
                     (if notice? "NOTICE" "PRIVMSG")
                     target (apply format fmt args))))
 
+;; ----------------------------------------------------------------------------
+;; General IRC protocol matchers
+
 (defmatcher IRC-COMMAND "ERROR"
   (log "Uh oh!"))
 
@@ -248,6 +251,9 @@
 
 (defmatcher IRC-COMMAND _ (log "Duh?"))
 
+;; ----------------------------------------------------------------------------
+;; User verbs
+
 (define verbs        (make-hasheq))
 (define master-verbs (make-hasheq))
 (define verb-lines        '())
@@ -281,14 +287,38 @@
                            (match-lambda #,clause
                                          [_ (reply "Expecting: ~a" #,formstr)]))
                 (set! verb-lines (cons '(verb #,formstr desc) verb-lines))))]))
-(define-syntax defverb
-  (syntax-rules ()
-    [(_ #:master (verb arg ...) desc body ...)
-     (*defverb master-verbs master-verb-lines (verb arg ...) desc body ...)]
-    [(_ #:hidden (verb arg ...) desc body ...)
-     (*defverb verbs master-verb-lines (verb arg ...) desc body ...)]
-    [(_ (verb arg ...) desc body ...)
-     (*defverb verbs verb-lines (verb arg ...) desc body ...)]))
+;; defverb defines a new verb:
+;;   (defverb (verb arg ...) "description" body ...)
+;; where `arg ...' can use `...' to get a "rest" argument, or one
+;; `?id' for an optional argument.
+;; In addition, it can have up to two flags:
+;; - #:whine can appear, which will wrap the verb action in a call/whine
+;; - #:master means that this is a master-only verb, or
+;;   #:hidden which makes it available for everyone, but not included in the
+;;   `help' output for a non-master user.
+(define-syntax (defverb stx)
+  (let*-values ([(whine rest)
+                 (syntax-case stx ()
+                   [(_ #:whine . rest)
+                    (values #t #'rest)]
+                   [(_ kwd #:whine . rest)
+                    (keyword? (syntax-e #'kwd))
+                    (values #t #'(kwd . rest))]
+                   [(_ . rest) (values #f #'rest)])]
+                [(verbs verb-lines rest)
+                 (syntax-case rest ()
+                   [(#:master . rest)
+                    (values #'master-verbs #'master-verb-lines #'rest)]
+                   [(#:hidden . rest)
+                    (values #'verbs #'master-verb-lines #'rest)]
+                   [_ (values #'verbs #'verb-lines rest)])])
+    (syntax-case rest ()
+      [((verb arg ...) desc body ...)
+       (and (andmap identifier? (syntax->list #'(verb arg ...)))
+            (string? (syntax-e #'desc)))
+       #`(*defverb #,verbs #,verb-lines (verb arg ...) desc
+           #,@(if whine #'((call/whine (lambda () body ...))) #'(body ...)))]
+      [_ (raise-syntax-error 'defverb "malformed defverb" stx)])))
 
 (define (reply fmt . args)
   (let* ((response-target (*response-target*))
@@ -297,8 +327,10 @@
                             (if (is-master?) "* " "")
                             (format (if (is-master?) "*~a: " "~a: ")
                                     for-whom))))
-    (pm response-target (string-append response-prefix
-                                       (apply format fmt args)))))
+    (pm response-target "~a~a" response-prefix (apply format fmt args))))
+
+;; ----------------------------------------------------------------------------
+;; Misc utilities
 
 (defverb (help ?what) "what tricks can I do?"
   (let ([what (and ?what (string->symbol ?what))]
@@ -333,19 +365,20 @@
          (describe-since *start-time*)
          (describe-since (*connection-start-time*))))
 
+;; ----------------------------------------------------------------------------
+;; Evaluation related stuffs
+
 (define default-sandbox-language '(begin (require scheme)))
 
 (define (call/whine f . args)
   (define (on-error e)
     (let ((whine (if (exn? e) (exn-message e) (format "~s" e))))
-      (apply reply
-             ;; make sure our error message begins with "error: ".
-             (if (regexp-match #rx"^error: " whine)
-               (list "~a" whine)
-               (list "error: ~a" whine)))))
+      (reply ;; make sure our error message begins with "error: ".
+             (if (regexp-match? #rx"^error: " whine) "~a" "error: ~a")
+             whine)))
   (with-handlers ([void on-error]) (apply f args)))
 
-(define (do-init lang force?)
+(define (get-sandbox [lang #f] [force? #f])
   (let* ([lang (if lang (string->symbol lang) default-sandbox-language)]
          [lang (case lang
                  [(r5rs) '(special r5rs)]
@@ -365,7 +398,7 @@
            ;; allowing giving a value to yourself can lead to a nested call
            ;; to `call-in-sandbox-context' which will deadlock.
            (error "Talk to yourself much too?"))))
-  (let ((s (do-init #f #f)))
+  (let ((s (get-sandbox)))
     (call-with-values (lambda () (sandbox-eval s (string-join words)))
       (lambda values
         ;; Even though the sandbox runs with strict memory and time limits, we
@@ -423,13 +456,142 @@
             (display-output 'stdout sandbox-get-stdout)
             (display-output 'stderr sandbox-get-stderr)))))))
 
-(defverb (init ?lang)
+(defverb #:whine (init ?lang)
   "initialize a sandbox, <lang> can be 'r5rs, 'scheme, 'scheme/base, etc"
-  (call/whine do-init ?lang #t))
-(defverb (eval expr ...) "evaluate an expression(s)"
-  (call/whine do-eval expr #f))
-(defverb (give to expr ...) "evaluate and give someone the result"
-  (call/whine do-eval expr to))
+  (get-sandbox ?lang #t))
+(defverb #:whine (eval expr ...) "evaluate an expression(s)"
+  (do-eval expr #f))
+(defverb #:whine (give to expr ...) "evaluate and give someone the result"
+  (do-eval expr to))
+
+(defautoloads
+  [net/uri-codec uri-encode]
+  [setup/private/path-utils path->name]
+  [setup/xref load-collections-xref]
+  [setup/dirs find-doc-dir]
+  [scribble/xref
+   xref-binding->definition-tag xref-tag->path+anchor xref-index entry-desc]
+  [scribble/manual-struct
+   exported-index-desc? exported-index-desc-name exported-index-desc-from-libs])
+
+(define (binding-info id-str)
+  (call-in-sandbox-context (sandbox-evaluator (get-sandbox))
+    (lambda ()
+      (let* ([sym (string->symbol id-str)]
+             [id  (namespace-symbol->identifier sym)])
+        (values sym id (identifier-binding id))))))
+
+;; Based on Eli's interactive library
+(defverb #:whine (apropos str ...) "look for a binding"
+  (if (null? str)
+    (reply "give me something to look for")
+    (let* ([arg (map (compose regexp regexp-quote) str)]
+           [arg (lambda (str)
+                  (andmap (lambda (rx) (regexp-match? rx str)) arg))]
+           [syms (namespace-mapped-symbols
+                  (call-in-sandbox-context (sandbox-evaluator (get-sandbox))
+                                           current-namespace))]
+           [syms (filter-map (lambda (sym)
+                               (let ([str (symbol->string sym)])
+                                 (and (arg str) str)))
+                             syms)]
+           [syms (sort syms string<?)])
+      (if (null? syms)
+        (reply "no matches found")
+        (reply "matches: ~a." (string-join syms ", "))))))
+
+;; Based on Eli's interactive library
+(defverb #:whine (desc id) "describe an identifier"
+  (define-values (sym identifier info) (binding-info id))
+  (cond
+    [(not info) (reply "`~s' is a toplevel (or unbound) identifier" sym)]
+    [(eq? info 'lexical) (reply "`~s' is a lexical identifier" sym)]
+    [(or (not (list? info)) (not (= 7 (length info))))
+     (error "internal error, mzscheme changed on me")]
+    [else
+     (let-values ([(source-mod source-id
+                    nominal-source-mod nominal-source-id
+                    source-phase import-phase
+                    nominal-export-phase)
+                   (apply values info)])
+       (define (mpi* mpi)
+         (let ([p (resolved-module-path-name
+                   (module-path-index-resolve mpi))])
+           (if (path? p) (path->name p) p)))
+       (let ([source-mod (mpi* source-mod)]
+             [nominal-source-mod (mpi* nominal-source-mod)])
+         (reply
+          "~a"
+          (string-append*
+           `("`",id"' is a bound identifier,"
+             " defined"
+             ,(case source-phase
+                [(0) ""] [(1) "-for-syntax"] [else (error "internal error")])
+             " in \"",(format "~a" source-mod)"\""
+             ,(if (not (eq? sym source-id))
+                (format " as `~s'" source-id)
+                "")
+             " required"
+             ,(case import-phase
+                [(0) ""] [(1) "-for-syntax"] [else (error "internal error")])
+             " "
+             ,(if (equal? source-mod nominal-source-mod)
+                "directly"
+                (format "through \"~a\"~a"
+                        nominal-source-mod
+                        (if (not (eq? sym nominal-source-id))
+                          (format " where it is defined as `~s'"
+                                  nominal-source-id)
+                          "")))
+             ,(case nominal-export-phase
+                [(0) ""] [(1) (format ", (exported-for-syntax)")]
+                [else (error "internal error")]))))))]))
+
+;; Based on help/help-utils
+
+(define remove-doc-dir
+  (regexp (string-append "^" (regexp-quote (path->string (find-doc-dir))) "/")))
+(define doc-url "http://docs.plt-scheme.org/")
+(defverb #:whine (doc id) "find documentation for a binding"
+  (define-values (sym identifier info) (binding-info id))
+  (define xref
+    (load-collections-xref (lambda () (log "Loading help index..."))))
+  (if info
+    (let ([tag (xref-binding->definition-tag xref info 0)])
+      (if tag
+        (let*-values ([(file anchor) (xref-tag->path+anchor xref tag)]
+                      [(file) (path->string file)]
+                      [(m) (regexp-match-positions remove-doc-dir file)]
+                      [(url) (and m (string-append
+                                     doc-url
+                                     (uri-encode (substring file (cdar m)))))]
+                      [(url) (cond [(and anchor url)
+                                    (string-append url "#" (uri-encode anchor))]
+                                   [url url]
+                                   [else "??hidden??"])])
+          (reply "~a" url))
+        (error 'help
+               "no documentation found for: ~e provided by: ~a"
+               sym
+               (module-path-index-resolve (caddr info)))))
+    (search-for-exports xref sym)))
+
+(define (search-for-exports xref sym)
+  (let ([idx (xref-index xref)]
+        [libs null])
+    (for ([entry (in-list idx)])
+      (when (and (exported-index-desc? (entry-desc entry))
+                 (eq? sym (exported-index-desc-name (entry-desc entry))))
+        (set! libs (append libs (exported-index-desc-from-libs
+                                 (entry-desc entry))))))
+    (if (null? libs)
+      (reply "not found in any library's documentation: ~a" sym)
+      (reply "no docs for a current binding, but provided by: ~a"
+             (string-join (map symbol->string (remove-duplicates libs))
+                          ", ")))))
+
+;; ----------------------------------------------------------------------------
+;; Master tools
 
 (define *master-password* #f)
 (defverb #:hidden (authenticate ?passwd) "request a passwd, or use one"
@@ -483,6 +645,9 @@
             (eval (read (open-input-string
                          (string-append "(begin " (string-join expr) ")")))
                   my-namespace)))))
+
+;; ----------------------------------------------------------------------------
+;; Main dispatchers
 
 (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #f])
   (parameterize ([*for-whom* for-whom]
