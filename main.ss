@@ -1,6 +1,10 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
+if [ "x$BOTDEBUG" != "no" ]; then
+  exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
+else
+  exec mzscheme --require $0 --main -- ${1+"$@"}
+fi
 |#
 
 #lang scheme
