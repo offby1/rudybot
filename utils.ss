@@ -45,8 +45,7 @@
 (define-syntax defautoloads
   (syntax-rules ()
     [(_ [lib var])
-     (begin (define hidden (delay (begin (printf "loading ~a:~a\n" 'lib 'var)
-                                         (dynamic-require 'lib 'var))))
+     (begin (define hidden (delay (dynamic-require 'lib 'var)))
             (define-syntax var
               (syntax-id-rules (set!)
                 [(set! . _) (error 'var "cannot mutate")]
