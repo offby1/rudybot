@@ -7,10 +7,11 @@
 (define *my-nick*
   (make-parameter (from-env "BOTNICK" "rudybot")))
 (define *my-master*
-  (box #f
-       #; ; use authentication by default
-       (regexp (string-append
-                "^" (from-env "BOTMASTER" "offby1!n=.*\\.avvanta\\.com") "$"))))
+  ;; use authentication by default, but allow to set a regexp for convenience
+  (box (let ([master (from-env "BOTMASTER" "")])
+         (and (not (equal? master ""))
+              (regexp (string-append "^" master "$"))))))
+
 (define *initial-channels* ; env var can be "#foo,#bar"
   (make-parameter (from-env "BOTCHANNELS" '("#scheme" "#emacs" "##SICP") #rx",")))
 (define *nickserv-password*
