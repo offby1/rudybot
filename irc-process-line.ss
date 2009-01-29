@@ -473,10 +473,12 @@
   [setup/private/path-utils path->name]
   [setup/xref load-collections-xref]
   [setup/dirs find-doc-dir]
-  [scribble/xref
-   xref-binding->definition-tag xref-tag->path+anchor xref-index entry-desc]
-  [scribble/manual-struct
-   exported-index-desc? exported-index-desc-name exported-index-desc-from-libs])
+  [scribble/xref xref-binding->definition-tag xref-tag->path+anchor
+                 xref-index entry-desc])
+;; these cannot be autoloaded, since it leads to some problem with errortrace
+(require (only-in scribble/manual-struct
+                  exported-index-desc? exported-index-desc-name
+                  exported-index-desc-from-libs))
 
 (define (binding-info id-str)
   (call-in-sandbox-context (sandbox-evaluator (get-sandbox))
