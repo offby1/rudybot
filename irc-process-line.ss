@@ -369,6 +369,9 @@
          (describe-since *start-time*)
          (describe-since (*connection-start-time*))))
 
+(defverb #:hidden (ping) "am I alive?"
+  (reply "pong"))
+
 ;; ----------------------------------------------------------------------------
 ;; Evaluation related stuffs
 
