@@ -594,6 +594,15 @@
              (string-join (map symbol->string (remove-duplicates libs))
                           ", ")))))
 
+;; Silly stuffs
+
+(define-syntax-rule (defspecbotverbs db ...)
+  (begin (defverb #:hidden (db term (... ...)) "look something up"
+           (pm (*response-target*) "specbot: ~a ~a" 'db (string-join term)))
+         ...))
+(defspecbotverbs
+  db clhs r5rs cocoa elisp clim ieee754 ppc posix man cltl2 cltl2-section)
+
 ;; ----------------------------------------------------------------------------
 ;; Master tools
 
