@@ -106,8 +106,8 @@
 (defmatcher IRC-COMMAND "PING"
   (out "PONG ~a" (car (*current-words*))))
 
-(defmatcher IRC-COMMAND (regexp #rx"^:(.*)!(.*)@(.*)$"
-                                (list full-id nick id host))
+(defmatcher IRC-COMMAND (regexp #rx"^:((.*)!(.*)@(.*))$"
+                                (list _ full-id nick id host))
   (define (espy target action words)
     (note-sighting (make-sighting nick target (current-seconds) action words)))
   (if (equal? nick (*my-nick*))
