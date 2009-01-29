@@ -646,7 +646,8 @@
   (pm (*response-target*) "\1ACTION ~a\1" (string-join stuff)))
 
 (defverb #:master (for who stuff ...) "tell me something in someone's name"
-  (do-cmd (*response-target*) who stuff))
+  (parameterize ([*full-id* ""]) ; avoid allowing master commands
+    (do-cmd (*response-target*) who stuff)))
 
 (defverb #:master (nick new-nick) "tell me to rename myself"
   (out "NICK ~a" new-nick))
