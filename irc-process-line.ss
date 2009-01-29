@@ -97,7 +97,7 @@
 ;; we connect.
 (defmatcher IRC-COMMAND "NOTICE"
   (when (eq? (unbox *authentication-state*) 'havent-even-tried)
-    (out "NICK ~a" (*my-nick*))
+    (out "NICK ~a" (unbox *my-nick*))
     ;; RFC 1459 suggests that most of this data is ignored.
     (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
          (git-version))
@@ -110,8 +110,12 @@
                                 (list _ full-id nick id host))
   (define (espy target action words)
     (note-sighting (make-sighting nick target (current-seconds) action words)))
-  (if (equal? nick (*my-nick*))
-    (log "I seem to have said ~s" (*current-words*))
+  (if (equal? nick (unbox *my-nick*))
+    (match (*current-words*)
+      [(list "NICK" (colon new-nick))
+       (log "I seem to be called ~s now" new-nick)
+       (set-box! *my-nick* new-nick)]
+      [_ (log "I seem to have said ~s" (*current-words*))])
     (match (*current-words*)
       [(list "NOTICE" my-nick ":This"  "nickname" "is" "registered."
              yaddayaddayadda ...)
@@ -170,7 +174,7 @@
          (pm #:notice? #t
              nick
              "\u0001VERSION ~a (offby1@blarg.net):v4.~a:PLT scheme version ~a on ~a\0001"
-             (*my-nick*)
+             (unbox *my-nick*)
              (git-version)
              (version)
              (system-type 'os)))]
@@ -179,8 +183,8 @@
 
        ;; fledermaus points out that people may be surprised
        ;; to find "private" messages -- those where "target"
-       ;; is (*my-nick*) -- recorded in the sightings log.
-       (when (not (equal? target (*my-nick*)))
+       ;; is (unbox *my-nick*) -- recorded in the sightings log.
+       (when (not (equal? target (unbox *my-nick*)))
          (espy target #f (cons first-word rest)))
        ;; look for long URLs to tiny-ify
        (for ((word (in-list (cons first-word rest))))
@@ -196,7 +200,7 @@
          [(regexp-match? #rx"bot$" nick)
           (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
                nick)]
-         [(equal? target (*my-nick*))
+         [(equal? target (unbox *my-nick*))
           (log "~a privately said ~a to me"
                nick (string-join (cons first-word rest)))
           (parameterize ([*full-id* full-id])
@@ -211,8 +215,8 @@
             ;; character -- that way people can use, say, a semicolon after
             ;; our nick, rather than just the comma and colon I've
             ;; hard-coded here.
-            [(regexp #px"^([[:alnum:]_]+)[,:](.*)" (list _ addressee garbage))
-             (when (equal? addressee (*my-nick*))
+            [(regexp #px"^([[:alnum:]_-]+)[,:](.*)" (list _ addressee garbage))
+             (when (equal? addressee (unbox *my-nick*))
                (let ((words (if (positive? (string-length garbage))
                               (cons garbage rest)
                               rest)))
@@ -246,8 +250,8 @@
              (car blather)))
        ((433)
         (log "Nuts, gotta try a different nick")
-        (*my-nick* (string-append (*my-nick*) "_"))
-        (out "NICK ~a" (*my-nick*))))]))
+        (set-box! *my-nick* (string-append (unbox *my-nick*) "_"))
+        (out "NICK ~a" (unbox *my-nick*))))]))
 
 (defmatcher IRC-COMMAND _ (log "Duh?"))
 
@@ -393,7 +397,7 @@
   ;; catch _all_ exceptions from the sandbox, to prevent "eval (raise 1)" or
   ;; any other error from killing this thread (including creating the sandbox).
   (when give-to
-    (cond ((equal? give-to (*my-nick*)) (error "I'm full, thanks."))
+    (cond ((equal? give-to (unbox *my-nick*)) (error "I'm full, thanks."))
           ((equal? give-to for-whom)
            ;; allowing giving a value to yourself can lead to a nested call
            ;; to `call-in-sandbox-context' which will deadlock.
@@ -634,6 +638,9 @@
 
 (defverb #:master (for who stuff ...) "tell me something in someone's name"
   (do-cmd (*response-target*) who stuff))
+
+(defverb #:master (nick new-nick) "tell me to rename myself"
+  (out "NICK ~a" new-nick))
 
 (defverb #:master (system command ...) "run something"
   (let ([s (open-output-string)])

@@ -5,7 +5,7 @@
 
 ;; This value depends on the server; this seems to work for freenode
 (define *my-nick*
-  (make-parameter (from-env "BOTNICK" "rudybot")))
+  (box (from-env "BOTNICK" "rudybot")))
 (define *my-master*
   ;; use authentication by default, but allow to set a regexp for convenience
   (box (let ([master (from-env "BOTMASTER" "")])

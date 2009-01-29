@@ -27,11 +27,11 @@ fi
                (lambda ()
                  (define (c str)
                    (format ":n!n@n PRIVMSG #c :~a: ~a"
-                           (*my-nick*)
+                           (unbox *my-nick*)
                            str))
                  (define (p str)
                    (format ":n!n@n PRIVMSG ~a :~a"
-                           (*my-nick*)
+                           (unbox *my-nick*)
                            str))
                  (for-each
                   (lambda (line)
@@ -64,19 +64,19 @@ fi
                     ,(c "version")
                     ,(c "SOURCE")
                     ,(c "quote")
-                    ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" (*my-nick*))
+                    ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" (unbox *my-nick*))
                     ,(format ":jordanb!n@n PRIVMSG #c :Let's say something memorable")
                     ,(format ":n!n@n PRIVMSG #emacs :,...")
                     ,(format ":n!n@n PRIVMSG #not-emacs :,...")
-                    ,(format ":n!n@n PRIVMSG #c :~a:~a" (*my-nick*) "lookboynospaces")
-                    ,(format ":n!n@n PRIVMSG #c :~a:" (*my-nick*) )
+                    ,(format ":n!n@n PRIVMSG #c :~a:~a" (unbox *my-nick*) "lookboynospaces")
+                    ,(format ":n!n@n PRIVMSG #c :~a:" (unbox *my-nick*) )
                     ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
                         (c (format "seen ~a" action)))
 
                     ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
                     ,(format
                       ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
-                      (*my-nick*))
+                      (unbox *my-nick*))
 
                     ,@(apply
                        append
