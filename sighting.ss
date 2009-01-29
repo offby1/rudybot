@@ -16,15 +16,8 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 (define (canonicalize-nick n)
   ;; TODO -- consider nixing _leading_ underscores as well; I've seen
   ;; those in the wild.
-  (let ((sans-trailing-crap
-         ((if (*downcase-nicks*) string-downcase values)
-          (match n
-            [(regexp #px"(.*?)([`_]*)$" (list _ base suffixes))
-             base]
-            [_ n]))))
-    (if (string=? sans-trailing-crap "")
-        "_"
-        sans-trailing-crap)))
+  ((if (*downcase-nicks*) string-downcase values)
+   (regexp-replace #rx"(?<=.)([`_]*)$" n "")))
 
 (define (nick->dirpath n)
   (let ((cn (canonicalize-nick n)))
