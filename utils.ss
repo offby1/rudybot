@@ -2,7 +2,7 @@
 
 (require scheme/match scheme/system scheme/promise
          (for-syntax scheme/base syntax/boundmap))
-(provide from-env run-command defmatcher domatchers defautoloads)
+(provide from-env run-command call-with-PATH defmatcher domatchers defautoloads)
 
 ;; this is used when this module is loaded, before `clearenv' is called
 (define (from-env var default [split #f])
@@ -11,13 +11,18 @@
       (if split (regexp-split split val) val)
       default)))
 
-;; Conveniently running an external process (given its name and string args)
-;; and return the stdout in a string (capture the initial PATH)
+;; Capture the initial path for all kinds of things that need it
 (define default-path (getenv "PATH"))
+(define (call-with-PATH thunk)
+  (dynamic-wind
+    (lambda () (putenv "PATH" default-path))
+    thunk
+    (lambda () (putenv "PATH" "")))) ; no way to actually delete a var
+
+;; Conveniently running an external process (given its name and string args)
+;; and return the stdout in a string
 (define (run-command cmd . args)
-  (define exe (begin (putenv "PATH" default-path)
-                     (begin0 (find-executable-path cmd)
-                       (putenv "PATH" "")))) ; no way to delete a var
+  (define exe (call-with-PATH (lambda () (find-executable-path cmd))))
   (define out (open-output-string))
   (parameterize ([current-output-port out])
     (if (and exe (apply system* exe args))
