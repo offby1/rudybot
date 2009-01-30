@@ -581,7 +581,7 @@
                       [(m) (regexp-match-positions remove-doc-dir file)]
                       [(url) (and m (string-append
                                      doc-url
-                                     (uri-encode (substring file (cdar m)))))]
+                                     (substring file (cdar m))))]
                       [(url) (cond [(and anchor url)
                                     (string-append url "#" (uri-encode anchor))]
                                    [url url]
