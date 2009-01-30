@@ -678,7 +678,7 @@
 (defverb #:master (system command ...) "run something"
   (let ([s (open-output-string)])
     (parameterize ([current-output-port s] [current-error-port s])
-      (call/whine system (string-join command)))
+      (call-with-PATH (lambda () (call/whine system (string-join command)))))
     (let* ([s (get-output-string s)]
            [s (regexp-replace #rx"^[ \r\n]+" s "")]
            [s (regexp-replace #rx"[ \r\n]+$" s "")]

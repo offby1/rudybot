@@ -94,7 +94,14 @@ fi
 
                     ,@(map c (list "quote" "uptime"))
                     ,@(map p (list "This is a private utterance, and I certainly hope you don't divulge it!!"))
-                    ,(c "seen n")))
+                    ,(c "seen n"))
+                    ;; This should work, if you set BOTMASTER in the
+                    ;; environment before running this test.
+                    ,(c (format "system ls /"))
+
+                    ;; This should yield an empty string.
+                    ,(c (format "eval (getenv \"PATH\")"))
+                  )
 
                  (close-output-port op)))
               ip)
