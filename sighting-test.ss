@@ -6,9 +6,9 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 (require (planet schematics/schemeunit:2/test)
          (planet schematics/schemeunit:2/text-ui)
          (planet schematics/schemeunit:2/util)
-         "sighting.ss")
+         "userinfo.ss")
 
-(require/expose "sighting.ss" (*downcase-nicks*))
+(require/expose "userinfo.ss" (*downcase-nicks*))
 
 
 (define sighting-tests

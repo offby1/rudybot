@@ -13,14 +13,14 @@ fi
          "git-version.ss"
          (except-in "clearenv.ss" main)
          (only-in "main.ss" real-server)
-         (only-in "sighting.ss" *sightings-database-directory-name*))
+         (only-in "userinfo.ss" *userinfo-database-directory-name*))
 
 (require mzlib/trace)
 (define (main . args)
   (clearenv)
   (log "Main starting: ~a" (git-version))
   (parameterize ((*irc-server-hostname* "irc.freenode.org")
-                 (*sightings-database-directory-name* "sightings.db")
+                 (*userinfo-database-directory-name* "userinfo.db")
                  (current-trace-notify (lambda (string) (log-debug string))))
     (command-line
      #:program "rudybot"

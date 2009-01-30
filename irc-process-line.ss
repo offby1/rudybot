@@ -9,7 +9,7 @@
          (except-in "sandboxes.ss" main)
          "vars.ss"
          "git-version.ss"
-         "sighting.ss"
+         "userinfo.ss"
          "utils.ss"
          "spelled-out-time.ss"
          (except-in "quotes.ss" main)
@@ -375,7 +375,7 @@
 ;; ----------------------------------------------------------------------------
 ;; Evaluation related stuffs
 
-(define default-sandbox-language '(begin (require scheme)))
+(define *default-sandbox-language* '(begin (require scheme)))
 
 (define (call/whine f . args)
   (define (on-error e)
@@ -385,12 +385,13 @@
              whine)))
   (with-handlers ([void on-error]) (apply f args)))
 
-(define (get-sandbox [lang #f] [force? #f])
-  (let* ([lang (if lang (string->symbol lang) default-sandbox-language)]
+(define (get-sandbox [force? #f])
+  (let* ([for-whom (*for-whom*)]
+         [lang (userinfo-ref for-whom 'sandbox-lang *default-sandbox-language*)]
          [lang (case lang
                  [(r5rs) '(special r5rs)]
                  [else lang])]
-         [sb (get-sandbox-by-name *sandboxes* (*for-whom*) lang force?)])
+         [sb (get-sandbox-by-name *sandboxes* for-whom lang force?)])
     (when force? (reply "your sandbox is ready"))
     sb))
 
@@ -465,7 +466,9 @@
 
 (defverb #:whine (init ?lang)
   "initialize a sandbox, <lang> can be 'r5rs, 'scheme, 'scheme/base, etc"
-  (get-sandbox ?lang #t))
+  (when ?lang
+    (userinfo-set! (*for-whom*) 'sandbox-lang (string->symbol ?lang)))
+  (get-sandbox #t))
 (defverb #:whine (eval expr ...) "evaluate an expression(s)"
   (do-eval expr #f))
 (defverb #:whine (give to expr ...) "evaluate and give someone the result"
