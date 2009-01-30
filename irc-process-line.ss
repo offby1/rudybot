@@ -264,27 +264,30 @@
 (define master-verb-lines '())
 (require (for-syntax (only-in scheme last drop-right)))
 (define-syntax (*defverb stx)
-  (define (id->str id) (symbol->string (syntax-e id)))
+  (define (id->str id) (and (identifier? id) (symbol->string (syntax-e id))))
   (syntax-case stx ()
     [(_ verbs verb-lines (verb arg ...) desc body ...)
-     (and (andmap identifier? (syntax->list #'(verb arg ...)))
+     (and (identifier? #'verb)
+          (andmap (lambda (s) (or (identifier? s) (string? (syntax-e s))))
+                  (syntax->list #'(arg ...)))
           (string? (syntax-e #'desc)))
-     (let* ([args (map id->str (syntax->list #'(arg ...)))]
+     (let* ([raw-args (syntax->list #'(arg ...))]
+            [args (map id->str raw-args)]
             [formstr
              (apply string-append
                     (id->str #'verb)
-                    (map (lambda (a)
-                           (cond [(equal? a "...") " ..."]
+                    (map (lambda (a r)
+                           (cond [(not a) (format " ~s" (syntax-e r))]
+                                 [(equal? a "...") " ..."]
                                  [(regexp-match? #rx"^[?]" a)
                                   (string-append " [<" (substring a 1) ">]")]
                                  [else (string-append " <" a ">")]))
-                         args))])
+                         args raw-args))])
        (define clause
-         (if (and (pair? args) (regexp-match? #rx"^[?]" (last args)))
-           (let* ([args (syntax->list #'(arg ...))]
-                  [opt  (last args)]
-                  [args (drop-right args 1)])
-             #`[(list* #,@args (and #,opt (or (list _) '())))
+         (if (and (pair? args) (last args) (regexp-match? #rx"^[?]" (last args)))
+           (let* ([opt  (last raw-args)]
+                  [raw-args (drop-right raw-args 1)])
+             #`[(list* #,@raw-args (and #,opt (or (list _) '())))
                 (let ([#,opt (and (pair? #,opt) (car #,opt))]) body ...)])
            #'[(list arg ...) body ...]))
        #`(begin (hash-set! verbs 'verb
@@ -318,7 +321,9 @@
                    [_ (values #'verbs #'verb-lines rest)])])
     (syntax-case rest ()
       [((verb arg ...) desc body ...)
-       (and (andmap identifier? (syntax->list #'(verb arg ...)))
+       (and (identifier? #'verb)
+            (andmap (lambda (s) (or (identifier? s) (string? (syntax-e s))))
+                    (syntax->list #'(arg ...)))
             (string? (syntax-e #'desc)))
        #`(*defverb #,verbs #,verb-lines (verb arg ...) desc
            #,@(if whine #'((call/whine (lambda () body ...))) #'(body ...)))]
@@ -610,6 +615,16 @@
          ...))
 (defspecbotverbs
   db clhs r5rs cocoa elisp clim ieee754 ppc posix man cltl2 cltl2-section)
+
+(define-syntax-rule (defminionverbs verb ...)
+  (begin (defverb #:hidden (verb stuff (... ...)) "do some minion work"
+           (pm (*response-target*) "minion: ~a ~a" 'verb (string-join stuff)))
+         ...))
+(defminionverbs chant advice memo)
+
+(defverb (later "tell" nick something ...) "leave a message for someone"
+  (pm (*response-target*) "minion: memo for ~a: ~a told me to tell you: ~a"
+      nick (*for-whom*) (string-join something)))
 
 ;; ----------------------------------------------------------------------------
 ;; Master tools
