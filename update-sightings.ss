@@ -14,8 +14,8 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (require "userinfo.ss")
 
-(define old-sightings-root "/home/erich/bot/sightings.db")
-(define new-sightings-root "/home/erich/bot/userinfo.db")
+(define old-sightings-root "/home/erich/live-bot/sightings.db")
+(define new-sightings-root "/home/erich/live-bot/userinfo.db")
 
 (define nick-dirs
   (reverse
