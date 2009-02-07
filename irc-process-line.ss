@@ -35,8 +35,18 @@
 (define (describe-since when)
   (spelled-out-time (- (current-seconds) when)))
 
+(define (last-two l)
+  (take-right
+   l
+   (min (length l)
+        2)))
+
 (define (nick->sighting-string n)
-  (let ((ss (lookup-sightings n)))
+  ;; We might have accidentally stored a bunch of sightings for this
+  ;; nick.  If we were to display them all, they might get truncated,
+  ;; due to the 500-character output limit.  So just get the two most
+  ;; recent ones.
+  (let ((ss (last-two (lookup-sightings n))))
     (if (null? ss)
         (format "No sign of ~a" n)
         (string-join
