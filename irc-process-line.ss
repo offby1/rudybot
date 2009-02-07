@@ -262,6 +262,8 @@
 (define master-verbs (make-hasheq))
 (define verb-lines        '())
 (define master-verb-lines '())
+(define hidden-verb-lines '())
+
 (require (for-syntax (only-in scheme last drop-right)))
 (define-syntax (*defverb stx)
   (define (id->str id) (and (identifier? id) (symbol->string (syntax-e id))))
@@ -317,7 +319,7 @@
                    [(#:master . rest)
                     (values #'master-verbs #'master-verb-lines #'rest)]
                    [(#:hidden . rest)
-                    (values #'verbs #'master-verb-lines #'rest)]
+                    (values #'verbs #'hidden-verb-lines #'rest)]
                    [_ (values #'verbs #'verb-lines rest)])])
     (syntax-case rest ()
       [((verb arg ...) desc body ...)
