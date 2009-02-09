@@ -24,13 +24,16 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (set-sandbox-last-used-time! sb (current-inexact-milliseconds))
   ((sandbox-evaluator sb) string))
 
-(define (get-sandbox-by-name ht name lang force?)
+;; returns the sandbox, force/new? can be #t to force a new sandbox,
+;; or a box which will be set to #t if it was just created
+(define (get-sandbox-by-name ht name lang force/new?)
   (define sb (hash-ref ht name #f))
   (define (make)
     (let ([sb (public-make-sandbox lang)])
-       (add-grabber name sb)
-       (hash-set! ht name sb)
-       sb))
+      (when (box? force/new?) (set-box! force/new? #t))
+      (add-grabber name sb)
+      (hash-set! ht name sb)
+      sb))
   (cond
     [(not (and sb (evaluator-alive? (sandbox-evaluator sb))))
      (when (and (not sb) (>= (hash-count ht) (*max-sandboxes*)))
@@ -47,7 +50,9 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (hash-remove! ht (cadr moldiest))))
      ;; (when sb ...inform user about reset...)
      (make)]
-    [force? (kill-evaluator (sandbox-evaluator sb)) (make)]
+    [(and force/new? (not (box? force/new?)))
+     (kill-evaluator (sandbox-evaluator sb))
+     (make)]
     [else sb]))
 
 (define (sandbox-get-stdout s)

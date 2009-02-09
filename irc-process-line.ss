@@ -402,11 +402,17 @@
 (define (get-sandbox [force? #f])
   (let* ([for-whom (*for-whom*)]
          [lang (userinfo-ref for-whom 'sandbox-lang *default-sandbox-language*)]
+         [lang-to-report (and (not (equal? lang *default-sandbox-language*))
+                              lang)]
          [lang (case lang
                  [(r5rs) '(special r5rs)]
                  [else lang])]
-         [sb (get-sandbox-by-name *sandboxes* for-whom lang force?)])
-    (when force? (reply "your sandbox is ready"))
+         [force/new? (or force? (box #f))]
+         [sb (get-sandbox-by-name *sandboxes* for-whom lang force/new?)])
+    (when (or force? (unbox force/new?))
+      (if lang-to-report
+        (reply "your ~s sandbox is ready" lang-to-report)
+        (reply "your sandbox is ready")))
     sb))
 
 (define (do-eval words give-to)
