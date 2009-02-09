@@ -6,6 +6,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 #lang scheme
 
 (require scheme/sandbox
+         net/url
          (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui))
 
@@ -16,8 +17,13 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
    (parameterize ((sandbox-output       'string)
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(3 20)))
-
-     (make-evaluator lang))
+     (let ([port
+            (and (string? lang)
+                 (regexp-match? #rx"^http://" lang)
+                 (get-pure-port (string->url lang)))])
+       (if port
+         (make-module-evaluator port)
+         (make-evaluator lang))))
    0))
 
 (define (sandbox-eval sb string)

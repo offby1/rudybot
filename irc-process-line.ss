@@ -487,7 +487,9 @@
 (defverb #:whine (init ?lang)
   "initialize a sandbox, <lang> can be 'r5rs, 'scheme, 'scheme/base, etc"
   (when ?lang
-    (userinfo-set! (*for-whom*) 'sandbox-lang (string->symbol ?lang)))
+    (userinfo-set! (*for-whom*) 'sandbox-lang
+                   (if (regexp-match? #rx"^http://" ?lang)
+                     ?lang (string->symbol ?lang))))
   (get-sandbox #t))
 (defverb #:whine (eval expr ...) "evaluate an expression(s)"
   (do-eval expr #f))
