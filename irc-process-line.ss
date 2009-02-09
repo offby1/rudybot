@@ -38,10 +38,8 @@
 (define (nick->sighting-string n)
   ;; We might have accidentally stored a bunch of sightings for this
   ;; nick.  If we were to display them all, they might get truncated,
-  ;; due to the 500-character output limit.  So just get the two most
-  ;; recent ones.  However, there is no need to do any truncation
-  ;; here, because userinfo already takes care of storing only the two
-  ;; most recent sightings.
+  ;; due to the 500-character output limit.  So userinfo always gives
+  ;; us at most two of the recent ones.
   (let ((ss (lookup-sightings n)))
     (if (null? ss)
         (format "No sign of ~a" n)
