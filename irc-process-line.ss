@@ -192,16 +192,19 @@
        ;; is (unbox *my-nick*) -- recorded in the sightings log.
        (when (not (equal? target (unbox *my-nick*)))
          (espy target #f (cons first-word rest)))
-       ;; look for long URLs to tiny-ify
-       (for ((word (in-list (cons first-word rest))))
-         (match word
-           [(regexp url-regexp (list url _ _))
-            (when (<= 75 (string-length url))
-              (pm #:notice? #t
-                  target
-                  "~a"
-                  (make-tiny-url url)))]
-           [_ #f]))
+       ;; look for long URLs to tiny-ify, but only if we're The
+       ;; Original Rudybot, so avoid annoying duplicates from multiple
+       ;; bots
+       (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
+         (for ((word (in-list (cons first-word rest))))
+           (match word
+             [(regexp url-regexp (list url _ _))
+              (when (<= 75 (string-length url))
+                (pm #:notice? #t
+                    target
+                    "~a"
+                    (make-tiny-url url)))]
+             [_ #f])))
        (cond
          [(regexp-match? #rx"bot$" nick)
           (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
