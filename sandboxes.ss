@@ -17,13 +17,14 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
    (parameterize ((sandbox-output       'string)
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(3 20)))
-     (let ([port
-            (and (string? lang)
-                 (regexp-match? #rx"^http://" lang)
-                 (get-pure-port (string->url lang)))])
-       (if port
-         (make-module-evaluator port)
-         (make-evaluator lang))))
+     (call-with-limits 3 #f
+       (lambda ()
+         (let ([port (and (string? lang)
+                          (regexp-match? #rx"^http://" lang)
+                          (get-pure-port (string->url lang)))])
+           (if port
+             (make-module-evaluator port)
+             (make-evaluator lang))))))
    0))
 
 (define (sandbox-eval sb string)
