@@ -35,18 +35,12 @@
 (define (describe-since when)
   (spelled-out-time (- (current-seconds) when)))
 
-(define (last-two l)
-  (take-right
-   l
-   (min (length l)
-        2)))
-
 (define (nick->sighting-string n)
   ;; We might have accidentally stored a bunch of sightings for this
   ;; nick.  If we were to display them all, they might get truncated,
-  ;; due to the 500-character output limit.  So just get the two most
-  ;; recent ones.
-  (let ((ss (last-two (lookup-sightings n))))
+  ;; due to the 500-character output limit.  So userinfo always gives
+  ;; us at most two of the recent ones.
+  (let ((ss (lookup-sightings n)))
     (if (null? ss)
         (format "No sign of ~a" n)
         (string-join
@@ -196,16 +190,19 @@
        ;; is (unbox *my-nick*) -- recorded in the sightings log.
        (when (not (equal? target (unbox *my-nick*)))
          (espy target #f (cons first-word rest)))
-       ;; look for long URLs to tiny-ify
-       (for ((word (in-list (cons first-word rest))))
-         (match word
-           [(regexp url-regexp (list url _ _))
-            (when (<= 75 (string-length url))
-              (pm #:notice? #t
-                  target
-                  "~a"
-                  (make-tiny-url url)))]
-           [_ #f]))
+       ;; look for long URLs to tiny-ify, but only if we're The
+       ;; Original Rudybot, so avoid annoying duplicates from multiple
+       ;; bots
+       (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
+         (for ((word (in-list (cons first-word rest))))
+           (match word
+             [(regexp url-regexp (list url _ _))
+              (when (<= 75 (string-length url))
+                (pm #:notice? #t
+                    target
+                    "~a"
+                    (make-tiny-url url)))]
+             [_ #f])))
        (cond
          [(regexp-match? #rx"bot$" nick)
           (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
@@ -405,11 +402,17 @@
 (define (get-sandbox [force? #f])
   (let* ([for-whom (*for-whom*)]
          [lang (userinfo-ref for-whom 'sandbox-lang *default-sandbox-language*)]
+         [lang-to-report (and (not (equal? lang *default-sandbox-language*))
+                              lang)]
          [lang (case lang
                  [(r5rs) '(special r5rs)]
                  [else lang])]
-         [sb (get-sandbox-by-name *sandboxes* for-whom lang force?)])
-    (when force? (reply "your sandbox is ready"))
+         [force/new? (or force? (box #f))]
+         [sb (get-sandbox-by-name *sandboxes* for-whom lang force/new?)])
+    (when (or force? (unbox force/new?))
+      (if lang-to-report
+        (reply "your ~s sandbox is ready" lang-to-report)
+        (reply "your sandbox is ready")))
     sb))
 
 (define (do-eval words give-to)
@@ -484,7 +487,9 @@
 (defverb #:whine (init ?lang)
   "initialize a sandbox, <lang> can be 'r5rs, 'scheme, 'scheme/base, etc"
   (when ?lang
-    (userinfo-set! (*for-whom*) 'sandbox-lang (string->symbol ?lang)))
+    (userinfo-set! (*for-whom*) 'sandbox-lang
+                   (if (regexp-match? #rx"^http://" ?lang)
+                     ?lang (string->symbol ?lang))))
   (get-sandbox #t))
 (defverb #:whine (eval expr ...) "evaluate an expression(s)"
   (do-eval expr #f))

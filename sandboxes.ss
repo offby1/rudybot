@@ -6,6 +6,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 #lang scheme
 
 (require scheme/sandbox
+         net/url
          (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui))
 
@@ -16,21 +17,29 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
    (parameterize ((sandbox-output       'string)
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(3 20)))
-
-     (make-evaluator lang))
+     (let ([port
+            (and (string? lang)
+                 (regexp-match? #rx"^http://" lang)
+                 (get-pure-port (string->url lang)))])
+       (if port
+         (make-module-evaluator port)
+         (make-evaluator lang))))
    0))
 
 (define (sandbox-eval sb string)
   (set-sandbox-last-used-time! sb (current-inexact-milliseconds))
   ((sandbox-evaluator sb) string))
 
-(define (get-sandbox-by-name ht name lang force?)
+;; returns the sandbox, force/new? can be #t to force a new sandbox,
+;; or a box which will be set to #t if it was just created
+(define (get-sandbox-by-name ht name lang force/new?)
   (define sb (hash-ref ht name #f))
   (define (make)
     (let ([sb (public-make-sandbox lang)])
-       (add-grabber name sb)
-       (hash-set! ht name sb)
-       sb))
+      (when (box? force/new?) (set-box! force/new? #t))
+      (add-grabber name sb)
+      (hash-set! ht name sb)
+      sb))
   (cond
     [(not (and sb (evaluator-alive? (sandbox-evaluator sb))))
      (when (and (not sb) (>= (hash-count ht) (*max-sandboxes*)))
@@ -47,7 +56,9 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (hash-remove! ht (cadr moldiest))))
      ;; (when sb ...inform user about reset...)
      (make)]
-    [force? (kill-evaluator (sandbox-evaluator sb)) (make)]
+    [(and force/new? (not (box? force/new?)))
+     (kill-evaluator (sandbox-evaluator sb))
+     (make)]
     [else sb]))
 
 (define (sandbox-get-stdout s)

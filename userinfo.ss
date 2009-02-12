@@ -75,14 +75,14 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 
 ;; generic list-of-values constructor for a lookup-* and not-* functions
 (define (make-limited-list-info key get-nick get-time limit)
-  (define (lookup nick) (userinfo-ref nick key '()))
+  (define (trim vals) (drop vals (max 0 (- (length vals) limit))))
+  (define (lookup nick) (trim (userinfo-ref nick key '())))
   (define (add! val)
     (let* ([nick (get-nick val)]
-           ;; lookup in db
-           [vals (lookup nick)]
-           ;; drop extra (note: will only drop one, because it adds only one)
-           [vals (if (>= (length vals) limit) (cdr vals) vals)]
-           [vals (sort (cons val vals) < #:key get-time)])
+           ;; lookup in db, sort, trim
+           [vals (userinfo-ref nick key '())]
+           [vals (sort (cons val vals) < #:key get-time)]
+           [vals (trim vals)])
       (userinfo-set! nick key vals)))
   (values lookup add!))
 
