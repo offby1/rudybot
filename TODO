@@ -10,27 +10,3 @@ more programs that want to parse it.
 
 Get rid of "in/on" in the output of the "seen" command; surely I can
 figure out which preposition is appropriate.
-
-From 22 Jan 2009
-<mejja> rudybot: eval (define (add x y z) (list (+ x y z) (+ (+ x y) z) (+ x (+ y z))))    [06:40]
-<mejja> rudybot: eval (add 10e20 -10e20 10e2)
-<rudybot> mejja: ; Value: (1000.0 1000.0 0.0)
-<vixey> how did you do that o_o                                                            [06:42]
-<mejja> It'a a known floating point gotcha.                                                [06:43]
-<vixey> rudybot: eval (add 1000000000000000000000 1/1000000000000000000000 1000)
-<rudybot> vixey: error: reference to undefined identifier: add
-<foof> eval (add #e10e20 #e-10e20 #e10e2)                                                  [06:45]
-<foof> rudybot: eval (add #e10e20 #e-10e20 #e10e2)
-<rudybot> foof: error: reference to undefined identifier: add
-<foof> rudybot: eval (define (add x y z) (list (+ x y z) (+ (+ x y) z) (+ x (+ y z))))     [06:46]
-<foof> rudybot: eval (add #e10e20 #e-10e20 #e10e2)
-<rudybot> foof: ; Value: (1000 1000 1000)
-<eli> note that just above that there were two cases where people tried to use other people's
-      functions,                                                                           [08:14]
-<eli> and I still think that implementing something like:
-<eli> rudybot: eval (define blah ...)
-<rudybot> eli: error: eval:1:13: ...: ellipses not allowed as an expression in: ...
-<eli> rudybot: give offby1 blah
-<eli> would be very interesting.
-<eli> s/very/*very*/
-
