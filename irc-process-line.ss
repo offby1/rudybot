@@ -727,7 +727,7 @@
         (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
         (if proc
           (proc (cdr words))
-          (reply "?"))
+          (reply "eh?  Try \"~a: help\"." (unbox *my-nick*)))
         (note-we-did-something-for! for-whom)))))
 
 (define (irc-process-line line)
