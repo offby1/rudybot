@@ -465,8 +465,10 @@
                    (error "you can only give one value"))
                   (else
                    (sandbox-give s give-to (car values))
-                   (let ((msg "has given you a value, use (GRAB) in an eval to get it (case sensitive)")
-                         (msg* "has given you a value, use (GRAB)"))
+                   (let ((msg (format "has given you a value, say \"~a: eval (GRAB)\" to get it (case sensitive)"
+                                      (unbox *my-nick*)))
+                         (msg* (format "has given you a value, say \"~a: eval (GRAB)\""
+                                       (unbox *my-nick*))))
                      (if (not (regexp-match? #rx"^#" response-target))
                        ;; announce privately if given privately
                        (pm give-to "~a ~a" for-whom msg)
