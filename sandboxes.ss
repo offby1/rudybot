@@ -6,47 +6,61 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 #lang scheme
 
 (require scheme/sandbox
+         net/url
          (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui))
 
 (define-struct sandbox (evaluator
                         last-used-time) #:transparent #:mutable)
-(define (public-make-sandbox)
+(define (public-make-sandbox [lang '(begin (require scheme))])
   (make-sandbox
    (parameterize ((sandbox-output       'string)
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(3 20)))
-
-     (make-evaluator
-      '(begin
-         (require scheme))))
+     (call-with-limits 3 #f
+       (lambda ()
+         (let ([port (and (string? lang)
+                          (regexp-match? #rx"^http://" lang)
+                          (get-pure-port (string->url lang)))])
+           (if port
+             (make-module-evaluator port)
+             (make-evaluator lang))))))
    0))
 
 (define (sandbox-eval sb string)
   (set-sandbox-last-used-time! sb (current-inexact-milliseconds))
   ((sandbox-evaluator sb) string))
 
-(define (get-sandbox-by-name ht name)
-  (let ([sb (hash-ref ht name #f)])
-    (if (and sb (evaluator-alive? (sandbox-evaluator sb)))
-      sb
-      (begin
-        (when (and (not sb) (>= (hash-count ht) (*max-sandboxes*)))
-          ;; evict the sandbox that has been unused the longest, don't do this
-          ;; if we have a dead sandbox -- since we'll just replace it.
-          (let ([moldiest #f])
-            (hash-for-each ht
-                           (lambda (name sb)
-                             (let ([t (sandbox-last-used-time sb)])
-                               (unless (and moldiest (> t (car moldiest)))
-                                 (set! moldiest (cons t name))))))
-            (when (not moldiest)
-              (error 'assertion-failure))
-            (hash-remove! ht (cdr moldiest))))
-        ;; (when sb ...inform user about reset...)
-        (let ([sb (public-make-sandbox)])
-          (hash-set! ht name sb)
-          sb)))))
+;; returns the sandbox, force/new? can be #t to force a new sandbox,
+;; or a box which will be set to #t if it was just created
+(define (get-sandbox-by-name ht name lang force/new?)
+  (define sb (hash-ref ht name #f))
+  (define (make)
+    (let ([sb (public-make-sandbox lang)])
+      (when (box? force/new?) (set-box! force/new? #t))
+      (add-grabber name sb)
+      (hash-set! ht name sb)
+      sb))
+  (cond
+    [(not (and sb (evaluator-alive? (sandbox-evaluator sb))))
+     (when (and (not sb) (>= (hash-count ht) (*max-sandboxes*)))
+       ;; evict the sandbox that has been unused the longest, don't do this
+       ;; if we have a dead sandbox -- since we'll just replace it.
+       (let ([moldiest #f])
+         (for ([(name sb) (in-hash ht)])
+           (let ([t (sandbox-last-used-time sb)])
+             (unless (and moldiest (> t (car moldiest)))
+               (set! moldiest (list t name sb)))))
+         (when (not moldiest)
+           (error "assertion-failure"))
+         (kill-evaluator (sandbox-evaluator (caddr moldiest)))
+         (hash-remove! ht (cadr moldiest))))
+     ;; (when sb ...inform user about reset...)
+     (make)]
+    [(and force/new? (not (box? force/new?)))
+     (kill-evaluator (sandbox-evaluator sb))
+     (make)]
+    [else sb]))
 
 (define (sandbox-get-stdout s)
   (get-output (sandbox-evaluator s)))
@@ -55,6 +69,57 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (get-error-output (sandbox-evaluator s)))
 
 (define *max-sandboxes* (make-parameter 3))
+
+;; A subtle point here is memory that is accessible from the sandbox:
+;; the value shouldn't be accessible outside the originating sandbox to
+;; prevent this from being a security hole (use `give' to avoid being
+;; charged for the allocated memory).  Solve this by registering the
+;; value with a gensym handle in the sending sandbox's namespace, and
+;; make the handle accessible in the other sandbox.  The handle is
+;; available in the receiving sandbox and weakly held in the giving
+;; sandbox, so if the receiver dies the handle can be GCed and with it
+;; the value.
+(define given-handles (gensym 'given-values))
+(define (sandbox->given-registry sb)
+  (call-in-sandbox-context (sandbox-evaluator sb)
+    (lambda ()
+      (namespace-variable-value given-handles #f
+        (lambda ()
+          (let ([t (make-weak-hasheq)])
+            (namespace-set-variable-value! given-handles t)
+            t))))
+    #t))
+
+(define name->grabber (make-hash))
+
+;; give : Sandbox String Any -> Void
+(define (sandbox-give from to val)
+  ;; Evaluate the expression (all the usual things apply: should catch errors,
+  ;; and require a single value too).  See above for an explanation for the
+  ;; handle.
+  (define handle (gensym 'given))
+  (hash-set! (sandbox->given-registry from) handle val)
+  ;; Note: removing registered values depends on the handle being released, so
+  ;; (a) the following should be done only for existing nicks (otherwise
+  ;; error), (b) when a nick leaves it should be removed from this table
+  (hash-set!
+   name->grabber to
+   (lambda ()
+     (if (evaluator-alive? (sandbox-evaluator from))
+       ;; note: this could be replaced with `val' -- but then this
+       ;; closure will keep a reference for the value, making it
+       ;; available from the receiving thread!
+       (hash-ref (sandbox->given-registry from) handle
+                 (lambda ()
+                   (error 'grab "internal error (the value disappeared)")))
+       (error 'grab "the sending evaluator died")))))
+
+;; adds the GRAB binding to a given sandbox
+(define (add-grabber name sb)
+  (call-in-sandbox-context (sandbox-evaluator sb)
+    (lambda ()
+      (define (GRAB) ((hash-ref name->grabber name (lambda () void))))
+      (namespace-set-variable-value! 'GRAB GRAB))))
 
 
 (print-hash-table #t)
@@ -154,14 +219,15 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      )))
 
 (provide get-sandbox-by-name
+         sandbox-evaluator
          sandbox-eval
          sandbox-get-stderr
          sandbox-get-stdout
+         sandbox-give
          sandboxes-tests
          main
          (rename-out [public-make-sandbox make-sandbox]))
 
-(require (except-in "log.ss" main))
 (define (main . args)
   (printf "Main running ...~%")
 

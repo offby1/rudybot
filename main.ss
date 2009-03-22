@@ -1,6 +1,10 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
+if [ "x$BOTDEBUG" != "xno" ]; then
+  exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
+else
+  exec mzscheme --require $0 --main -- ${1+"$@"}
+fi
 |#
 
 #lang scheme
@@ -23,11 +27,11 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                (lambda ()
                  (define (c str)
                    (format ":n!n@n PRIVMSG #c :~a: ~a"
-                           (*my-nick*)
+                           (unbox *my-nick*)
                            str))
                  (define (p str)
                    (format ":n!n@n PRIVMSG ~a :~a"
-                           (*my-nick*)
+                           (unbox *my-nick*)
                            str))
                  (for-each
                   (lambda (line)
@@ -58,21 +62,21 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                     ":topic!n=javachat@cpe-74-71-143-65.twcny.res.rr.com TOPIC #emacs :-=[ www.WHAK.com ]=- Make Free/Fun Graphics Online At http://www.ImageGenerator.org =)"
 
                     ,(c "version")
+                    ,(c "SOURCE")
                     ,(c "quote")
-                    ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" (*my-nick*))
+                    ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" (unbox *my-nick*))
                     ,(format ":jordanb!n@n PRIVMSG #c :Let's say something memorable")
                     ,(format ":n!n@n PRIVMSG #emacs :,...")
                     ,(format ":n!n@n PRIVMSG #not-emacs :,...")
-                    ,(format ":n!n@n PRIVMSG #c :~a:~a" (*my-nick*) "lookboynospaces")
-                    ,(format ":n!n@n PRIVMSG #c :~a:" (*my-nick*) )
+                    ,(format ":n!n@n PRIVMSG #c :~a:~a" (unbox *my-nick*) "lookboynospaces")
+                    ,(format ":n!n@n PRIVMSG #c :~a:" (unbox *my-nick*) )
                     ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
                         (c (format "seen ~a" action)))
 
-                    ,(c "SOURCE")
                     ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
                     ,(format
                       ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
-                      (*my-nick*))
+                      (unbox *my-nick*))
 
                     ,@(apply
                        append
@@ -90,7 +94,13 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
                     ,@(map c (list "quote" "uptime"))
                     ,@(map p (list "This is a private utterance, and I certainly hope you don't divulge it!!"))
-                    ,(c "seen n")))
+                    ,(c "seen n")
+                    ;; This should work, if you set BOTMASTER in the
+                    ;; environment before running this test.
+                    ,(c "system ls /")
+
+                    ;; This should yield an empty string.
+                    ,(c "eval (getenv \"PATH\")")))
 
                  (close-output-port op)))
               ip)
@@ -229,8 +239,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (fprintf (current-error-port) " poof~%")
 ;;  flaky-main
 ;;;   hanging-up-main
-;;;   localhost-main
-   (preload-main)
+;;;   (localhost-main)
+     (preload-main)
 ;;;   random-main
 ;;;   replay-main
   )

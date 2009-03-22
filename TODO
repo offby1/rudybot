@@ -1,13 +1,10 @@
-<leppie> not sure how you would feed a top level R6RS program to rudybot
-<chandler> rudybot needs an eval-paste
-<leppie> eval-paste?
-<Daemmerung> eval contents of a pastebin.
-<chandler> yeah, something like rudybot: eval-paste 70573
-<leppie> ahh
-<chandler> offby1: make it so!
+Roll the log file over: that is, don't let it grow without bound, but
+instead, once it gets to a certain size, rename it and start a new
+file.
 
-<leppie> maybe rudybot can have a r6rs-eval call?
+Consider making the log a sequence of sexprs, rather than lines: this
+will make it easier for programs to parse ... and it seems I'm writing
+more programs that want to parse it.
 
-Have the "source" command return a URL not just to the repo on github,
-but to the very version that's currently running.  I.e., incorporate
-the "version" info into it.
+Get rid of "in/on" in the output of the "seen" command; surely I can
+figure out which preposition is appropriate.

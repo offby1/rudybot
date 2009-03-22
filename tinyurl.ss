@@ -7,10 +7,10 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (require html
          xml
-         (lib "trace.ss")
-         (planet "sxml.ss" ("lizorkin"    "sxml.plt"))
-         (lib "uri-codec.ss" "net")
-         (lib "url.ss" "net")
+         mzlib/trace
+         (planet lizorkin/sxml/sxml)
+         net/uri-codec
+         net/url
          (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui))
 

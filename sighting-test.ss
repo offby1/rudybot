@@ -3,12 +3,12 @@
 exec  mzscheme --require "$0" --main -- ${1+"$@"}
 |#
 #lang scheme
-(require (planet "test.ss"    ("schematics" "schemeunit.plt" 2))
-         (planet "text-ui.ss" ("schematics" "schemeunit.plt" 2))
-         (planet "util.ss"    ("schematics" "schemeunit.plt" 2))
-         "sighting.ss")
+(require (planet schematics/schemeunit:2/test)
+         (planet schematics/schemeunit:2/text-ui)
+         (planet schematics/schemeunit:2/util)
+         "userinfo.ss")
 
-(require/expose "sighting.ss" (*downcase-nicks*))
+(require/expose "userinfo.ss" (*downcase-nicks*))
 
 
 (define sighting-tests

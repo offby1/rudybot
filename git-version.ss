@@ -1,19 +1,22 @@
-#!/usr/bin/env mzscheme
-#lang scheme
+#lang scheme/base
 
-(require scheme/system
-         (planet dherman/memoize:3:1))
+(require scheme/contract "utils.ss")
 
-(define/memo (git-version)
-  (match-define
-   (list stdout-ip stdin-op pid stderr-ip controller)
-   (process "git log --pretty=format:%h%n -1"))
+(define git-versions (make-hash))
 
-  (controller 'wait)
-
-  (if (eq? 'done-ok (controller 'status))
-      (read-line stdout-ip)
-      "unknown"))
+(define (git-version [style 'short])
+  (if (eq? style 'reset!)
+    (set! git-versions (make-hash))
+    ;; TODO -- run "git diff-index --name-only HEAD --" (just as
+    ;; /usr/local/src/git/GIT-VERSION-GEN does) to see if the working
+    ;; tree is "dirty", and so indicate in our output.
+    (or (hash-ref git-versions style #f)
+        (let ([r (run-command "git" "log"
+                              (format "--pretty=format:%~a"
+                                      (case style ((short) "h") (else "H")))
+                              "-1")])
+          (hash-set! git-versions style r)
+          r))))
 
 (provide/contract
- [git-version (-> string?)])
+ [git-version (->* () ((or/c 'short 'complete 'reset!)) any)])

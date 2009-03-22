@@ -3,7 +3,6 @@
          (except-in "progress.ss" main)
          "db.ss")
 
-;; ip -> ip
 (define (make-filter writer)
   (let-values (((ip op)
                 (make-pipe 500)))
@@ -83,4 +82,3 @@
                             (port-next-location ip))
           (lambda args (car args)))
         ip)))))
-

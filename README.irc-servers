@@ -1,0 +1,19 @@
+-*-org-*-
+
+* dancer-ircd
+
+Works fine against whatever runs on freenode, and the version that
+comes with Ubuntu (1.0.36-8 or thereabouts).  I think it's good to
+have "nullidentd" installed: that might reduce the delay between
+"NOTICE AUTH :*** Checking ident" and ":localhost. 001
+rudybot :Welcome to the Debian ..."
+
+* ngircd-0.10.3
+
+Since it doesn't emit "NICK" or "USER" until the server emits a NOTICE
+... but since the server doesn't emit anything until we authenticate
+... we get hung up on, and keep retrying endlessly.
+
+* inspircd 1.1.20+dfsg-1ubuntu1
+
+I was too lazy to figure out how to configure it, so I don't know.
