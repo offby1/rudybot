@@ -100,7 +100,11 @@ fi
                     ,(c "system ls /")
 
                     ;; This should yield an empty string.
-                    ,(c "eval (getenv \"PATH\")")))
+                    ,(c "eval (getenv \"PATH\")")
+                                                 
+                    ;; This should simply not blow up.
+                    ,(p "eval (number->string #d10000000000000000000000000000000000000000000000000000000000 16)")
+                    ))
 
                  (close-output-port op)))
               ip)
