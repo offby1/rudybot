@@ -19,13 +19,14 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
     (lookup "snord" (prefiltered-port->db (open-input-string ""))))
    (check-equal?
     (lookup "snord" (prefiltered-port->db (open-input-string "The snord horde")))
-    "The snord horde")
+    (list "The snord horde"))
 
-   (test-case
-    "Returns longest of multiple matching strings"
-    (check-equal?
-     (lookup "snord" (prefiltered-port->db (open-input-string (string-join (list "snord" "The snord horde" "my snord") "\n"))))
-     "The snord horde"))))
+   (check-equal?
+    (lookup "snord"
+            (prefiltered-port->db (open-input-string
+                                   (string-join
+                                    (list "snord" "The snord horde" "my snord") "\n"))))
+    (list "my snord" "The snord horde" "snord"))))
 
 (define (main . args)
   (exit (run-tests hmm-tests 'verbose)))
