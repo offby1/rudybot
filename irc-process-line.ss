@@ -235,7 +235,7 @@
                                   (equal? target "#emacs" )))))))]
             [",..."
              (when (equal? target "#emacs")
-               (pm target "Arooooooooooo"))]
+               (pm target "Woof."))]
             [_ #f])])]
 
       [(list "QUIT" (colon first-word) rest ...)
@@ -465,23 +465,26 @@
                    (error "you can only give one value"))
                   (else
                    (sandbox-give s give-to (car values))
+                   ;; BUGBUG -- we shouldn't put "my-nick" in the
+                   ;; string if we're talking to a nick, as opposed to
+                   ;; a channel.
                    (let* ((msg* (format "has given you a value, say \"~a: eval (GRAB)\""
                                         (unbox *my-nick*)))
                           (msg  (string-append msg* " to get it (case sensitive)")))
                      (if (not (regexp-match? #rx"^#" response-target))
-                       ;; announce privately if given privately
-                       (pm give-to "~a ~a" for-whom msg)
-                       ;; cheap no-nag feature
-                       (let* ((l last-give-instructions)
-                              (msg (if (and l
-                                            (equal? (car l) response-target)
-                                            (< (- (current-seconds) (cdr l)) 120))
-                                     msg*
-                                     msg)))
-                         (set! last-give-instructions
-                               (cons response-target (current-seconds)))
-                         (pm response-target
-                             "~a: ~a ~a" give-to for-whom msg))))))
+                         ;; announce privately if given privately
+                         (pm give-to "~a ~a" for-whom msg)
+                         ;; cheap no-nag feature
+                         (let* ((l last-give-instructions)
+                                (msg (if (and l
+                                              (equal? (car l) response-target)
+                                              (< (- (current-seconds) (cdr l)) 120))
+                                         msg*
+                                         msg)))
+                           (set! last-give-instructions
+                                 (cons response-target (current-seconds)))
+                           (pm response-target
+                               "~a: ~a ~a" give-to for-whom msg))))))
             (display-output 'stdout sandbox-get-stdout)
             (display-output 'stderr sandbox-get-stderr)))))))
 
