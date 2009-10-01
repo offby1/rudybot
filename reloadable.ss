@@ -17,7 +17,7 @@
       (with-handlers ([exn? (lambda (e)
                               (notifier "error, module not reloaded (~a)"
                                         (exn-message e)))])
-        (namespace-require '(only mzscheme module #%top-interaction))
+        (namespace-require '(only scheme module #%top-interaction))
         (load/use-compiled path)))))
 
 ;; pulls out a value from a module, reloading the module if its source file was
