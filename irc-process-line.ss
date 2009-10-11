@@ -1,3 +1,8 @@
+#! /bin/sh
+#| Hey Emacs, this is -*-scheme-*- code!
+exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
+|#
+
 #lang scheme
 
 (provide irc-process-line)
@@ -766,3 +771,7 @@
   (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
     (parameterize ([*current-words* (cdr toks)])
       (domatchers IRC-COMMAND (car toks)))))
+
+(provide main)
+(define (main)
+  (printf "Pretend I'm testing something"))
