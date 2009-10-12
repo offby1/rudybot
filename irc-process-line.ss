@@ -774,4 +774,14 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (provide main)
 (define (main)
-  (printf "Pretend I'm testing something"))
+  (parameterize ([*logger*
+                  (lambda  args
+                    (printf "I'm logging ~s~%" args))
+                  ]
+                 [*irc-output*
+                  (current-output-port)])
+
+    (irc-process-line "hey charlie")
+    (irc-process-line ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001")
+    (irc-process-line ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :rudybot: your butt")
+    ))
