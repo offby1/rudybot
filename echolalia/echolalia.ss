@@ -5,8 +5,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 
-(require scheme/thread
-         mzlib/etc
+(require mzlib/etc
          "read-db.ss"
          "db.ss")
 

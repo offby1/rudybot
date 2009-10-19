@@ -57,13 +57,9 @@
          (for/fold ([db db])
              ([word (in-list (string-tokenize string))])
              (hash-update db word (lambda (existing)
-                                    ;; Only save this string if it's
-                                    ;; longer than any other we've seen.
-                                    (if (< (string-length existing)
-                                           (string-length string))
-                                        string
-                                        existing))
-                          ""))))))
+                                    (cons string existing))
+                                  '()
+                          ))))))
 
 (provide/contract [irc-lines->db [(or/c string? path?) . -> . db?]])
 (define (irc-lines->db filename)
