@@ -11,7 +11,8 @@
          "git-version.ss"
          "userinfo.ss"
          "utils.ss"
-         "spelled-out-time.ss"
+         (except-in "xlate.ss" main)
+         (except-in "spelled-out-time.ss" main)
          (except-in "quotes.ss" main)
          (except-in "tinyurl.ss" main)
          (planet schematics/macro/macro)
@@ -382,6 +383,9 @@
   (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
          (describe-since *start-time*)
          (describe-since (*connection-start-time*))))
+
+(defverb (t8 from to text ...) "translate TEXT from FROM to TO"
+  (reply (xlate (string-join text " ") from to)))
 
 (defverb #:hidden (ping) "am I alive?"
   (reply "pong"))

@@ -11,6 +11,7 @@ fi
 
 (require "loop.ss"
          "git-version.ss"
+         (except-in "quotes.ss" main)
          (except-in "clearenv.ss" main)
          scheme/port)
 
@@ -64,6 +65,7 @@ fi
                     ,(c "version")
                     ,(c "SOURCE")
                     ,(c "quote")
+                    ,(format ":t8!n=foo@bar PRIVMSG #ch :~a: t8 en it kits, cats, sacks, wives: how many were going to St Ives?" (unbox *my-nick*))
                     ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" (unbox *my-nick*))
                     ,(format ":jordanb!n@n PRIVMSG #c :Let's say something memorable")
                     ,(format ":n!n@n PRIVMSG #emacs :,...")
@@ -101,7 +103,7 @@ fi
 
                     ;; This should yield an empty string.
                     ,(c "eval (getenv \"PATH\")")
-                                                 
+
                     ;; This should simply not blow up.
                     ,(p "eval (number->string #d10000000000000000000000000000000000000000000000000000000000 16)")
                     ))
