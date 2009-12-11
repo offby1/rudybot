@@ -384,7 +384,7 @@
          (describe-since *start-time*)
          (describe-since (*connection-start-time*))))
 
-(defverb (t8 from to text ...) "translate TEXT from FROM to TO"
+(defverb #:whine (t8 from to text ...) "translate TEXT from FROM to TO"
   (reply (xlate (string-join text " ") from to)))
 
 (defverb #:hidden (ping) "am I alive?"

@@ -66,6 +66,8 @@ fi
                     ,(c "SOURCE")
                     ,(c "quote")
                     ,(format ":t8!n=foo@bar PRIVMSG #ch :~a: t8 en it kits, cats, sacks, wives: how many were going to St Ives?" (unbox *my-nick*))
+                    ,(format ":t8!n=foo@bar PRIVMSG #ch :~a: t8 snord horde" (unbox *my-nick*))
+
                     ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" (unbox *my-nick*))
                     ,(format ":jordanb!n@n PRIVMSG #c :Let's say something memorable")
                     ,(format ":n!n@n PRIVMSG #emacs :,...")

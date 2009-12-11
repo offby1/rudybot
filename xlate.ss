@@ -13,7 +13,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (provide xlate main)
 (define (xlate text from to)
-  ;; TODO -- error checking, duh
   (hash-ref
    (hash-ref
     (call/input-url
