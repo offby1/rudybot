@@ -254,7 +254,7 @@
            [",t8"
             (match rest
               [(list from to text ...)
-               (reply (xlate (string-join text " ") from to))])]
+               (pm target (xlate (string-join text " ") from to))])]
            [_ #f])])]
 
       [(list "QUIT" (colon first-word) rest ...)
