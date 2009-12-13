@@ -195,7 +195,8 @@
        ;; If first-word is just whitespace, then skip it.  This
        ;; happens when someone types a line to their IRC client that
        ;; begins with whitespace.
-       (when (regexp-match #px"^\\s*$" first-word)
+       (when (and (not (null? rest))
+                  (regexp-match #px"^\\s*$" first-word))
          (set! first-word (car rest))
          (set! rest (cdr rest)))
 
