@@ -111,6 +111,7 @@
 (defmatcher IRC-COMMAND "PING"
   (out "PONG ~a" (car (*current-words*))))
 
+
 (defmatcher IRC-COMMAND (regexp #rx"^:((.*)!(.*)@(.*))$"
                                 (list _ full-id nick id host))
   (define (espy target action words)
@@ -185,6 +186,18 @@
              (system-type 'os)))]
 
       [(list "PRIVMSG" target (colon first-word) rest ...)
+       ;; Unspeakable hack -- "irc-process-line" is way too dumb, and
+       ;; merely hands us whitespace-delimited tokens; it should
+       ;; really have some knowledge of what IRC lines look like, and
+       ;; split the line into semantically-meaningful units.  But
+       ;; until I get of my ass and do that properly ...
+
+       ;; If first-word is just whitespace, then skip it.  This
+       ;; happens when someone types a line to their IRC client that
+       ;; begins with whitespace.
+       (when (regexp-match #px"^\\s*$" first-word)
+         (set! first-word (car rest))
+         (set! rest (cdr rest)))
 
        ;; fledermaus points out that people may be surprised
        ;; to find "private" messages -- those where "target"
@@ -204,40 +217,45 @@
                     "~a"
                     (make-tiny-url url)))]
              [_ #f])))
+
        (cond
-         [(regexp-match? #rx"bot$" nick)
-          (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
-               nick)]
-         [(equal? target (unbox *my-nick*))
-          (log "~a privately said ~a to me"
-               nick (string-join (cons first-word rest)))
-          (parameterize ([*full-id* full-id])
-            (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))]
-         [else
-          (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
-                     (regexp-match? #rx"^(?i:jordanb)" nick))
-            (log "KOMEDY GOLD: ~s" (cons first-word rest)))
-          (match first-word
-            ;; TODO -- use a regex that matches just those characters that
-            ;; are legal in nicknames, followed by _any_ non-white
-            ;; character -- that way people can use, say, a semicolon after
-            ;; our nick, rather than just the comma and colon I've
-            ;; hard-coded here.
-            [(regexp #px"^([[:alnum:]_-]+)[,:](.*)" (list _ addressee garbage))
-             (when (equal? addressee (unbox *my-nick*))
-               (let ((words (if (positive? (string-length garbage))
-                              (cons garbage rest)
-                              rest)))
-                 (when (not (null? words))
-                   (parameterize ([*full-id* full-id])
-                     (do-cmd target nick words #:rate_limit?
-                             (and #f
-                                  (not (regexp-match #rx"^offby1" nick))
-                                  (equal? target "#emacs" )))))))]
-            [",..."
-             (when (equal? target "#emacs")
-               (pm target "Woof."))]
-            [_ #f])])]
+        [(regexp-match? #rx"bot$" nick)
+         (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
+              nick)]
+        [(equal? target (unbox *my-nick*))
+         (log "~a privately said ~a to me"
+              nick (string-join (cons first-word rest)))
+         (parameterize ([*full-id* full-id])
+           (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))]
+        [else
+         (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
+                    (regexp-match? #rx"^(?i:jordanb)" nick))
+           (log "KOMEDY GOLD: ~s" (cons first-word rest)))
+         (match first-word
+           ;; TODO -- use a regex that matches just those characters that
+           ;; are legal in nicknames, followed by _any_ non-white
+           ;; character -- that way people can use, say, a semicolon after
+           ;; our nick, rather than just the comma and colon I've
+           ;; hard-coded here.
+           [(regexp #px"^([[:alnum:]_-]+)[,:](.*)" (list _ addressee garbage))
+            (when (equal? addressee (unbox *my-nick*))
+              (let ((words (if (positive? (string-length garbage))
+                               (cons garbage rest)
+                               rest)))
+                (when (not (null? words))
+                  (parameterize ([*full-id* full-id])
+                    (do-cmd target nick words #:rate_limit?
+                            (and #f
+                                 (not (regexp-match #rx"^offby1" nick))
+                                 (equal? target "#emacs" )))))))]
+           [",..."
+            (when (equal? target "#emacs")
+              (pm target "Woof."))]
+           [",t8"
+            (match rest
+              [(list from to text ...)
+               (reply (xlate (string-join text " ") from to))])]
+           [_ #f])])]
 
       [(list "QUIT" (colon first-word) rest ...)
        (espy host "quitting"
