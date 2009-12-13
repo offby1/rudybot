@@ -40,6 +40,7 @@ fi
                     (display "\r\n" op))
                   (if #f
                       `(
+                        ,(format ":t8!n=foo@bar PRIVMSG #ch :~a: t8 en it kits, cats, sacks, wives: how many were going to St Ives?" (unbox *my-nick*))
                         ":t8!n=foo@bar PRIVMSG #ch :,t8 en hu I will not buy this record, it is scratched"
                         ":t8!n=foo@bar PRIVMSG #ch : ,t8 en hu I will not buy this translation; it contains leading whitespace")
                       `(
