@@ -56,7 +56,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (take lst pos)))
 
 (define (spelled-out-time secs)
-  (let* ((result (safe-take (seconds->english secs) 2))
+  (let* ((result (safe-take (seconds->english secs) 1))
          (final (list (car result)))
          (final (if (and (< 1 (length result))
                          (zero? (cdr (second result))))
