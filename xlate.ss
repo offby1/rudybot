@@ -12,6 +12,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet schematics/schemeunit:3/text-ui))
 
 (provide xlate main)
+;; TODO -- the returned string sometimes has HTML entities in it:
+;; <offby1> ,t8 en fr fledermaus: have I rubbed this in your face yet?
+;; <rudybot> Fledermaus: j&#39;ai frotté dans votre visage encore inscrit?
 (define (xlate text from to)
   (hash-ref
    (hash-ref
