@@ -144,7 +144,7 @@
        (espy target
              (format "changing the channel's topic to '~a'"
                      (string-join (cons first-word rest))) '())]
-      [(list "JOIN" target)
+      [(list "JOIN" (colon target))
        ;; Alas, this pretty much never triggers, since duncanm keeps his client
        ;; session around for ever
        (when (regexp-match #rx"^duncanm" nick)
