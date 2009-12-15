@@ -12,8 +12,9 @@
          (and (not (equal? master ""))
               (regexp (string-append "^" master "$"))))))
 
+;; This should probably be a hash table, keyed by network name.
 (define *initial-channels* ; env var can be "#foo,#bar"
-  (make-parameter (from-env "BOTCHANNELS" '("#scheme" "#emacs" "##SICP") #rx",")))
+  (make-parameter (from-env "BOTCHANNELS" '("#scheme" "#emacs" "##SICP" "##cinema") #rx",")))
 (define *nickserv-password*
   (make-parameter (from-env "BOTPASSWD" #f)))
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
