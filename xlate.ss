@@ -19,8 +19,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (regexp-replace*
    #px"&#([0-9]+);"
    str
-   (lambda (match . subexpressions)
-     (string (integer->char (string->number (first subexpressions)))))))
+   (lambda (whole-match digits)
+     (string (integer->char (string->number digits))))))
 
 (define-test-suite replace-tests
   (check-equal?
