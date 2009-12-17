@@ -39,31 +39,45 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
    "frotz{why notA"
    (replace-html-entities "frotz&#123;why not&#65;")))
 
+(define (snag text from to)
+  (call/input-url
+   (make-url
+    "http" #f "ajax.googleapis.com" #f #t
+    (map (cut make-path/param <> '()) (list "ajax" "services" "language" "translate"))
+    `((v . "1.0")
+      (q . ,text)
+      (langpair . ,(format "~a|~a" from to))) #f)
+   get-pure-port
+   read-json))
+
 (define (xlate text from to)
-  (replace-html-entities
-   (hash-ref
-    (hash-ref
-     (call/input-url
-      (make-url
-       "http" #f "ajax.googleapis.com" #f #t
-       (map (cut make-path/param <> '()) (list "ajax" "services" "language" "translate"))
-       `((v . "1.0")
-         (q . ,text)
-         (langpair . ,(format "~a|~a" from to))) #f)
-      get-pure-port
-      read-json)
-     'responseData)
-    'translatedText)))
+  (let* ([stuff (snag text from to)]
+         [responseStatus (hash-ref stuff 'responseStatus)])
+    (if (equal? 200 responseStatus)
+        (replace-html-entities
+         (hash-ref
+          (hash-ref
+           stuff
+           'responseData)
+          'translatedText))
+        (hash-ref stuff 'responseDetails))))
 
 (define-test-suite xlate-tests
 
   (check-equal?
-   "quarantacinque emendamenti separati"
-   (xlate "forty-five separate amendments" "en" "it"))
+   (xlate "forty-five separate amendments" "en" "it")
+   "quarantacinque emendamenti separati")
 
   (check-equal?
-   "Fledermaus: j'ai frotté dans votre visage encore inscrit?"
-   (xlate "fledermaus: have I rubbed this in your face yet?" "en" "fr")))
+   (hash-ref
+    (snag "print \"hello, world\\n\"" "perl" "java")
+    'responseDetails)
+   "invalid translation language pair")
+
+  (check-equal?
+   (xlate "fledermaus: have I rubbed this in your face yet?" "en" "fr")
+   "Fledermaus: j'ai frotté dans votre visage encore inscrit?")
+  )
 
 (define-test-suite all-tests
   replace-tests
