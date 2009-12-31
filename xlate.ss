@@ -13,31 +13,93 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (provide xlate main)
 
-;; The returned string sometimes has HTML entities in it; this
-;; translates those to regular characters.
+;; The returned string sometimes has HTML entities in it; the
+;; functions on this page translate those to regular characters.
+
+;; From http://htmlhelp.com/reference/html40/entities/special.html
+(define entity-integers-by-name
+  #hash(
+        ("quot"   . 34)
+        ("amp"    . 38)
+        ("lt"     . 60)
+        ("gt"     . 62)
+        ("OElig"  . 338)
+        ("oelig"  . 339)
+        ("Scaron" . 352)
+        ("scaron" . 353)
+        ("Yuml"   . 376)
+        ("circ"   . 710)
+        ("tilde"  . 732)
+        ("ensp"   . 8194)
+        ("emsp"   . 8195)
+        ("thinsp" . 8201)
+        ("zwnj"   . 8204)
+        ("zwj"    . 8205)
+        ("lrm"    . 8206)
+        ("rlm"    . 8207)
+        ("ndash"  . 8211)
+        ("mdash"  . 8212)
+        ("lsquo"  . 8216)
+        ("rsquo"  . 8217)
+        ("sbquo"  . 8218)
+        ("ldquo"  . 8220)
+        ("rdquo"  . 8221)
+        ("bdquo"  . 8222)
+        ("dagger" . 8224)
+        ("Dagger" . 8225)
+        ("permil" . 8240)
+        ("lsaquo" . 8249)
+        ("rsaquo" . 8250)
+        ("euro"   . 8364)
+        ))
+
 (define (replace-html-entities str)
-  (regexp-replace*
-   #px"&#([0-9]+);"
-   str
-   (lambda (whole-match digits)
-     (string (integer->char (string->number digits))))))
+  (define (numeric str)
+    (regexp-replace*
+     #px"&#([0-9]+);"
+     str
+     (lambda (whole-match digits)
+       (string (integer->char (string->number digits))))))
+  (define (named str)
+    (regexp-replace*
+     #px"&([a-z]+);"
+     str
+     (lambda (whole-match word)
+       (let ([replacement (hash-ref entity-integers-by-name word #f)])
+         (if replacement
+             (format "&#~a;" replacement)
+             str)))))
+  (numeric (named str)))
 
 (define-test-suite replace-tests
   (check-equal?
-   ""
-   (replace-html-entities ""))
+   (replace-html-entities "")
+   "")
 
   (check-equal?
-   "frotz"
-   (replace-html-entities "frotz"))
+   (replace-html-entities "frotz")
+   "frotz")
 
   (check-equal?
-   "frotzM"
-   (replace-html-entities "frotz&#77;"))
+   (replace-html-entities "&frotz;")
+   "&frotz;")
 
   (check-equal?
-   "frotz{why notA"
-   (replace-html-entities "frotz&#123;why not&#65;")))
+   (replace-html-entities "&amp;")
+   "&")
+
+  (check-equal?
+   (replace-html-entities "&quot;plonk&quot;")
+   "\"plonk\"")
+
+  (check-equal?
+   (replace-html-entities "frotz&#77;")
+   "frotzM")
+
+  (check-equal?
+   (replace-html-entities "frotz&#123;why not&#65;")
+   "frotz{why notA"))
+
 
 (define (snag text from to)
   (call/input-url
