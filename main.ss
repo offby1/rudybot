@@ -38,8 +38,11 @@ fi
                   (lambda (line)
                     (display line op)
                     (display "\r\n" op))
-                  (if #f
+                  (if #t
                       `(
+                        ":t8!n=foo@bar PRIVMSG #ch :,t8"
+                        ":t8!n=foo@bar PRIVMSG #ch :,t8 fr"
+                        ":t8!n=foo@bar PRIVMSG #ch :,t8 fr de"
                         ,(format ":t8!n=foo@bar PRIVMSG #ch :~a: t8 en it kits, cats, sacks, wives: how many were going to St Ives?" (unbox *my-nick*))
                         ":t8!n=foo@bar PRIVMSG #ch :,t8 en hu I will not buy this record, it is scratched"
                         ":t8!n=foo@bar PRIVMSG #ch : ,t8 en hu I will not buy this translation; it contains leading whitespace")
