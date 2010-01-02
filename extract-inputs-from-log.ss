@@ -2,14 +2,47 @@
 
 (require  mzlib/etc)
 
-(define (pump ip op)
-  (for ([line (in-lines ip)])
-    (display line op)
-    (newline op))
-  (close-output-port op))
+(define (make-parsed-input-port ifn)
+  (let-values ([(ip op) (make-pipe)])
+    (let ([ch (make-channel)])
 
-(call-with-input-file
-      (build-path (this-expression-source-directory) "big-log")
-  (lambda (ip)
-    (pump ip (current-output-port))))
+      ;; Reads from input file, puts to channel
+      (thread
+       (lambda ()
+         (call-with-input-file
+             ifn
+           (lambda (unparsed-ip)
+             (for ([line (in-lines unparsed-ip)])
+
+               ;; TODO -- rather than putting "line" here, we put some
+               ;; modification of line.  Hence "parsing" :-)
+               (channel-put ch line)
+
+               )
+             (channel-put ch eof)))))
+
+      ;; gets from channel; writes to pipe
+      (thread
+       (lambda ()
+         (let loop ()
+           (let ([datum (channel-get ch)])
+             (if (eof-object? datum)
+                 (close-output-port op)
+                 (begin
+                   (display datum op)
+                   (newline op)
+                   (loop)))))))
+
+      ip)))
+
+(let ([ip (make-parsed-input-port
+           (build-path (this-expression-source-directory)
+                       "quotes.ss"
+                       ;; "big-log"
+                       ))])
+  (for ([line (in-lines ip)])
+    (display line)
+    (newline))
+  (close-input-port ip))
+
 
