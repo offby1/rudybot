@@ -18,7 +18,7 @@
 (define putter
   (thread
    (lambda ()
-     (let ([ip (open-input-file "big-log")])
+     (let ([ip (open-input-file "little-log")])
        (define (read-from-string s)
          (read (open-input-string s)))
        (consume-from-port
@@ -26,11 +26,12 @@
         read-line
         ((curry regexp-match) *leading-crap*)
         (lambda (line)
-          (channel-put *ch* (read-from-string (substring line *length-of-leading-crap*)))))))))
+          (channel-put *ch* (read-from-string (substring line *length-of-leading-crap*)))))
+       (channel-put *ch* eof)
+       ))))
 
-(let loop ()
+(let loop ([lines-processed 0])
   (let ([datum (channel-get *ch*)])
     (when (not (eof-object? datum))
-      (display datum)
-      (newline)
-      (loop))))
+      (printf "~a\t~a~%" lines-processed datum)
+      (loop (add1 lines-processed)))))
