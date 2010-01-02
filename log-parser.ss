@@ -36,18 +36,20 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
               (current-output-port)
               "~a~%" (sub1 lines))))))
       (port-count-lines! ip)
-      (call-with-output-file "parsed-log"
-        (lambda (op)
-          (pretty-print
-           (for/fold ([result '()])
-               ([line (in-lines ip)])
-               (note-progress!)
-             (cond
-              ((string->utterance line)
-               =>
-               (lambda (u) (cons u result)))
-              (else
-               result)))
-           op)
-          (newline op))
-        #:exists 'truncate))))
+      (let ((ofn "parsed-log"))
+        (call-with-output-file ofn
+          (lambda (op)
+            (pretty-print
+             (for/fold ([result '()])
+                 ([line (in-lines ip)])
+                 (note-progress!)
+               (cond
+                ((string->utterance line)
+                 =>
+                 (lambda (u) (cons u result)))
+                (else
+                 result)))
+             op)
+            (newline op))
+          #:exists 'truncate)
+        (fprintf (current-error-port) "Wrote parsed log to ~a~%" ofn)))))
