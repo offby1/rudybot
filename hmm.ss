@@ -2,9 +2,9 @@
 
 (require (only-in srfi/13 string-reverse))
 
-(define (consume-from-port ip port->bytes line-filter line-consumer)
+(define (consume-from-port ip port->string line-filter line-consumer)
   (let loop ()
-    (let ([datum (port->bytes ip)])
+    (let ([datum (port->string ip)])
       (when (not (eof-object? datum))
         (when (line-filter datum)
           (line-consumer datum))
