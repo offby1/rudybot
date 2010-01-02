@@ -12,6 +12,9 @@
 
 (define *ch* (make-channel))
 
+(define *leading-crap* #px"^........................ <= ")
+(define *length-of-leading-crap* 28)
+
 (define putter
   (thread
    (lambda ()
@@ -21,9 +24,9 @@
        (consume-from-port
         ip
         read-line
-        ((curry regexp-match) "<=")
+        ((curry regexp-match) *leading-crap*)
         (lambda (line)
-          (channel-put *ch* (read-from-string (substring line 28)))))))))
+          (channel-put *ch* (read-from-string (substring line *length-of-leading-crap*)))))))))
 
 (let loop ()
   (let ([datum (channel-get *ch*)])
