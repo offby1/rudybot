@@ -18,7 +18,7 @@
 (define putter
   (thread
    (lambda ()
-     (let ([ip (open-input-file "little-log")])
+     (let ([ip (open-input-file "big-log")])
        (define (read-from-string s)
          (read (open-input-string s)))
        (consume-from-port
@@ -32,6 +32,11 @@
 
 (let loop ([lines-processed 0])
   (let ([datum (channel-get *ch*)])
-    (when (not (eof-object? datum))
+    (when (and
+           (not (eof-object? datum))
+           (< lines-processed 10))
+
       (printf "~a\t~a~%" lines-processed datum)
       (loop (add1 lines-processed)))))
+
+(kill-thread putter)
