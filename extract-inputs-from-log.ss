@@ -1,8 +1,12 @@
 #lang scheme
 
-(require  mzlib/etc)
+(require mzlib/etc
+         (only-in srfi/13 string-reverse))
 
-(define (make-parsed-input-port ifn)
+;; Roughly like open-input-file: takes a file name, and returns an
+;; input port.  But the input port doesn't directly yield the bytes
+;; from the file; rather, they're massaged by line-mangler.
+(define (make-parsed-input-port ifn [line-mangler values])
   (let-values ([(ip op) (make-pipe)])
     (let ([ch (make-channel)])
 
@@ -13,13 +17,10 @@
              ifn
            (lambda (unparsed-ip)
              (for ([line (in-lines unparsed-ip)])
+               (channel-put ch (line-mangler line)))
 
-               ;; TODO -- rather than putting "line" here, we put some
-               ;; modification of line.  Hence "parsing" :-)
-               (channel-put ch line)
-
-               )
              (channel-put ch eof)))))
+
 
       ;; gets from channel; writes to pipe
       (thread
@@ -39,7 +40,8 @@
            (build-path (this-expression-source-directory)
                        "quotes.ss"
                        ;; "big-log"
-                       ))])
+                       )
+           string-reverse)])
   (for ([line (in-lines ip)])
     (display line)
     (newline))
