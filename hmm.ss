@@ -23,7 +23,8 @@
         ((curry regexp-match) "^b")
         (compose ((curry channel-put) *ch*) string-reverse))
 
-       (channel-put *ch* eof)))))
+       (channel-put *ch* eof)
+       (close-input-port ip)))))
 
 (let loop ()
   (let ([datum (channel-get *ch*)])
