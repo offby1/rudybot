@@ -2,19 +2,19 @@
 
 (require (only-in srfi/13 string-reverse))
 
-(define (do-stuff ip op port->bytes line-filter line-mangler)
+(define (do-stuff ip port->bytes line-filter line-mangler line-consumer)
   (let loop ()
     (let ([datum (port->bytes ip)])
-      (if (eof-object? datum)
-          (close-output-port op)
-          (begin
-            (when (line-filter datum)
-              (display (line-mangler datum) op)
-              (newline op))
-            (loop))))))
+      (when (not (eof-object? datum))
+        (when (line-filter datum)
+          (line-consumer (line-mangler datum)))
+        (loop)))))
 
 (let ([ip (open-input-string "foo\nbar\nbaz")]
       [op (open-output-string)])
 
-  (do-stuff ip op read-line ((curry regexp-match) "^b") string-reverse)
+  (do-stuff ip read-line ((curry regexp-match) "^b") string-reverse
+            (lambda (line) (display line op) (newline op)))
+
+  (close-output-port op)
   (get-output-string op))
