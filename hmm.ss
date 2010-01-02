@@ -2,7 +2,7 @@
 
 (require (only-in srfi/13 string-reverse))
 
-(define (do-stuff ip port->bytes line-filter line-consumer)
+(define (consume-from-port ip port->bytes line-filter line-consumer)
   (let loop ()
     (let ([datum (port->bytes ip)])
       (when (not (eof-object? datum))
@@ -10,16 +10,24 @@
           (line-consumer datum))
         (loop)))))
 
-(let ([ip (open-input-string "foo\nbar\nbaz")]
-      [op (open-output-string)])
+(define *ch* (make-channel))
 
-  (do-stuff
-   ip
-   read-line
-   ((curry regexp-match) "^b")
-   (lambda (line)
-     (display (string-reverse line) op)
-     (newline op)))
+(define putter
+  (thread
+   (lambda ()
+     (let ([ip (open-input-string "foo\nbar\nbaz")])
 
-  (close-output-port op)
-  (get-output-string op))
+       (consume-from-port
+        ip
+        read-line
+        ((curry regexp-match) "^b")
+        (compose ((curry channel-put) *ch*) string-reverse))
+
+       (channel-put *ch* eof)))))
+
+(let loop ()
+  (let ([datum (channel-get *ch*)])
+    (when (not (eof-object? datum))
+      (display datum)
+      (newline)
+      (loop))))
