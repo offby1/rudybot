@@ -1,6 +1,14 @@
+#! /bin/sh
+#| Hey Emacs, this is -*-scheme-*- code!
+exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
+|#
+
 #lang scheme
 
-(require (only-in srfi/13 string-reverse))
+(require (only-in srfi/13 string-reverse)
+         (only-in "irc-process-line.ss" irc-process-line)
+         (only-in "quotes.ss" start-dealer!)
+         "vars.ss")
 
 (define (consume-from-port ip port->string line-filter line-consumer)
   (let loop ()
@@ -30,13 +38,22 @@
        (channel-put *ch* eof)
        ))))
 
-(let loop ([lines-processed 0])
-  (let ([datum (channel-get *ch*)])
-    (when (and
-           (not (eof-object? datum))
-           (< lines-processed 10))
+(provide main)
+(define (main)
 
-      (printf "~a\t~a~%" lines-processed datum)
-      (loop (add1 lines-processed)))))
+  ;; Gotta set some parameters etc before invoking irc-process-line
+  (start-dealer!)
 
-(kill-thread putter)
+  (parameterize ([*logger* (lambda  args (printf "I'm logging ~s~%" args))]
+                 [*irc-output* (current-output-port)]
+                 [*connection-start-time* (current-seconds)])
+    (let loop ([lines-processed 0])
+      (let ([datum (channel-get *ch*)])
+        (when (and
+               (not (eof-object? datum))
+               (or #f (< lines-processed 10)))
+
+          (irc-process-line datum)
+          (loop (add1 lines-processed))))))
+
+  (kill-thread putter))
