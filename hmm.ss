@@ -15,16 +15,15 @@
 (define putter
   (thread
    (lambda ()
-     (let ([ip (open-input-string "foo\nbar\nbaz")])
-
+     (let ([ip (open-input-file "big-log")])
+       (define (read-from-string s)
+         (read (open-input-string s)))
        (consume-from-port
         ip
         read-line
-        ((curry regexp-match) "^b")
-        (compose ((curry channel-put) *ch*) string-reverse))
-
-       (channel-put *ch* eof)
-       (close-input-port ip)))))
+        ((curry regexp-match) "<=")
+        (lambda (line)
+          (channel-put *ch* (read-from-string (substring line 28)))))))))
 
 (let loop ()
   (let ([datum (channel-get *ch*)])
