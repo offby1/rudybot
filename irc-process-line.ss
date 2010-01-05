@@ -190,7 +190,7 @@
        ;; merely hands us whitespace-delimited tokens; it should
        ;; really have some knowledge of what IRC lines look like, and
        ;; split the line into semantically-meaningful units.  But
-       ;; until I get of my ass and do that properly ...
+       ;; until I get off my ass and do that properly ...
 
        ;; If first-word is just whitespace, then skip it.  This
        ;; happens when someone types a line to their IRC client that
