@@ -25,13 +25,30 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (provide main)
 (define (main)
 
-  (let/ec break
-    (for ([line (in-lines *pipe-ip*)]
-          [lines-processed (in-naturals)])
+  (let ([servers-seen (make-hash)]
+        [verbs-seen (make-hash)])
+    (let/ec break
+      (for ([line (in-lines *pipe-ip*)]
+            [lines-processed (in-naturals)])
 
-      (when (> lines-processed 10)
-        (break))
+        (when (> lines-processed 100)
+          (break))
 
-      (printf "Pretend I'm processing ~s~%" line)))
+        (cond
+         ((and (positive? (string-length line))
+               (equal? #\: (string-ref line 0)))
+          (let ([line (substring line 1)])
+            (match line
+              [(pregexp #px"^(.+?) " (list _ servername))
+               (dict-update! servers-seen servername add1 1)
+               ])))
+         (else
+          (match line
+            [(pregexp #px"^(.+?) " (list _ verb))
+             (dict-update! verbs-seen verb add1 1)
+             ])
+          ))))
+    (printf "Servers seen: ~a~%" servers-seen)
+    (printf "Verbs seen: ~a~%" verbs-seen))
 
   (kill-thread putter))
