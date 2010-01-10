@@ -30,7 +30,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (make-immutable-hash
      (map
       (lambda (name) (cons name (make-hash)))
-      '(servers numeric-verbs lone-verbs numeric-texts speakers verbs))))
+      '(servers numeric-verbs lone-verbs speakers verbs))))
 
   (define (inc! dict-name key) (dict-update! (hash-ref tables dict-name) key add1 1))
 
@@ -48,15 +48,10 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
            (equal? #\: (string-ref line 0)))
       (let ([line (substring line 1)])
         (match line
-          [(pregexp #px"^(\\S+) ([0-9]{3}) (\\S+) [^:]" (list _ servername number-string target))
+          ;; ":lindbohm.freenode.net 002 rudybot :Your host is lindbohm.freenode.net ..."
+          [(pregexp #px"^(\\S+) ([0-9]{3}) (\\S+) .*$" (list _ servername number-string target))
            (inc! 'servers servername)
            (inc! 'numeric-verbs number-string)]
-          ;; ":lindbohm.freenode.net 002 rudybot :Your host is lindbohm.freenode.net ..."
-          [(pregexp #px"^(\\S+) ([0-9]{3}) (\\S+) :(.*)$" (list _ servername number-string target text))
-           (inc! 'servers servername)
-           (inc! 'numeric-verbs number-string)
-           (inc! 'numeric-texts text)
-           ]
 
           ;; "alephnull!n=alok@122.172.25.154 PRIVMSG #emacs :subhadeep: ,,doctor"
           [(pregexp #px"^(\\S+) (\\S+) (\\S+) :(.*)$" (list _ speaker verb target text))
