@@ -48,6 +48,9 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
            (equal? #\: (string-ref line 0)))
       (let ([line (substring line 1)])
         (match line
+          [(pregexp #px"^(\\S+) ([0-9]{3}) (\\S+) [^:]" (list _ servername number-string target))
+           (inc! 'servers servername)
+           (inc! 'numeric-verbs number-string)]
           ;; ":lindbohm.freenode.net 002 rudybot :Your host is lindbohm.freenode.net ..."
           [(pregexp #px"^(\\S+) ([0-9]{3}) (\\S+) :(.*)$" (list _ servername number-string target text))
            (inc! 'servers servername)
@@ -55,13 +58,24 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
            (inc! 'numeric-texts text)
            ]
 
-          ;; ":alephnull!n=alok@122.172.25.154 PRIVMSG #emacs :subhadeep: ,,doctor"
+          ;; "alephnull!n=alok@122.172.25.154 PRIVMSG #emacs :subhadeep: ,,doctor"
           [(pregexp #px"^(\\S+) (\\S+) (\\S+) :(.*)$" (list _ speaker verb target text))
            (inc! 'speakers speaker)
            (inc! 'verbs verb)
            ]
-          [_
-           (set! oddballs (cons line oddballs))])))
+          ;; "rudybot!n=luser@q-static-138-125.avvanta.com JOIN :#scheme"
+          [
+           (pregexp #px"^(\\S+) (\\S+) :(.*)$" (list _ speaker verb text))
+           (inc! 'speakers speaker)
+           (inc! 'verbs verb)
+           ]
+
+          ;; "ChanServ!ChanServ@services. MODE #scheme +o arcfide "
+          [
+           (pregexp #px"^(\\S+) ((\\S+) )+" (list _ speaker words ...))
+           (inc! 'speakers speaker)
+           ]
+          )))
      (else
       ;; non-colon lines -- pretty much just NOTICE and PING
       (match line
@@ -73,5 +87,8 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (for ([k (in-hash-keys tables)])
     (printf "~a seen: " k)
     (hprint k))
+
+  (printf "Oddballs: ")
+  (pretty-print oddballs)
 
   (kill-thread putter))
