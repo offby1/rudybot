@@ -22,6 +22,10 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (newline *pipe-op*))
        (close-output-port *pipe-op*)))))
 
+(define (keys dict)
+  (sort (dict-map dict (lambda (k v) k))
+        string<? #:key symbol->string))
+
 (provide main)
 (define (main)
 
@@ -29,7 +33,16 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (make-immutable-hash
      (map
       (lambda (name) (cons name (make-hash)))
-      '(lone-verbs numeric-verbs servers speakers targets verbs))))
+      '(
+        lone-verbs
+        numeric-verbs
+        oddball-speakers
+        servers
+        speaker-nicks
+        speaker-hosts
+        targets
+        verbs
+        ))))
 
   (define (inc! dict-name key) (dict-update! (hash-ref *tables* dict-name) key add1 1))
 
@@ -54,7 +67,12 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
           ;; "alephnull!n=alok@122.172.25.154 PRIVMSG #emacs :subhadeep: ,,doctor"
           [(pregexp #px"^(\\S+) (\\S+) (\\S+){0,1} :(.*)$" (list _ speaker verb target text))
-           (inc! 'speakers speaker)
+           (match speaker
+             [(pregexp #px"^(.*)!(.*)@(.*)" (list _ nick attrs host))
+              (inc! 'speaker-nicks nick)
+              (inc! 'speaker-hosts host)]
+             [_ (inc! 'oddball-speakers speaker)])
+
            (inc! 'verbs verb)
            (inc! 'targets target)
            ]
@@ -62,7 +80,11 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
           ;; "ChanServ!ChanServ@services. MODE #scheme +o arcfide "
           [
            (pregexp #px"^(\\S+) ((\\S+) )+" (list _ speaker words ...))
-           (inc! 'speakers speaker)
+           (match speaker
+             [(pregexp #px"^(.*)!(.*)@(.*)" (list _ nick attrs host))
+              (inc! 'speaker-nicks nick)
+              (inc! 'speaker-hosts host)]
+             [_ (inc! 'oddball-speakers speaker)])
            ]
           )))
      (else
@@ -73,7 +95,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          ])
       )))
 
-  (for ([k (in-hash-keys *tables*)])
+  (for ([k (in-list (keys *tables*))])
     (printf "~a seen: " k)
     (hprint k))
 
