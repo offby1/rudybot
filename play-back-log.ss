@@ -25,12 +25,11 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (provide main)
 (define (main)
 
-  (define oddballs '())
   (define *tables*
     (make-immutable-hash
      (map
       (lambda (name) (cons name (make-hash)))
-      '(servers numeric-verbs lone-verbs speakers verbs targets))))
+      '(lone-verbs numeric-verbs servers speakers targets verbs))))
 
   (define (inc! dict-name key) (dict-update! (hash-ref *tables* dict-name) key add1 1))
 
@@ -77,8 +76,5 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (for ([k (in-hash-keys *tables*)])
     (printf "~a seen: " k)
     (hprint k))
-
-  (printf "Oddballs: ")
-  (pretty-print oddballs)
 
   (kill-thread putter))
