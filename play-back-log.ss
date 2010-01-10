@@ -46,6 +46,13 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
   (define (inc! dict-name key) (dict-update! (hash-ref *tables* dict-name) key add1 1))
 
+  (define (note-speaker! s)
+    (match s
+      [(pregexp #px"^(.*)!(.*)@(.*)" (list _ nick attrs host))
+       (inc! 'speaker-nicks nick)
+       (inc! 'speaker-hosts host)]
+      [_ (inc! 'oddball-speakers s)]))
+
   (define (hprint d)
     (pretty-print
      (sort #:key cdr
@@ -67,12 +74,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
           ;; "alephnull!n=alok@122.172.25.154 PRIVMSG #emacs :subhadeep: ,,doctor"
           [(pregexp #px"^(\\S+) (\\S+) (\\S+){0,1} :(.*)$" (list _ speaker verb target text))
-           (match speaker
-             [(pregexp #px"^(.*)!(.*)@(.*)" (list _ nick attrs host))
-              (inc! 'speaker-nicks nick)
-              (inc! 'speaker-hosts host)]
-             [_ (inc! 'oddball-speakers speaker)])
-
+           (note-speaker! speaker)
            (inc! 'verbs verb)
            (inc! 'targets target)
            ]
@@ -80,11 +82,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
           ;; "ChanServ!ChanServ@services. MODE #scheme +o arcfide "
           [
            (pregexp #px"^(\\S+) ((\\S+) )+" (list _ speaker words ...))
-           (match speaker
-             [(pregexp #px"^(.*)!(.*)@(.*)" (list _ nick attrs host))
-              (inc! 'speaker-nicks nick)
-              (inc! 'speaker-hosts host)]
-             [_ (inc! 'oddball-speakers speaker)])
+           (note-speaker! speaker)
            ]
           )))
      (else
