@@ -10,13 +10,10 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (only-in "quotes.ss" start-dealer!)
          "vars.ss")
 
-(define (consume-from-port ip port->string line-filter line-consumer)
-  (let loop ()
-    (let ([datum (port->string ip)])
-      (when (not (eof-object? datum))
-        (when (line-filter datum)
-          (line-consumer datum))
-        (loop)))))
+(define (consume-lines sequence line-filter line-consumer)
+  (for ([line sequence]
+        #:when (line-filter line))
+    (line-consumer line)))
 
 (define *ch* (make-channel))
 
@@ -29,9 +26,8 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      (let ([ip (open-input-file "big-log")])
        (define (read-from-string s)
          (read (open-input-string s)))
-       (consume-from-port
-        ip
-        read-line
+       (consume-lines
+        (in-lines ip)
         ((curry regexp-match) *leading-crap*)
         (lambda (line)
           (channel-put *ch* (read-from-string (substring line *length-of-leading-crap*)))))
