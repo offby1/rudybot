@@ -41,10 +41,11 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
         speaker-nicks
         speaker-hosts
         targets
+        texts
         verbs
         ))))
 
-  (define (inc! dict-name key) (dict-update! (hash-ref *tables* dict-name) key add1 1))
+  (define (inc! dict-name key) (dict-update! (hash-ref *tables* dict-name) key add1 0))
 
   (define (note-speaker! s)
     (match s
@@ -77,7 +78,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
            (note-speaker! speaker)
            (inc! 'verbs verb)
            (inc! 'targets target)
-           ]
+           (inc! 'texts text)]
 
           ;; "ChanServ!ChanServ@services. MODE #scheme +o arcfide "
           [
@@ -90,8 +91,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
       (match line
         [(pregexp #px"^(.+?) " (list _ verb))
          (inc! 'lone-verbs verb)
-         ])
-      )))
+         ]))))
 
   (for ([k (in-list (keys *tables*))])
     (printf "~a seen: " k)
