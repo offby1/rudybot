@@ -38,10 +38,13 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
              (equal? #\: (string-ref line 0)))
         (let ([line (substring line 1)])
           (match line
-            [(pregexp #px"^([^ ]+) ([0-9]{3})" (list _ servername number-string))
+            ;; ":lindbohm.freenode.net 002 rudybot :Your host is lindbohm.freenode.net ..."
+            [(pregexp #px"^(\\S+) ([0-9]{3})" (list _ servername number-string))
              (inc! servers servername)
              (inc! numeric-verbs number-string)
              ]
+
+            ;; ":alephnull!n=alok@122.172.25.154 PRIVMSG #emacs :subhadeep: ,,doctor"
             [(pregexp #px"^(.+?) " (list _ speaker))
              (inc! speakers speaker)
              ])))
