@@ -27,9 +27,18 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
   (let ([servers (make-hash)]
         [numeric-verbs (make-hash)]
+        [lone-verbs (make-hash)]
+        [numeric-texts (make-hash)]
+        [speakers (make-hash)]
         [verbs (make-hash)]
-        [speakers (make-hash)])
+        [oddballs '()])
     (define (inc! dict key) (dict-update! dict key add1 1))
+    (define (hprint d)
+      (pretty-print
+       (sort #:key cdr
+             (hash-map d cons)
+             <)))
+
     (for ([line (in-lines *pipe-ip*)]
           [lines-processed (in-naturals)])
 
@@ -39,33 +48,38 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
         (let ([line (substring line 1)])
           (match line
             ;; ":lindbohm.freenode.net 002 rudybot :Your host is lindbohm.freenode.net ..."
-            [(pregexp #px"^(\\S+) ([0-9]{3})" (list _ servername number-string))
+            [(pregexp #px"^(\\S+) ([0-9]{3}) (\\S+) :(.*)$" (list _ servername number-string target text))
              (inc! servers servername)
              (inc! numeric-verbs number-string)
+             (inc! numeric-texts text)
              ]
 
             ;; ":alephnull!n=alok@122.172.25.154 PRIVMSG #emacs :subhadeep: ,,doctor"
-            [(pregexp #px"^(.+?) " (list _ speaker))
+            [(pregexp #px"^(\\S+) (\\S+) (\\S+) :(.*)$" (list _ speaker verb target text))
              (inc! speakers speaker)
-             ])))
+             (inc! verbs verb)
+             ]
+            [_
+             (set! oddballs (cons line oddballs))])))
        (else
         ;; non-colon lines -- pretty much just NOTICE and PING
         (match line
           [(pregexp #px"^(.+?) " (list _ verb))
-           (inc! verbs verb)
+           (inc! lone-verbs verb)
            ])
         )))
 
     (printf "Servers seen: " )
-    (pretty-print servers)
-    (printf "Verbs seen: " )
-    (pretty-print verbs)
+    (hprint servers)
+    (printf "Lone verbs seen: " )
+    (hprint lone-verbs)
     (printf "Numeric verbs seen: ")
-    (pretty-print numeric-verbs)
+    (hprint numeric-verbs)
     (printf "Speakers seen: ")
-    (pretty-print
-     (sort #:key cdr
-           (hash-map speakers cons)
-           <)))
+    (hprint speakers)
+    (printf "Texts of numeric messages: ")
+    (hprint numeric-texts)
+    (printf "Verbs seen: ")
+    (hprint verbs))
 
   (kill-thread putter))
