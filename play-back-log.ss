@@ -26,18 +26,18 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (define (main)
 
   (define oddballs '())
-  (define tables
+  (define *tables*
     (make-immutable-hash
      (map
       (lambda (name) (cons name (make-hash)))
-      '(servers numeric-verbs lone-verbs speakers verbs))))
+      '(servers numeric-verbs lone-verbs speakers verbs targets))))
 
-  (define (inc! dict-name key) (dict-update! (hash-ref tables dict-name) key add1 1))
+  (define (inc! dict-name key) (dict-update! (hash-ref *tables* dict-name) key add1 1))
 
   (define (hprint d)
     (pretty-print
      (sort #:key cdr
-           (hash-map (hash-ref tables d) cons)
+           (hash-map (hash-ref *tables* d) cons)
            <)))
 
   (for ([line (in-lines *pipe-ip*)]
@@ -54,15 +54,10 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
            (inc! 'numeric-verbs number-string)]
 
           ;; "alephnull!n=alok@122.172.25.154 PRIVMSG #emacs :subhadeep: ,,doctor"
-          [(pregexp #px"^(\\S+) (\\S+) (\\S+) :(.*)$" (list _ speaker verb target text))
+          [(pregexp #px"^(\\S+) (\\S+) (\\S+){0,1} :(.*)$" (list _ speaker verb target text))
            (inc! 'speakers speaker)
            (inc! 'verbs verb)
-           ]
-          ;; "rudybot!n=luser@q-static-138-125.avvanta.com JOIN :#scheme"
-          [
-           (pregexp #px"^(\\S+) (\\S+) :(.*)$" (list _ speaker verb text))
-           (inc! 'speakers speaker)
-           (inc! 'verbs verb)
+           (inc! 'targets target)
            ]
 
           ;; "ChanServ!ChanServ@services. MODE #scheme +o arcfide "
@@ -79,7 +74,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          ])
       )))
 
-  (for ([k (in-hash-keys tables)])
+  (for ([k (in-hash-keys *tables*)])
     (printf "~a seen: " k)
     (hprint k))
 
