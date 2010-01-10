@@ -25,30 +25,41 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (provide main)
 (define (main)
 
-  (let ([servers-seen (make-hash)]
-        [verbs-seen (make-hash)])
-    (let/ec break
-      (for ([line (in-lines *pipe-ip*)]
-            [lines-processed (in-naturals)])
+  (let ([servers (make-hash)]
+        [numeric-verbs (make-hash)]
+        [verbs (make-hash)]
+        [speakers (make-hash)])
+    (define (inc! dict key) (dict-update! dict key add1 1))
+    (for ([line (in-lines *pipe-ip*)]
+          [lines-processed (in-naturals)])
 
-        (when (> lines-processed 100)
-          (break))
-
-        (cond
-         ((and (positive? (string-length line))
-               (equal? #\: (string-ref line 0)))
-          (let ([line (substring line 1)])
-            (match line
-              [(pregexp #px"^(.+?) " (list _ servername))
-               (dict-update! servers-seen servername add1 1)
-               ])))
-         (else
+      (cond
+       ((and (positive? (string-length line))
+             (equal? #\: (string-ref line 0)))
+        (let ([line (substring line 1)])
           (match line
-            [(pregexp #px"^(.+?) " (list _ verb))
-             (dict-update! verbs-seen verb add1 1)
-             ])
-          ))))
-    (printf "Servers seen: ~a~%" servers-seen)
-    (printf "Verbs seen: ~a~%" verbs-seen))
+            [(pregexp #px"^([^ ]+) ([0-9]{3})" (list _ servername number-string))
+             (inc! servers servername)
+             (inc! numeric-verbs (string->number number-string))
+             ]
+            [(pregexp #px"^(.+?) " (list _ speaker))
+             (inc! speakers speaker)
+             ])))
+       (else
+        ;; non-colon lines -- pretty much just NOTICE and PING
+        (match line
+          [(pregexp #px"^(.+?) " (list _ verb))
+           (inc! verbs verb)
+           ])
+        )))
+
+    (printf "Servers seen: " )
+    (pretty-print servers)
+    (printf "Verbs seen: " )
+    (pretty-print verbs)
+    (printf "Numeric verbs seen: ")
+    (pretty-print numeric-verbs)
+    (printf "Speakers seen: ")
+    (pretty-print speakers))
 
   (kill-thread putter))
