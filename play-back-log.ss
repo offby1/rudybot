@@ -40,7 +40,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
           (match line
             [(pregexp #px"^([^ ]+) ([0-9]{3})" (list _ servername number-string))
              (inc! servers servername)
-             (inc! numeric-verbs (string->number number-string))
+             (inc! numeric-verbs number-string)
              ]
             [(pregexp #px"^(.+?) " (list _ speaker))
              (inc! speakers speaker)
@@ -60,6 +60,9 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     (printf "Numeric verbs seen: ")
     (pretty-print numeric-verbs)
     (printf "Speakers seen: ")
-    (pretty-print speakers))
+    (pretty-print
+     (sort #:key cdr
+           (hash-map speakers cons)
+           <)))
 
   (kill-thread putter))
