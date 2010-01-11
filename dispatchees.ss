@@ -5,7 +5,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme
-(require  (except-in (planet offby1/offby1/zdate) main))
+(require
+ (except-in (planet offby1/offby1/zdate) main)
+ "side-effects.ss")
 
 (define (do-328 channel URL)
   (printf "Channel ~a; URL ~a~%"
@@ -21,5 +23,11 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define (do-353 channel users)
   (printf "Channel ~a; users ~a~%" channel users))
+
+(define (do-usual-stuff speaker verb target text)
+  (note-speaker! speaker)
+  (inc! 'verbs verb)
+  (inc! 'targets target)
+  (inc! 'texts text))
 
 (provide (all-defined-out))

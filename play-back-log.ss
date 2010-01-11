@@ -5,7 +5,9 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 #lang scheme
 
-(require "dispatchees.ss")
+(require
+ "dispatchees.ss"
+ "side-effects.ss")
 
 (define-values (*pipe-ip* *pipe-op*) (make-pipe))
 
@@ -24,36 +26,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (newline *pipe-op*))
        (close-output-port *pipe-op*)))))
 
-;; a bunch of hash tables in which we'll keep track of interesting
-;; stuff we've parsed
-(define *tables*
-  (make-immutable-hash
-   (map
-    (lambda (name) (cons name (make-hash)))
-    '(
-      lone-verbs
-      notices
-      numeric-verbs
-      oddball-speakers
-      randomness
-      servers
-      speaker-nicks
-      speaker-hosts
-      targets
-      texts
-      verbs
-      ))))
-
 (define (do-one-line line)
-  (define (inc! dict-name key) (dict-update! (hash-ref *tables* dict-name) key add1 0))
-
-  (define (note-speaker! s)
-    (match s
-      [(pregexp #px"^(.*)!(.*)@(.*)" (list _ nick attrs host))
-       (inc! 'speaker-nicks nick)
-       (inc! 'speaker-hosts host)]
-      [_ (inc! 'oddball-speakers s)]))
-
   (cond
    ((and (positive? (string-length line))
          (equal? #\: (string-ref line 0)))
@@ -98,10 +71,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
         ;; "alephnull!n=alok@122.172.25.154 PRIVMSG #emacs :subhadeep: ,,doctor"
         [(pregexp #px"^(\\S+) (\\S+) (\\S+){0,1} :(.*)$" (list _ speaker verb target text))
-         (note-speaker! speaker)
-         (inc! 'verbs verb)
-         (inc! 'targets target)
-         (inc! 'texts text)]
+         (do-usual-stuff speaker verb target text)]
 
         ;; "ChanServ!ChanServ@services. MODE #scheme +o arcfide "
         [
