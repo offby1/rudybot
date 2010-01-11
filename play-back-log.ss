@@ -6,7 +6,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 #lang scheme
 
 (require
- "dispatchees.ss"
+ (except-in "dispatchees.ss" main)
  "side-effects.ss")
 
 (define-values (*pipe-ip* *pipe-op*) (make-pipe))
@@ -59,7 +59,11 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
            ((|353|)
             (match random-crap
               [(pregexp #px"= (\\S+) :(.*)$" (list _ channel users))
-               (do-353 channel  (regexp-split " " users))]))
+               (do-353 channel  (regexp-split " " users))]
+              [(pregexp #px"@ (.*)$" (list _ stuff))
+               ;; dunno what this is, but it doesn't come up often
+               #f
+               ]))
 
            ((|372|)
             ;; message of the day blather
@@ -89,7 +93,15 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (provide main)
 (define (main)
   (for ([line (in-lines *pipe-ip*)])
-    (do-one-line line))
+    (with-handlers
+        ([values
+          (lambda (e)
+            (fprintf
+             (current-error-port)
+             "~s~%" line)
+            (raise e))])
+
+    (do-one-line line)))
 
   (pretty-print-tables)
 

@@ -6,6 +6,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 (require
+ mzlib/trace
  (planet schematics/schemeunit:3)
  (planet schematics/schemeunit:3/text-ui)
  (except-in (planet offby1/offby1/zdate) main)
@@ -48,21 +49,43 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (provide main)
 
 (define (do-328 channel URL)
-  (printf "Channel ~a; URL ~a~%"
-          channel URL))
+  (inc! '|328s| (list channel URL)))
 
 (define (do-332 channel topic)
-  (printf "Channel ~a; topic ~a~%"
-          channel topic))
+  (inc! '|332s| (list channel topic) ))
 
 (define (do-333 channel creator topic-set-time)
-  (printf "Channel ~a; topic set by ~a at ~a~%"
-                       channel creator (zdate (string->number topic-set-time))))
+  (inc! '|333s| (list channel creator (zdate (string->number topic-set-time)))))
 
 (define (do-353 channel users)
-  (printf "Channel ~a; users ~a~%" channel users))
+  (inc! '|353s| (list channel users)))
 
 (define *my-nick* (make-parameter "rudybot"))
+
+(define (do-a-direct-order speaker channel text)
+  (define for-whom (if channel (format "in channel ~a" channel) "privately"))
+  (define (do-eval text)
+    (inc! 'evals (list text speaker for-whom)))
+
+  (match text
+    [(pregexp #px"\1VERSION\1")
+     (inc! 'versions (list speaker for-whom))]
+    [(pregexp #px"^ *(\\S+)(?= +(.*))?" (list _ command command-args))
+     (let ([command (string->symbol (string-downcase command))])
+       (case  command
+         ((uptime)
+          (inc! 'uptimes (list speaker for-whom)))
+         ((eval)
+          (do-eval command-args))
+         (else
+          (if (just-one-sexp text)
+              (do-eval text)
+              (inc! 'unknown-commands command))
+          )))]
+    [_
+     ;; empty string, presumably
+     (printf "Weird direct order: ~s~%" text)
+     ]))
 
 (define (do-usual-stuff speaker verb target text)
   (note-speaker! speaker)
@@ -70,16 +93,19 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     ((PRIVMSG)
      (inc! 'verbs verb)
      (if (string=? target (*my-nick*))
-         (printf "~s said ~s to me~%" speaker text)
+         (do-a-direct-order speaker #f text)
          (match text
            [(pregexp #px"^\\s*(\\S+)[:,] (.*)$" (list _ ostensible-target text))
-            (printf "~s said ~s to ~a in channel ~a~%" speaker text ostensible-target target)
+            (if (string=? ostensible-target (*my-nick*))
+                (do-a-direct-order speaker target text)
+                (and #f (printf "~s said ~s to ~a in channel ~a~%" speaker text ostensible-target target))
+                )
 
             (inc! 'targets ostensible-target)
             (inc! 'texts text)]
 
           [_
-           (printf "~s said ~s to channel ~a~%" speaker text target)
+           (and #f (printf "~s said ~s to channel ~a~%" speaker text target))
 
            (inc! 'targets target)
            (inc! 'texts text)])))))

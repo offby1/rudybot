@@ -12,6 +12,11 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
    (map
     (lambda (name) (cons name (make-hash)))
     '(
+      |328s|
+      |332s|
+      |333s|
+      |353s|
+      evals
       lone-verbs
       notices
       numeric-verbs
@@ -22,7 +27,10 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
       speaker-hosts
       targets
       texts
+      unknown-commands
+      uptimes
       verbs
+      versions
       ))))
 
 (provide inc!)
@@ -43,8 +51,9 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
           string<? #:key symbol->string))
 
   (for ([k (in-list (keys *tables*))])
-    (printf "~a: " k)
-    (pretty-print
-     (sort #:key cdr
-           (hash-map (hash-ref *tables* k) cons)
-           <))))
+    (when (not (eq? 'texts k))
+      (printf "~a: " k)
+      (pretty-print
+       (sort #:key cdr
+             (hash-map (hash-ref *tables* k) cons)
+             <)))))
