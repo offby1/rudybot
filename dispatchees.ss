@@ -9,36 +9,37 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
  mzlib/trace
  (planet schematics/schemeunit:3)
  (planet schematics/schemeunit:3/text-ui)
+ (only-in (planet schematics/macro:1:2/macro) aif)
  (except-in (planet offby1/offby1/zdate) main)
  "side-effects.ss")
 
-;; #t if and only if reading STR yields exactly one s-expression, and
-;; no errors.
+;; #f unless reading STR yields exactly one s-expression, and no
+;; errors; the s-expression (in a box) otherwise.
 (define just-one-sexp
   (match-lambda
    [(? string? str)
     (just-one-sexp (open-input-string str))]
    [(? input-port? ip)
-    (let loop ([sexps '()])
+    (let loop ([sexp #f])
       (with-handlers
           ([exn:fail:read? (lambda (e) #f)])
         (let ([datum (read ip)])
           (cond
 
            ((eof-object? datum)
-            (= 1 (length sexps)))
+            sexp)
 
-           ((not (null? sexps)) #f)
+           ((box? sexp) #f)
 
            (else
-            (loop (cons datum sexps)))))))]))
+            (loop (box datum)))))))]))
 
 (define-test-suite just-one-sexp-tests
 
   (check-false (just-one-sexp "")              "empty string")
-  (check-true  (just-one-sexp "frotz")         "single atom")
+  (check-not-false  (just-one-sexp "frotz")         "single atom")
   (check-false (just-one-sexp " frotz plotz")  "two atoms")
-  (check-true  (just-one-sexp " (frotz) ")     "single list")
+  (check-not-false  (just-one-sexp " (frotz) ")     "single list")
   (check-false (just-one-sexp " (frotz plotz) (") "trailing open")
   (check-false (just-one-sexp " (frotz plotz) )") "trailing close")
   (check-false (just-one-sexp " (frotz plotz) '") "trailing quote")
@@ -78,10 +79,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          ((eval)
           (do-eval command-args))
          (else
-          (if (just-one-sexp text)
-              (do-eval text)
-              (inc! 'unknown-commands command))
-          )))]
+          (aif it (just-one-sexp text)
+               (do-eval (unbox it))
+               (inc! 'unknown-commands command)))))]
     [_
      ;; empty string, presumably
      (printf "Weird direct order: ~s~%" text)
