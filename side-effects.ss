@@ -25,8 +25,10 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
       verbs
       ))))
 
+(provide inc!)
 (define (inc! dict-name key) (dict-update! (hash-ref *tables* dict-name) key add1 0))
 
+(provide note-speaker!)
 (define (note-speaker! s)
   (match s
     [(pregexp #px"^(.*)!(.*)@(.*)" (list _ nick attrs host))
@@ -34,4 +36,15 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      (inc! 'speaker-hosts host)]
     [_ (inc! 'oddball-speakers s)]))
 
-(provide (all-defined-out))
+(provide pretty-print-tables)
+(define (pretty-print-tables)
+  (define (keys dict)
+    (sort (dict-map dict (lambda (k v) k))
+          string<? #:key symbol->string))
+
+  (for ([k (in-list (keys *tables*))])
+    (printf "~a: " k)
+    (pretty-print
+     (sort #:key cdr
+           (hash-map (hash-ref *tables* k) cons)
+           <))))

@@ -93,16 +93,6 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (for ([line (in-lines *pipe-ip*)])
     (do-one-line line))
 
-  (let ()
-    (define (keys dict)
-      (sort (dict-map dict (lambda (k v) k))
-            string<? #:key symbol->string))
-
-    (for ([k (in-list (keys *tables*))])
-      (printf "~a: " k)
-      (pretty-print
-       (sort #:key cdr
-             (hash-map (hash-ref *tables* k) cons)
-             <))))
+  (pretty-print-tables)
 
   (kill-thread putter))
