@@ -6,6 +6,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 (require
+ (planet schematics/schemeunit:3)
+ (planet schematics/schemeunit:3/text-ui)
  (except-in (planet offby1/offby1/zdate) main)
  "side-effects.ss")
 
@@ -18,26 +20,33 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
    [(? input-port? ip)
     (let loop ([sexps '()])
       (with-handlers
-          ([values
-            (lambda (e)
-              (printf "exception ~s; returning #f~%" (exn-message e))
-              #f)])
+          ([exn:fail:read? (lambda (e) #f)])
         (let ([datum (read ip)])
           (cond
 
            ((eof-object? datum)
-            (printf "empty input; depends on what we've already read~%")
             (= 1 (length sexps)))
 
-           ((not (null? sexps))
-            (printf "Already read one sexp (~s), just got another (~s); returning #f"
-                    (car sexps)
-                    datum)
-            #f)
+           ((not (null? sexps)) #f)
 
            (else
             (loop (cons datum sexps)))))))]))
 
+(define-test-suite just-one-sexp-tests
+
+  (check-false (just-one-sexp "")              "empty string")
+  (check-true  (just-one-sexp "frotz")         "single atom")
+  (check-false (just-one-sexp " frotz plotz")  "two atoms")
+  (check-true  (just-one-sexp " (frotz) ")     "single list")
+  (check-false (just-one-sexp " (frotz plotz) (") "trailing open")
+  (check-false (just-one-sexp " (frotz plotz) )") "trailing close")
+  (check-false (just-one-sexp " (frotz plotz) '") "trailing quote")
+  )
+
+(define (main . args)
+  (exit (run-tests just-one-sexp-tests 'verbose)))
+(provide main)
+
 (define (do-328 channel URL)
   (printf "Channel ~a; URL ~a~%"
           channel URL))
