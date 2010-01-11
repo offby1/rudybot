@@ -30,4 +30,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (inc! 'targets target)
   (inc! 'texts text))
 
+(define (do-notice verb text)
+  (inc! 'lone-verbs verb)
+  (when (equal? "NOTICE" verb)
+    (inc! 'notices text)))
+
 (provide (all-defined-out))

@@ -83,9 +83,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
     ;; non-colon lines -- pretty much just NOTICE and PING
     (match line
       [(pregexp #px"^(\\S+) (.*)?" (list _ verb random-crap))
-       (inc! 'lone-verbs verb)
-       (when (equal? "NOTICE" verb)
-         (inc! 'notices random-crap))
+       (do-notice verb random-crap)
        ]))))
 
 (provide main)
