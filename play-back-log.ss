@@ -7,14 +7,14 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (define-values (*pipe-ip* *pipe-op*) (make-pipe))
 
-(define *leading-crap* #px"^........................ <= ")
-(define *length-of-leading-crap* 28)
-
 ;; Read lines from the log, discard some, massage the rest, and put
 ;; each of those into the pipe.
 (define putter
   (thread
    (lambda ()
+     (define *leading-crap* #px"^........................ <= ")
+     (define *length-of-leading-crap* 28)
+
      (let ([ip (open-input-file "big-log")])
        (for ([line (in-lines ip)]
              #:when (((curry regexp-match) *leading-crap*) line))
@@ -22,13 +22,11 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (newline *pipe-op*))
        (close-output-port *pipe-op*)))))
 
-(define (keys dict)
-  (sort (dict-map dict (lambda (k v) k))
-        string<? #:key symbol->string))
-
 (provide main)
 (define (main)
 
+  ;; a bunch of hash tables in which we'll keep track of interesting
+  ;; stuff we've parsed
   (define *tables*
     (make-immutable-hash
      (map
@@ -54,14 +52,7 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
        (inc! 'speaker-hosts host)]
       [_ (inc! 'oddball-speakers s)]))
 
-  (define (hprint d)
-    (pretty-print
-     (sort #:key cdr
-           (hash-map (hash-ref *tables* d) cons)
-           <)))
-
-  (for ([line (in-lines *pipe-ip*)]
-        [lines-processed (in-naturals)])
+  (for ([line (in-lines *pipe-ip*)])
 
     (cond
      ((and (positive? (string-length line))
@@ -93,8 +84,16 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
          (inc! 'lone-verbs verb)
          ]))))
 
-  (for ([k (in-list (keys *tables*))])
-    (printf "~a seen: " k)
-    (hprint k))
+  (let ()
+    (define (keys dict)
+      (sort (dict-map dict (lambda (k v) k))
+            string<? #:key symbol->string))
+
+    (for ([k (in-list (keys *tables*))])
+      (printf "~a: " k)
+      (pretty-print
+       (sort #:key cdr
+             (hash-map (hash-ref *tables* k) cons)
+             <))))
 
   (kill-thread putter))
