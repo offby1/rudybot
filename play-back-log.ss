@@ -11,6 +11,30 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (define-values (*pipe-ip* *pipe-op*) (make-pipe))
 
+(require file/gunzip)
+
+(define (make-unzipper zipped-ip)
+  (let-values ([(pipe-ip pipe-op) (make-pipe)])
+    (thread
+     (lambda ()
+       (define (cleanup) (close-output-port pipe-op))
+       (with-handlers
+           ([exn:fail?                  ;this could be "input port is
+                                        ;closed", which simply means
+                                        ;our customer doesn't want any
+                                        ;more data
+             (lambda (e) (cleanup))]
+            [values
+             (lambda (e)
+               (cleanup)
+               (fprintf
+                (current-error-port)
+                "That exception: ~s~%" e)
+               (raise e))])
+         (gunzip-through-ports zipped-ip pipe-op))
+       (cleanup)))
+    pipe-ip))
+
 ;; Read lines from the log, discard some, massage the rest, and put
 ;; each of those into the pipe.
 (define putter
@@ -19,12 +43,14 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      (define *leading-crap* #px"^........................ <= ")
      (define *length-of-leading-crap* 28)
 
-     (let ([ip (open-input-file "1000")])
-       (for ([line (in-lines ip)]
-             #:when (((curry regexp-match) *leading-crap*) line))
-         (display (read (open-input-string (substring line *length-of-leading-crap*))) *pipe-op*)
-         (newline *pipe-op*))
-       (close-output-port *pipe-op*)))))
+     (call-with-input-file "big-log.gz"
+       (lambda (ip)
+         (for ([line (in-lines (make-unzipper ip))]
+               [lines-read (in-range 10000)]
+               #:when (((curry regexp-match) *leading-crap*) line))
+           (display (read (open-input-string (substring line *length-of-leading-crap*))) *pipe-op*)
+           (newline *pipe-op*))
+         (close-output-port *pipe-op*))))))
 
 (define (do-one-line line)
   (match line
