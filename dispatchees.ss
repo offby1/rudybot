@@ -26,9 +26,23 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define (do-usual-stuff speaker verb target text)
   (note-speaker! speaker)
-  (inc! 'verbs verb)
-  (inc! 'targets target)
-  (inc! 'texts text))
+  (case (string->symbol verb)
+    ((PRIVMSG)
+     (inc! 'verbs verb)
+     (if (string=? target "rudybot")
+         (printf "~s said ~s to me~%" speaker text)
+         (match text
+           [(pregexp #px"^\\s*(\\S+)[:,] (.*)$" (list _ ostensible-target text))
+            (printf "~s said ~s to ~a in channel ~a~%" speaker text ostensible-target target)
+
+            (inc! 'targets ostensible-target)
+            (inc! 'texts text)]
+
+          [_
+           (printf "~s said ~s to channel ~a~%" speaker text target)
+
+           (inc! 'targets target)
+           (inc! 'texts text)])))))
 
 (define (do-notice verb text)
   (inc! 'lone-verbs verb)
