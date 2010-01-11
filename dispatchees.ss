@@ -87,28 +87,25 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
      (printf "Weird direct order: ~s~%" text)
      ]))
 
-(define (do-usual-stuff speaker verb target text)
+(define (do-PRIVMSG speaker target text)
   (note-speaker! speaker)
-  (case (string->symbol verb)
-    ((PRIVMSG)
-     (inc! 'verbs verb)
-     (if (string=? target (*my-nick*))
-         (do-a-direct-order speaker #f text)
-         (match text
-           [(pregexp #px"^\\s*(\\S+)[:,] (.*)$" (list _ ostensible-target text))
-            (if (string=? ostensible-target (*my-nick*))
-                (do-a-direct-order speaker target text)
-                (and #f (printf "~s said ~s to ~a in channel ~a~%" speaker text ostensible-target target))
-                )
+  (if (string=? target (*my-nick*))
+      (do-a-direct-order speaker #f text)
+      (match text
+        [(pregexp #px"^\\s*(\\S+)[:,] (.*)$" (list _ ostensible-target text))
+         (if (string=? ostensible-target (*my-nick*))
+             (do-a-direct-order speaker target text)
+             (and #f (printf "~s said ~s to ~a in channel ~a~%" speaker text ostensible-target target))
+             )
 
-            (inc! 'targets ostensible-target)
-            (inc! 'texts text)]
+         (inc! 'targets ostensible-target)
+         (inc! 'texts text)]
 
-          [_
-           (and #f (printf "~s said ~s to channel ~a~%" speaker text target))
+        [_
+         (and #f (printf "~s said ~s to channel ~a~%" speaker text target))
 
-           (inc! 'targets target)
-           (inc! 'texts text)])))))
+         (inc! 'targets target)
+         (inc! 'texts text)])))
 
 (define (do-notice verb text)
   (inc! 'lone-verbs verb)
