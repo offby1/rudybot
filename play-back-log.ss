@@ -13,24 +13,15 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 (require file/gunzip)
 
+;; Return a new input port that will yield the same data as zipped-ip,
+;; except ... unzipped.
 (define (make-unzipper zipped-ip)
   (let-values ([(pipe-ip pipe-op) (make-pipe)])
     (thread
      (lambda ()
        (define (cleanup) (close-output-port pipe-op))
        (with-handlers
-           ([exn:fail?                  ;this could be "input port is
-                                        ;closed", which simply means
-                                        ;our customer doesn't want any
-                                        ;more data
-             (lambda (e) (cleanup))]
-            [values
-             (lambda (e)
-               (cleanup)
-               (fprintf
-                (current-error-port)
-                "That exception: ~s~%" e)
-               (raise e))])
+           ([values (lambda (e) (cleanup))])
          (gunzip-through-ports zipped-ip pipe-op))
        (cleanup)))
     pipe-ip))
