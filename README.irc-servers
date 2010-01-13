@@ -17,3 +17,10 @@ Since it doesn't emit "NICK" or "USER" until the server emits a NOTICE
 * inspircd 1.1.20+dfsg-1ubuntu1
 
 I was too lazy to figure out how to configure it, so I don't know.
+
+* ircd-seven
+
+As described at http://freenode.net/seven.shtml.
+
+Untested.  That page says the plan is for freenode to switch to
+ircd-seven at the end of January, 2010.
