@@ -129,7 +129,6 @@ fi
                       ;; This should simply not blow up.
                       ,(p "eval (number->string #d10000000000000000000000000000000000000000000000000000000000 16)")
                       ))))
-                 (sleep 5)
                  (close-output-port op)))
               ip)
             op)))
