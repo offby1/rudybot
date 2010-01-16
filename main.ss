@@ -10,13 +10,16 @@ fi
 #lang scheme
 
 (require "loop.ss"
+         "vars.ss"
          "git-version.ss"
          (except-in "quotes.ss" main)
          (except-in "clearenv.ss" main)
          scheme/port)
 
 (define (real-server)
-  (let-values (((ip op) (tcp-connect (*irc-server-hostname*) 6667)))
+  (log "Connecting to host ~s, port ~s ..." (*irc-server-hostname*) (*irc-server-port*))
+  (let-values (((ip op) (tcp-connect (*irc-server-hostname*) (*irc-server-port*))))
+    (log "Connecting to host ~s, port ~s ... connected." (*irc-server-hostname*) (*irc-server-port*))
     (file-stream-buffer-mode op 'line)
     (values ip op)))
 

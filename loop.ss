@@ -90,7 +90,6 @@
   (->* (procedure?) (natural-number/c #:retry-on-hangup? boolean?) void?)])
 (provide
  log
- *irc-server-hostname*
  *my-nick*
  *nickserv-password*
  *bot-gives-up-after-this-many-silent-seconds*
