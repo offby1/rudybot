@@ -97,10 +97,7 @@
 (defmatcher IRC-COMMAND "ERROR"
   (log "Uh oh!"))
 
-;; Here we wait for a NOTICE before authenticating.  I suspect this doesn't
-;; work for all servers; in particular, ngircd-0.10.3 doesn't say anything when
-;; we connect.
-(defmatcher IRC-COMMAND "NOTICE"
+(define (do-notice-stuff)
   (log "got a NOTICE ... auth state is ~s" (unbox *authentication-state*))
   (when (eq? (unbox *authentication-state*) 'havent-even-tried)
     (out "NICK ~a" (unbox *my-nick*))
@@ -108,6 +105,18 @@
     (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
          (git-version))
     (set-box! *authentication-state* 'tried)))
+
+;; Here we wait for a NOTICE before authenticating.  I suspect this doesn't
+;; work for all servers; in particular, ngircd-0.10.3 doesn't say anything when
+;; we connect.
+
+;; ircd-seven
+(defmatcher IRC-COMMAND (regexp #rx"(:\\S+)")
+  (when (equal? (first (*current-words*)) "NOTICE")
+    (do-notice-stuff)))
+
+(defmatcher IRC-COMMAND regexp #rx"NOTICE"
+  (do-notice-stuff))
 
 (defmatcher IRC-COMMAND "PING"
   (out "PONG ~a" (car (*current-words*))))
@@ -117,6 +126,10 @@
                                 (list _ full-id nick id host))
   (define (espy target action words)
     (note-sighting (make-sighting nick target (current-seconds) action words)))
+  (log "Wiggly IRC-COMMAND; full-id ~s; nick ~s; id ~s; host ~s; *nickserv-password* ~s; current words are ~s"
+       full-id nick id host
+       (*nickserv-password*)
+       (*current-words*))
   (if (equal? nick (unbox *my-nick*))
     (match (*current-words*)
       [(list "NICK" (colon new-nick))
@@ -132,6 +145,8 @@
                   (equal? host "services."))
          (log "Gotta register my nick.")
          (pm "NickServ" "identify ~a" (*nickserv-password*)))]
+      [(list "NOTICE" yaddayaddayadda ...)
+       (do-notice-stuff)]
       [(list "KICK" target victim mumblage ...)
        (espy target (format "kicking ~a" victim) mumblage)]
       [(list "MODE" target mode-data ...)
@@ -766,4 +781,5 @@
 (define (irc-process-line line)
   (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
     (parameterize ([*current-words* (cdr toks)])
+      (log "toks: ~s; matching against ~s" toks (car toks))
       (domatchers IRC-COMMAND (car toks)))))
