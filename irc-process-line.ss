@@ -133,7 +133,7 @@
       [(list "NOTICE" my-nick ":This"  "nickname" "is" "registered."
              yaddayaddayadda ...)
        (when (and (member nick (list "notice" "NickServ"))
-                  (member id (list "notice" "NickServ"))
+                  (equal? id  "NickServ")
                   (equal? host "services."))
          (if (*nickserv-password*)
              (begin
