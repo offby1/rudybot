@@ -128,9 +128,12 @@
     (match (*current-words*)
       [(list "NOTICE" my-nick ":This"  "nickname" "is" "registered."
              yaddayaddayadda ...)
-       (when (and (member nick (list "notice" "NickServ"))
-                  (equal? id  "NickServ")
-                  (equal? host "services."))
+       (when (and
+              ;; in ircd-seven, the nick is "notice"; in an older
+              ;; version, it's "NickServ"
+              (member nick (list "notice" "NickServ"))
+              (equal? id  "NickServ")
+              (equal? host "services."))
          (if (*nickserv-password*)
              (begin
                (log "Gotta register my nick.")
