@@ -119,10 +119,6 @@
                                 (list _ full-id nick id host))
   (define (espy target action words)
     (note-sighting (make-sighting nick target (current-seconds) action words)))
-  (log "Wiggly IRC-COMMAND; full-id ~s; nick ~s; id ~s; host ~s; *nickserv-password* ~s; current words are ~s"
-       full-id nick id host
-       (*nickserv-password*)
-       (*current-words*))
   (if (equal? nick (unbox *my-nick*))
     (match (*current-words*)
       [(list "NICK" (colon new-nick))
