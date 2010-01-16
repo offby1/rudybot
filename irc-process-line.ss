@@ -97,7 +97,7 @@
 (defmatcher IRC-COMMAND "ERROR"
   (log "Uh oh!"))
 
-(define (do-notice-stuff)
+(define (send-NICK-and-USER)
   (log "got a NOTICE ... auth state is ~s" (unbox *authentication-state*))
   (when (eq? (unbox *authentication-state*) 'havent-even-tried)
     (out "NICK ~a" (unbox *my-nick*))
@@ -106,21 +106,14 @@
          (git-version))
     (set-box! *authentication-state* 'tried)))
 
-;; Here we wait for a NOTICE before authenticating.  I suspect this doesn't
-;; work for all servers; in particular, ngircd-0.10.3 doesn't say anything when
-;; we connect.
-
-;; ircd-seven
-(defmatcher IRC-COMMAND (regexp #rx"(:\\S+)")
-  (when (equal? (first (*current-words*)) "NOTICE")
-    (do-notice-stuff)))
-
-(defmatcher IRC-COMMAND regexp #rx"NOTICE"
-  (do-notice-stuff))
+;; This message doesn't contain much information; it really just means
+;; we've connected.  And not all servers emit this anyway.  The server
+;; on freenode did up to about January 2010
+(defmatcher IRC-COMMAND "NOTICE"
+  (send-NICK-and-USER))
 
 (defmatcher IRC-COMMAND "PING"
   (out "PONG ~a" (car (*current-words*))))
-
 
 (defmatcher IRC-COMMAND (regexp #rx"^:((.*)!(.*)@(.*))$"
                                 (list _ full-id nick id host))
@@ -139,14 +132,14 @@
     (match (*current-words*)
       [(list "NOTICE" my-nick ":This"  "nickname" "is" "registered."
              yaddayaddayadda ...)
-       (when (and (*nickserv-password*)
-                  (equal? nick "NickServ")
-                  (equal? id   "NickServ")
+       (when (and (member nick (list "notice" "NickServ"))
+                  (member id (list "notice" "NickServ"))
                   (equal? host "services."))
-         (log "Gotta register my nick.")
-         (pm "NickServ" "identify ~a" (*nickserv-password*)))]
-      [(list "NOTICE" yaddayaddayadda ...)
-       (do-notice-stuff)]
+         (if (*nickserv-password*)
+             (begin
+               (log "Gotta register my nick.")
+               (pm "NickServ" "identify ~a" (*nickserv-password*)))
+             (log "I'd register my nick, if I had a password.")))]
       [(list "KICK" target victim mumblage ...)
        (espy target (format "kicking ~a" victim) mumblage)]
       [(list "MODE" target mode-data ...)
@@ -283,6 +276,12 @@
 
 (defmatcher IRC-COMMAND (colon host)
   (match (*current-words*)
+
+    ;; ircd-seven (http://freenode.net/seven.shtml) emits this as soon
+    ;; as we connect
+    [(list "NOTICE" blather ...)
+     (send-NICK-and-USER)]
+
     [(list digits mynick blather ...)
      (case (string->number digits)
        ((1)
@@ -332,11 +331,11 @@
                          args raw-args))])
        (define clause
          (if (and (pair? args) (last args) (regexp-match? #rx"^[?]" (last args)))
-           (let* ([opt  (last raw-args)]
-                  [raw-args (drop-right raw-args 1)])
-             #`[(list* #,@raw-args (and #,opt (or (list _) '())))
-                (let ([#,opt (and (pair? #,opt) (car #,opt))]) body ...)])
-           #'[(list arg ...) body ...]))
+             (let* ([opt  (last raw-args)]
+                    [raw-args (drop-right raw-args 1)])
+               #`[(list* #,@raw-args (and #,opt (or (list _) '())))
+                  (let ([#,opt (and (pair? #,opt) (car #,opt))]) body ...)])
+             #'[(list arg ...) body ...]))
        #`(begin (hash-set! verbs 'verb
                            (match-lambda #,clause
                                          [_ (reply "expecting: ~a" #,formstr)]))
