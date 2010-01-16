@@ -17,9 +17,7 @@ fi
          scheme/port)
 
 (define (real-server)
-  (log "Connecting to host ~s, port ~s ..." (*irc-server-hostname*) (*irc-server-port*))
   (let-values (((ip op) (tcp-connect (*irc-server-hostname*) (*irc-server-port*))))
-    (log "Connecting to host ~s, port ~s ... connected." (*irc-server-hostname*) (*irc-server-port*))
     (file-stream-buffer-mode op 'line)
     (values ip op)))
 
@@ -43,6 +41,7 @@ fi
                     (display "\r\n" op))
                   (cond
                    (#t
+                    ;; Typical stuff from ircd-seven
                     `(":bartol.freenode.net NOTICE * :*** No Ident response"
                       ":notice!NickServ@services. NOTICE rudybot :This nickname is registered. Please choose a different nickname, or identify via \u0002/msg NickServ identify <password>\u0002.")
                     )

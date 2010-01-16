@@ -780,5 +780,4 @@
 (define (irc-process-line line)
   (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
     (parameterize ([*current-words* (cdr toks)])
-      (log "toks: ~s; matching against ~s" toks (car toks))
       (domatchers IRC-COMMAND (car toks)))))
