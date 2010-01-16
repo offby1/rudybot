@@ -101,6 +101,7 @@
 ;; work for all servers; in particular, ngircd-0.10.3 doesn't say anything when
 ;; we connect.
 (defmatcher IRC-COMMAND "NOTICE"
+  (log "got a NOTICE ... auth state is ~s" (unbox *authentication-state*))
   (when (eq? (unbox *authentication-state*) 'havent-even-tried)
     (out "NICK ~a" (unbox *my-nick*))
     ;; RFC 1459 suggests that most of this data is ignored.
