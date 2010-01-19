@@ -34,14 +34,19 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
      (define *leading-crap* #px"^........................ <= ")
      (define *length-of-leading-crap* 28)
 
-     (call-with-input-file "big-log.gz"
-       (lambda (ip)
-         (for ([line (in-lines (make-unzipper ip))]
-               [lines-read (in-range 10000)]
-               #:when (((curry regexp-match) *leading-crap*) line))
-           (display (read (open-input-string (substring line *length-of-leading-crap*))) *pipe-op*)
-           (newline *pipe-op*))
-         (close-output-port *pipe-op*))))))
+     (with-handlers
+         ([values
+           (lambda (e)
+             (display (exn-message e) (current-error-port))
+             (exit 1))])
+         (call-with-input-file "big-log.gz"
+           (lambda (ip)
+             (for ([line (in-lines (make-unzipper ip))]
+                   [lines-read (in-range 10000)]
+                   #:when (((curry regexp-match) *leading-crap*) line))
+               (display (read (open-input-string (substring line *length-of-leading-crap*))) *pipe-op*)
+               (newline *pipe-op*))
+             (close-output-port *pipe-op*)))))))
 
 (define (do-one-line line)
   (match line
