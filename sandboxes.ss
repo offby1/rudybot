@@ -33,7 +33,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 ;; returns the sandbox, force/new? can be #t to force a new sandbox,
 ;; or a box which will be set to #t if it was just created
-(define (get-sandbox-by-name ht name lang force/new?)
+(define (get-sandbox-by-name ht name [lang '(begin (require scheme))] [force/new? #f])
   (define sb (hash-ref ht name #f))
   (define (make)
     (let ([sb (public-make-sandbox lang)])
