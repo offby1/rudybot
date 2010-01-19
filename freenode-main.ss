@@ -20,8 +20,8 @@ fi
 (define (main . args)
   (clearenv)
   (log "Main starting: ~a" (git-version))
-  (parameterize ((*irc-server-hostname* "testnet.freenode.net")
-                 (*irc-server-port* 9002)
+  (parameterize ((*irc-server-hostname* "irc.freenode.org")
+                 (*irc-server-port* 6667)
                  (*userinfo-database-directory-name* "userinfo.db")
                  (current-trace-notify (lambda (string) (log-debug string))))
     (command-line
