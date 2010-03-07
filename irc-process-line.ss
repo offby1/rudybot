@@ -404,7 +404,7 @@
       [_ (reply "~a" q)])))
 
 (defverb (source) "my source location"
-  (reply "http://github.com/offby1/rudybot/commit/~a" (git-version 'complete)))
+  (reply "git clone git://github.com/offby1/rudybot.git"))
 
 (defverb (seen nick) "did I see someone?"
   (reply "~a" (nick->sighting-string nick)))
