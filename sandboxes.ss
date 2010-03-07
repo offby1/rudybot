@@ -16,8 +16,8 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
   (make-sandbox
    (parameterize ((sandbox-output       'string)
                   (sandbox-error-output 'string)
-                  (sandbox-eval-limits '(3 20)))
-     (call-with-limits 3 #f
+                  (sandbox-eval-limits '(10 20)))
+     (call-with-limits 10 #f
        (lambda ()
          (let ([port (and (string? lang)
                           (regexp-match? #rx"^http://" lang)
