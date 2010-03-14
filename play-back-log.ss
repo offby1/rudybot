@@ -31,8 +31,9 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 (define putter
   (thread
    (lambda ()
-     (define *leading-crap* #px"^........................ <= ")
-     (define *length-of-leading-crap* 28)
+     ;; The dots represent the timestamp at the start of each line.
+     (define *leading-crap* #px"^.................... <= ")
+     (define *length-of-leading-crap* 24)
 
      (with-handlers
          ([values
