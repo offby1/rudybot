@@ -13,8 +13,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
  (except-in (planet offby1/offby1/zdate) main)
  "side-effects.ss")
 
-;; #f unless reading STR yields exactly one s-expression, and no
-;; errors; the s-expression (in a box) otherwise.
+;; If reading STR yields exactly one s-expression, and no errors, then
+;; return the s-expression (in a box).  Otherwise return #f.
 (define just-one-sexp
   (match-lambda
    [(? string? str)
