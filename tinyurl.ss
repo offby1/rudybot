@@ -68,9 +68,10 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                                          '()))))
                             read-html-as-xml)
                            )))))
-    (and (not (null? matches))
-         (car matches)))
-  )
+    (if (null? matches)
+        "??"
+        (car matches))))
+
 ;;(trace make-tiny-url)
 
 (define tinyurl-tests
