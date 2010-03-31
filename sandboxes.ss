@@ -190,7 +190,7 @@ exec  mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
                          99))
          (check-exn
           exn:fail?
-          (lambda () (sandbox-eval keiths-sandbox))
+          (lambda () (sandbox-eval keiths-sandbox "x"))
           "keith's sandbox didn't gack when I referenced 'x' -- even though we never defined it."))))
      ;; I'm not sure what I want to do here.  On the one hand, I want
      ;; all calls to "getenv" to fail in the sandbox; on the other
