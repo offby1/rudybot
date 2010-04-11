@@ -12,6 +12,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (provide xlate main)
 
+;; Translate text using Google's translation APIs.
+
 ;; The returned string sometimes has HTML entities in it; the
 ;; functions on this page translate those to regular characters.
 
@@ -117,6 +119,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     (snag "print \"hello, world\\n\"" "perl" "java")
     'responseDetails)
    "invalid translation language pair"))
+
+;; List of language codes, to "from" and "to":
+;; http://code.google.com/apis/ajaxlanguage/documentation/reference.html#LangNameArray
 
 (define (xlate text from to)
   (let* ([stuff (snag text from to)]
