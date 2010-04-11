@@ -40,7 +40,7 @@ fi
                     (display line op)
                     (display "\r\n" op))
                   (cond
-                   (#t
+                   (#f
                     ;; Typical stuff from ircd-seven
                     `(":bartol.freenode.net NOTICE * :*** No Ident response"
                       ":notice!NickServ@services. NOTICE rudybot :This nickname is registered. Please choose a different nickname, or identify via \u0002/msg NickServ identify <password>\u0002.")
