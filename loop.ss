@@ -57,7 +57,8 @@
     (let-values (((ip op)
                   (server-maker)))
       (let ([ch (make-channel)])
-        (parameterize ([*incubot-server* (make-incubot-server "/tmp/davinci.txt")])
+        (parameterize ([*incubot-server* (make-incubot-server "/tmp/davinci.txt")]
+                       [*incubot-logger* log])
           (log "Bot version ~a starting" (git-version))
           (let do-one-line ((cfc consecutive-failed-connections))
             (let ((ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ip))

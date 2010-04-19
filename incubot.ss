@@ -7,7 +7,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 #lang scheme
 (require schemeunit schemeunit/text-ui
          scheme/set
-         mzlib/trace)
+         mzlib/trace
+         (only-in "vars.ss" *incubot-logger*))
 
 (define-struct corpus (strings strings-by-word) #:transparent)
 
@@ -19,12 +20,19 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (-> string? corpus? (listof string?))
   (hash-ref (corpus-strings-by-word c) w))
 
+(define (log fmt . args)
+  (when (*incubot-logger*)
+    (apply fprintf (current-output-port) fmt args)
+    (apply (*incubot-logger*) fmt args)))
+
+(provide  incubot-sentence)
 (define incubot-sentence
   (match-lambda*
    [(list (? string? s) (? corpus? c))
     (incubot-sentence (string->words s) c)]
    [(list (? set? ws) (? corpus? c))
     (let ([rare (rarest ws c)])
+      (log "Looking for witticism for word ~s" rare)
       (and rare
            (random-choose (strings-containing-word rare c))))]))
 
@@ -49,6 +57,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (provide add-to-corpus)
 (define/contract (add-to-corpus s c)
   (-> string? corpus? corpus?)
+  (log "Adding ~s to incubot corpus" s)
   (make-corpus
    (set-add (corpus-strings c) s)
    (for/fold ([h (corpus-strings-by-word c)])
@@ -186,4 +195,4 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                            "I'm impressed that I can find stuff already."))])
         (printf "~a => ~a~%" inp (incubot-sentence inp  c))))))
 
-(provide incubot-sentence main)
+(provide main)
