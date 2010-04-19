@@ -41,3 +41,6 @@
 ;; Lines much longer than this will cause the server to kick us for
 ;; flooding.
 (define *max-output-line* 500)
+
+;; This retrieves a sentence from the "incubot" server.
+(define *incubot-server* (make-parameter #f))
