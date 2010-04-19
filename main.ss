@@ -12,7 +12,6 @@ fi
 (require "loop.ss"
          "vars.ss"
          "git-version.ss"
-         (except-in "incubot.ss" main)
          (except-in "quotes.ss" main)
          (except-in "clearenv.ss" main)
          scheme/port)
