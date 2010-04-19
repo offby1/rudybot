@@ -6,10 +6,16 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 
-(require (except-in "incubot.ss" main))
+(require
+ (except-in "incubot.ss" main)
+ (only-in "vars.ss" *incubot-logger*))
 
 (define (pf fmt . args)
   (apply fprintf (current-error-port) fmt args))
+
+(define (log fmt . args)
+  (when (*incubot-logger*)
+    (apply (*incubot-logger*) fmt args)))
 
 (provide make-incubot-server)
 (define (make-incubot-server ifn)
@@ -41,6 +47,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                   (loop ((hash-ref funcs-by-symbol symbol) inp c))])))))))
 
     (lambda (command-sym inp)
+      (log "incubot ~a ~s" command-sym inp)
       (channel-put *to-server* (cons command-sym inp))
       (channel-get *from-server*))))
 

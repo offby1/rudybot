@@ -44,7 +44,7 @@ fi
                     (display line op)
                     (display "\r\n" op))
                   (cond
-                   (#t
+                   (#f
                     (list
                      (meh "Hey everyone!  What's happening?")
                      (c "uptime")
