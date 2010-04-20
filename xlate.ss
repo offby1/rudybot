@@ -123,7 +123,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 ;; List of language codes, to "from" and "to":
 ;; http://code.google.com/apis/ajaxlanguage/documentation/reference.html#LangNameArray
 
-(define (xlate text from to)
+(define (xlate from to text)
   (let* ([stuff (snag text from to)]
          [responseStatus (hash-ref stuff 'responseStatus)])
     (if (equal? 200 responseStatus)
@@ -138,12 +138,12 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define-test-suite xlate-tests
 
   (check-equal?
-   (xlate "forty-five separate amendments" "en" "it")
+   (xlate "en" "it" "forty-five separate amendments")
    "quarantacinque emendamenti separati")
 
   (check-equal?
-   (xlate "fledermaus: have I rubbed this in your face yet?" "en" "fr")
-   "Fledermaus: j'ai frotté dans votre visage encore inscrit?"))
+   (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
+   "Chauve-souris: j'ai frotté dans votre visage encore?"))
 
 (define-test-suite all-tests
   replace-tests
