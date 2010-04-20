@@ -22,6 +22,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (provide  incubot-sentence)
 (define incubot-sentence
   (match-lambda*
+   [(list (? list? s) (? corpus? c))
+    (incubot-sentence (wordlist->wordset s) c)]
    [(list (? string? s) (? corpus? c))
     (incubot-sentence (string->words s) c)]
    [(list (? set? ws) (? corpus? c))
@@ -60,17 +62,22 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (or (not thing)
       (in-corpus? thing corpus)))
 
-(define/contract (string->words s)
-  (string? . -> . set?) ;; it'd be nice if I could say "a set whose
+(define/contract (wordlist->wordset ws)
+  ((listof string?) . -> . set?) ;; it'd be nice if I could say "a set whose
   ;; elements are all strings"
   (define (strip rx) (curryr (curry regexp-replace* rx) ""))
-  (apply set
-         (filter (compose positive? string-length)
-                 (map (compose
-                       (strip #px"^'+")
-                       (strip #px"'+$")
-                       (strip #px"[^'[:alpha:]]+"))
-                      (regexp-split #rx" " (string-downcase s))))))
+  (apply
+   set
+   (filter (compose positive? string-length)
+           (map (compose
+                 (strip #px"^'+")
+                 (strip #px"'+$")
+                 (strip #px"[^'[:alpha:]]+"))
+                ws))))
+
+(define/contract (string->words s)
+  (string? . -> . set?)
+  (wordlist->wordset (regexp-split #rx" " (string-downcase s))))
 
 (define-binary-check (check-sets-equal? actual expected)
   (and (set-empty? (set-subtract actual expected))
@@ -185,6 +192,10 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                            "Oops, ate too much cookie dough"
                            "It's almost inconceivable that none of these words appears in that manual"
                            "I'm impressed that I can find stuff already."))])
+        (printf "~a => ~a~%" inp (incubot-sentence inp  c)))
+      (for ([inp (in-list (list
+                           (list "whOa" "nellie")
+                           (list "Oops" "ate" "too" "much" "cookie" "dough")))])
         (printf "~a => ~a~%" inp (incubot-sentence inp  c))))))
 
 (provide main)

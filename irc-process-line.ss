@@ -769,7 +769,7 @@
           (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
           (if proc
               (proc (cdr words))
-              (let ([incubot-witticism ((*incubot-server*) 'get words-glued-back-together)])
+              (let ([incubot-witticism ((*incubot-server*) 'get (cdr words))])
                 (if incubot-witticism
                     (reply "~a" incubot-witticism)
                     (reply "eh?  Try \"~a: help\"." (unbox *my-nick*)))))
