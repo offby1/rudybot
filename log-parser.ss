@@ -29,15 +29,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
       (port-count-lines! ip)
       (call-with-output-file "parsed-log"
         (lambda (op)
-          (pretty-print
-           (for/fold ([result '()])
-               ([line (in-lines ip)])
-             (cond
-              ((string->utterance line)
-               =>
-               (lambda (u) (cons u result)))
-              (else
-               result)))
-           op)
-          (newline op))
+          (for ([line (in-lines ip)])
+             (let ([utz (string->utterance line)])
+               (when utz (pretty-print utz op)))))
         #:exists 'truncate))))
