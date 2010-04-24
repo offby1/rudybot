@@ -8,7 +8,8 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (require
  (except-in "incubot.ss" main)
- (only-in "vars.ss" *incubot-logger*))
+ (only-in "vars.ss" *incubot-logger*)
+ (only-in "log-parser.ss" utterance-text))
 
 (define (pf fmt . args)
   (apply fprintf (current-error-port) fmt args))
@@ -40,7 +41,11 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                                                   "Ooops: ~a~%" (exn-message e))
                                          (exit 1))])
          
-                   (make-corpus-from-file ifn)))])
+                   (call-with-input-file ifn 
+                     (lambda (ip)
+                       (make-corpus-from-sexps 
+                        ip
+                        utterance-text)))))])
          
          (let loop ([c c])
            (match (channel-get *to-server*)
@@ -54,7 +59,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (provide main)
 (define (main . args)
-  (let ([s (make-incubot-server "/tmp/davinci.txt")])
+  (let ([s (make-incubot-server "parsed-log")])
     (define (get input) (s 'get input))
     (define (put sentence) (s 'put sentence))
 

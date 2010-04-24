@@ -8,6 +8,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (require mzlib/etc)
 
+(provide (struct-out utterance))
 (define-struct utterance (timestamp speaker target text) #:prefab)
 
 (define (string->utterance s)

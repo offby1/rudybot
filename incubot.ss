@@ -49,6 +49,12 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       ([s (in-list sentences)])
       (add-to-corpus s c)))
 
+(provide make-corpus-from-sexps)
+(define (make-corpus-from-sexps inp [sexp-mangler values] [reader read])
+  (for/fold ([c (public-make-corpus)])
+      ([form (in-port reader inp)])
+      (add-to-corpus (sexp-mangler form) c)))
+
 (provide make-corpus-from-file)
 (define (make-corpus-from-file ifn)
   (call-with-input-file ifn
