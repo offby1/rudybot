@@ -13,3 +13,8 @@ surely I can figure out which preposition is appropriate.
 
 * Run with "--warn info"
 ... and fix the various lint-like warnings that come up
+
+* Put the persistent data someplace safe
+That's the big-log (which we mine for incubot-witticisms) and the
+userinfo db.  I keep accidentally deleting them, and losing months of
+accumulated data; they should be on S3 or something.
