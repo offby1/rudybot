@@ -41,11 +41,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                                                   "Ooops: ~a~%" (exn-message e))
                                          (exit 1))])
          
-                   (call-with-input-file ifn 
-                     (lambda (ip)
-                       (make-corpus-from-sexps 
-                        ip
-                        utterance-text)))))])
+                   (fprintf (current-error-port) "Reading log from ~a..." ifn)
+                   (begin0
+                       (call-with-input-file ifn 
+                         (lambda (ip)
+                           (make-corpus-from-sexps 
+                            ip
+                            utterance-text)))
+                     (fprintf (current-error-port) "Reading log from ~a...done" ifn))))])
          
          (let loop ([c c])
            (match (channel-get *to-server*)
