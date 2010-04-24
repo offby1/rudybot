@@ -20,7 +20,7 @@ exec mzscheme -W debug --require $0 --main -- ${1+"$@"}
   (parameterize ([*irc-server-hostname* "irc.freenode.org"]
                  [*irc-server-port* 6667]
                  [*userinfo-database-directory-name* "userinfo.db"]
-                 [current-trace-notify (lambda (string) (log-debug string)))
+                 [current-trace-notify (lambda (string) (log-debug string))]
                  [*incubot-server* (make-incubot-server "parsed-log")]
                  [*incubot-logger* log])
     (command-line
