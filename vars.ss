@@ -47,4 +47,4 @@
 (define *max-output-line* 500)
 
 ;; This retrieves a sentence from the "incubot" server.
-(define *incubot-server* (make-parameter #f))
+(define *incubot-server* (make-parameter (lambda ignored #f)))
