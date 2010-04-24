@@ -40,11 +40,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                                                   "Ooops: ~a~%" (exn-message e))
                                          (exit 1))])
          
-                   (call-with-input-file ifn
-                     (lambda (ip)
-                       (for/fold ([c (public-make-corpus)])
-                           ([line (in-lines ip)])
-                           (add-to-corpus line c))))))])
+                   (make-corpus-from-file ifn)))])
          
          (let loop ([c c])
            (match (channel-get *to-server*)
