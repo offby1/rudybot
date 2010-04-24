@@ -765,10 +765,15 @@
       (let* ((verb (string->symbol (string-downcase (car words))))
              (proc (or (hash-ref verbs verb #f)
                        (and (is-master?) (hash-ref master-verbs verb #f)))))
-        (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
-        (if proc
-          (proc (cdr words))
-          (reply "eh?  Try \"~a: help\"." (unbox *my-nick*)))
+        (let ([words-glued-back-together (string-join (cdr words) " ")])
+          (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
+          (if proc
+              (proc (cdr words))
+              (let ([incubot-witticism ((*incubot-server*) 'get (cdr words))])
+                (if incubot-witticism
+                    (reply "~a" incubot-witticism)
+                    (reply "eh?  Try \"~a: help\"." (unbox *my-nick*)))))
+          ((*incubot-server*) 'put words-glued-back-together))
         (note-we-did-something-for! for-whom)))))
 
 (define (irc-process-line line)

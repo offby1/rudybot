@@ -27,6 +27,9 @@ fi
                           (make-pipe)))
               (thread
                (lambda ()
+                 (define (meh str)
+                   (format ":n!n@n PRIVMSG #c :~a"
+                           str))
                  (define (c str)
                    (format ":n!n@n PRIVMSG #c :~a: ~a"
                            (unbox *my-nick*)
@@ -40,6 +43,11 @@ fi
                     (display line op)
                     (display "\r\n" op))
                   (cond
+                   (#f
+                    (list
+                     (meh "Hey everyone!  What's happening?")
+                     (c "uptime")
+                     (c "If everyone could just settle down.")))
                    (#f
                     ;; Typical stuff from ircd-seven
                     `(":bartol.freenode.net NOTICE * :*** No Ident response"

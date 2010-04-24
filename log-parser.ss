@@ -6,9 +6,9 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 
-(require mzlib/etc
-         (except-in "echolalia/progress.ss" main))
+(require mzlib/etc)
 
+(provide (struct-out utterance))
 (define-struct utterance (timestamp speaker target text) #:prefab)
 
 (define (string->utterance s)
@@ -27,27 +27,10 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
   (call-with-input-file
       (build-path (this-expression-source-directory) "big-log")
     (lambda (ip)
-      (define note-progress!
-        (make-notifier
-         (lambda (times-called)
-           (let-values (((lines columns positions)
-                         (port-next-location ip)))
-             (fprintf
-              (current-output-port)
-              "~a~%" (sub1 lines))))))
       (port-count-lines! ip)
       (call-with-output-file "parsed-log"
         (lambda (op)
-          (pretty-print
-           (for/fold ([result '()])
-               ([line (in-lines ip)])
-               (note-progress!)
-             (cond
-              ((string->utterance line)
-               =>
-               (lambda (u) (cons u result)))
-              (else
-               result)))
-           op)
-          (newline op))
+          (for ([line (in-lines ip)])
+             (let ([utz (string->utterance line)])
+               (when utz (pretty-print utz op)))))
         #:exists 'truncate))))

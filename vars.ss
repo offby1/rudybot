@@ -33,7 +33,11 @@
 (define *response-target* (make-parameter #f))
 (define *for-whom*        (make-parameter #f))
 (define *full-id*         (make-parameter #f))
+
+;; Not sure it makes sense for these two to be separate; but adding
+;; *incubot-logger* seemed the quickest way to get logging in incubot
 (define *logger*          (make-parameter #f))
+(define *incubot-logger*  (make-parameter #f))
 
 ;; Maybe I should use rnrs/enums-6 to guard against typos
 (define *authentication-state* (box 'havent-even-tried))
@@ -41,3 +45,6 @@
 ;; Lines much longer than this will cause the server to kick us for
 ;; flooding.
 (define *max-output-line* 500)
+
+;; This retrieves a sentence from the "incubot" server.
+(define *incubot-server* (make-parameter #f))
