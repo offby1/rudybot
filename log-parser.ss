@@ -13,12 +13,13 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 
 (define (string->utterance s)
   (match s
-    [(regexp #px"^ *([[:print:]]*?) <= +\"(.*)\"" (list _ timestamp string))
-     (match string
-       [(regexp #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+?) :(.*)"
-                (list _ nick id host target text))
-        (make-utterance timestamp nick target text)]
-       [_ #f])]
+    [(regexp #px"^ *([[:print:]]*?) <= +(\".*\")" (list _ timestamp raw-string))
+     (let ([parsed-string (read (open-input-string raw-string))])
+       (match parsed-string
+         [(regexp #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+?) :(.*)"
+                  (list _ nick id host target text))
+          (make-utterance timestamp nick target parsed-string)]
+         [_ #f]))]
     [_ #f]))
 
 (provide main)
