@@ -57,7 +57,7 @@
     (let-values (((ip op)
                   (server-maker)))
       (let ([ch (make-channel)])
-        (parameterize ([*incubot-server* (make-incubot-server "/tmp/davinci.txt")]
+        (parameterize ([*incubot-server* (make-incubot-server "parsed-log")]
                        [*incubot-logger* log])
           (log "Bot version ~a starting" (git-version))
           (let do-one-line ((cfc consecutive-failed-connections))
