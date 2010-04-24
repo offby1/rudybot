@@ -21,7 +21,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
        (match parsed-string
          [(regexp #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+?) :(.*)"
                   (list _ nick id host target text))
-          (make-utterance timestamp nick target parsed-string)]
+          (make-utterance timestamp nick target text)]
          [_ #f]))]
     [_ #f]))
 
