@@ -34,21 +34,22 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                 (add-to-corpus sentence c))))))
     (thread
      (lambda ()
-       (with-handlers ([exn? (lambda (e)
-                               (fprintf (current-error-port)
-                                        "Ooops: ~a~%" (exn-message e))
-                               (exit 1))])
-         (call-with-input-file ifn
-           (lambda (ip)
-             (let ([c (time
+       (let ([c (time
+                 (with-handlers ([exn? (lambda (e)
+                                         (fprintf (current-error-port)
+                                                  "Ooops: ~a~%" (exn-message e))
+                                         (exit 1))])
+         
+                   (call-with-input-file ifn
+                     (lambda (ip)
                        (for/fold ([c (public-make-corpus)])
                            ([line (in-lines ip)])
-                           (add-to-corpus line c)))])
-
-               (let loop ([c c])
-                 (match (channel-get *to-server*)
-                   [(cons symbol inp)
-                    (loop ((hash-ref funcs-by-symbol symbol) inp c))]))))))))
+                           (add-to-corpus line c))))))])
+         
+         (let loop ([c c])
+           (match (channel-get *to-server*)
+             [(cons symbol inp)
+              (loop ((hash-ref funcs-by-symbol symbol) inp c))])))))
     
     (lambda (command-sym inp)
       (log "incubot ~a ~s" command-sym inp)
