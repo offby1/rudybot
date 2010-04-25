@@ -14,6 +14,7 @@ fi
          "git-version.ss"
          (except-in "quotes.ss" main)
          (except-in "clearenv.ss" main)
+         (only-in "incubot.ss" make-test-corpus)
          (only-in "iserver.ss" make-incubot-server)
          scheme/port)
 
@@ -49,7 +50,9 @@ fi
                      (meh "Hey everyone!  What's happening?")
                      (c "uptime")
                      (c "settle")
-                     (c "If everyone could just settle down.")))
+                     (meh "frotz: plotz.")
+                     (c "everyone")
+                     (c "plotz")))
                    (#f
                     ;; Typical stuff from ircd-seven
                     `(":bartol.freenode.net NOTICE * :*** No Ident response"
@@ -239,7 +242,7 @@ fi
   (log "Main starting.")
   (parameterize ([*bot-gives-up-after-this-many-silent-seconds* 1/4]
                  [*log-ports* (list (current-error-port))]
-                 [*incubot-server* (make-incubot-server "parsed-log")]
+                 [*incubot-server* (make-incubot-server (make-test-corpus))]
                  [*incubot-logger* log])
     (connect-and-run
      (make-preloaded-server (open-output-nowhere))

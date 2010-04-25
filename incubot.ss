@@ -9,6 +9,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
          scheme/set
          mzlib/trace)
 
+(provide (except-out (struct-out corpus) make-corpus))
 (define-struct corpus (strings strings-by-word) #:transparent)
 
 (define/contract (random-choose seq)
@@ -108,6 +109,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (string? corpus? . -> . natural-number/c)
   (length (hash-ref (corpus-strings-by-word c) w '())))
 
+(provide make-test-corpus)
 (define (make-test-corpus)
   (public-make-corpus
    "waka ja waka"

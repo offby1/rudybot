@@ -247,21 +247,25 @@
            ;; our nick, rather than just the comma and colon I've
            ;; hard-coded here.
            [(regexp #px"^([[:alnum:]_-]+)[,:](.*)" (list _ addressee garbage))
-            (when (equal? addressee (unbox *my-nick*))
-              (let ((words (if (positive? (string-length garbage))
-                               (cons garbage rest)
-                               rest)))
-                (when (not (null? words))
+            (let ((words (if (positive? (string-length garbage))
+                             (cons garbage rest)
+                             rest)))
+              (if (and (not (null? words))
+                       (equal? addressee (unbox *my-nick*)))
                   (parameterize ([*full-id* full-id])
                     (do-cmd target nick words #:rate_limit?
                             (and #f
                                  (not (regexp-match #rx"^offby1" nick))
-                                 (equal? target "#emacs" )))))))]
+                                 (equal? target "#emacs" ))))
+                  ((*incubot-server*) 'put (string-join (cons first-word rest) " ")))
+              )]
            [",..."
             (when (equal? target "#emacs")
               (pm target "Woof."))]
 
-           [_ #f])])]
+           [_
+            ((*incubot-server*) 'put (string-join (cons first-word rest) " "))
+            ])])]
 
       [(list "QUIT" (colon first-word) rest ...)
        (espy host "quitting"
@@ -765,15 +769,21 @@
       (let* ((verb (string->symbol (string-downcase (car words))))
              (proc (or (hash-ref verbs verb #f)
                        (and (is-master?) (hash-ref master-verbs verb #f)))))
-        (let ([words-glued-back-together (string-join (cdr words) " ")])
+        (let ([words-glued-back-together (string-join words " ")])
           (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
           (if proc
               (proc (cdr words))
               (let ([incubot-witticism ((*incubot-server*) 'get words)])
+                (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
+                (define (trim-leading-nick str)
+                  (if (regexp-match #px"^http(s)?://" str)
+                      str
+                      ((strip-just-one #px"^\\w+?: *") str)))
+
                 (if incubot-witticism
-                    (reply "~a" incubot-witticism)
-                    (reply "eh?  Try \"~a: help\"." (unbox *my-nick*)))))
-          ((*incubot-server*) 'put words-glued-back-together))
+                    (reply "~a" (trim-leading-nick incubot-witticism))
+                    (reply "eh?  Try \"~a: help\"." (unbox *my-nick*))))))
+
         (note-we-did-something-for! for-whom)))))
 
 (define (irc-process-line line)
