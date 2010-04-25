@@ -1,2 +1,7 @@
 Eric Hanchrow <eric.hanchrow@gmail.com>
+
 Eli Barzilay <eli@barzilay.org>
+
+Peter Danenberg (aka "klutometis") wrote a separate bot, "incubot",
+which inspired the similarly-named files here.  The code is all mine,
+though.
