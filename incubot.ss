@@ -35,8 +35,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (string? corpus? . -> . boolean?)
   (set-member? (corpus-strings c) s))
 
-(define (hash-increment h key)
-  (hash-set h key (add1 (hash-ref h key 0))))
 (define (hash-append h key value)
   (hash-set h key (cons value (hash-ref h key '()))))
 
@@ -102,7 +100,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (check-sets-equal? (string->words "Hey you!!") (set "hey" "you"))
   (check-sets-equal? (string->words "YO MOMMA") (set "yo" "momma"))
   (check-sets-equal? (string->words "Don't get tripped up by 'apostrophes'")
-                     (set "don't" "get" "tripped" "up" "by" "apostrophes")))
+                     (set "don't" "get" "tripped" "up" "by" "apostrophes"))
+  ;; apostrophes can really trip you up the most
+  )
 
 (define/contract (word-popularity w c)
   (string? corpus? . -> . natural-number/c)
@@ -177,9 +177,12 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                               (not output-2))
                          (not (equal? output-1 output-2))))
 
-    (check-equal? (incubot-sentence "What else do you want?" (make-test-corpus))
-                  "Some thing else")
-                                    )))
+    (check-equal?
+     (incubot-sentence
+      "What else do you want?"
+      (make-test-corpus))
+     "Some thing else"))))
+
 
 (define-test-suite all-tests
   string->words-tests
@@ -196,7 +199,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
               (call-with-input-file
                   ;; biggest .txt file I could find already on my box
                   ;; from the "ipython" package
-                  "/tmp/davinci.txt"
+                  "parsed-log"
                 (lambda (inp)
                   (for/fold ([c (public-make-corpus)])
                       ([line (in-lines inp)])
