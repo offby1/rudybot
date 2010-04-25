@@ -5,6 +5,8 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 
+(require schemeunit schemeunit/text-ui)
+
 (define *userinfo-database-directory-name* (make-parameter "test-userinfo.db"))
 (define *sightings-to-keep* 2)
 (define *messages-to-keep* 20)
@@ -110,3 +112,10 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
  [canonicalize-nick (-> string? string?)]
  [userinfo-ref (->* (string? any/c) (any/c) any)]
  [userinfo-set! (-> string? any/c any/c any)])
+
+(define-test-suite all-tests
+  (check-not-false (make-sighting 'sam 'London 'a-while-ago #f (list "Sure" "is" "foggy" "here"))))
+
+(provide main)
+(define (main . args)
+  (exit (run-tests all-tests)))
