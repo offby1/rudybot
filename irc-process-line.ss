@@ -775,13 +775,15 @@
               (proc (cdr words))
               (let ([incubot-witticism ((*incubot-server*) 'get words)])
                 (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
+                (define (trim-ACTION str)
+                  (regexp-replace #rx"\1ACTION (.*)\1" str "\\1"))
                 (define (trim-leading-nick str)
                   (if (regexp-match #px"^http(s)?://" str)
                       str
                       ((strip-just-one #px"^\\w+?: *") str)))
 
                 (if incubot-witticism
-                    (reply "~a" (trim-leading-nick incubot-witticism))
+                    (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism)))
                     (reply "eh?  Try \"~a: help\"." (unbox *my-nick*))))))
 
         (note-we-did-something-for! for-whom)))))
