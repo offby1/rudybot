@@ -18,3 +18,18 @@ surely I can figure out which preposition is appropriate.
 That's the big-log (which we mine for incubot-witticisms) and the
 userinfo db.  I keep accidentally deleting them, and losing months of
 accumulated data; they should be on S3 or something.
+
+* Incubot
+** Omit leading nicks from utterances
+The original incubot does this.  E.g., if we find
+: ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG #scheme :rudybot: seen eli"
+in the log, then we currently reduce that to
+: "rudybot: seen eli"
+but we should really omit the leading nick and colon, yielding
+: "seen eli"
+That's because it looks odd for the bot to utter something that's
+directed at someone who probably isn't present.
+** Entirely omit, or at least trim, ACTION
+I just saw the bot respond with "\1ACTION does something or other\1",
+which was weird; it should have either said nothing, or else jsut
+"does something or other". 
