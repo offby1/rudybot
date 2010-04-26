@@ -19,7 +19,15 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
 (define (canonicalize-nick n)
   ;; TODO -- consider nixing _leading_ underscores as well; I've seen
   ;; those in the wild.
+
+  ;; I've forgotten why I put (?<=.) in the regexp :-(
   (string-downcase (regexp-replace #rx"(?<=.)([`_]*)$" n "")))
+
+(define-test-suite canonicalize-nick-tests
+  (check-equal? "plunderblunder" (canonicalize-nick "plunderblunder"))
+  (check-equal? "sam" (canonicalize-nick "sam`"))
+  (check-equal? "sam" (canonicalize-nick "sam_`_`"))
+)
 
 (define (canonical-nick->infopath n)
   (let ([base (build-path (*userinfo-database-directory-name*)
@@ -114,7 +122,7 @@ exec  mzscheme  --require "$0" --main -- ${1+"$@"}
  [userinfo-set! (-> string? any/c any/c any)])
 
 (define-test-suite all-tests
-  (check-not-false (make-sighting 'sam 'London 'a-while-ago #f (list "Sure" "is" "foggy" "here"))))
+  canonicalize-nick-tests)
 
 (provide main)
 (define (main . args)
