@@ -7,14 +7,29 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 #lang scheme
 (require schemeunit schemeunit/text-ui
          scheme/set
-         mzlib/trace)
+         mzlib/trace
+         (only-in "log-parser.ss" utterance-text ))
 
 (provide (except-out (struct-out corpus) make-corpus))
 (define-struct corpus (strings strings-by-word) #:transparent)
 
+(define (random-favoring-smaller-numbers k)
+  (let (
+        ;; 0 <= r < 1, but smaller numbers are more likely
+        [r (/(sub1 (exp (random))) (sub1 (exp 1)))])
+    
+    (inexact->exact
+     (truncate
+      (* r k) ;; 0 <= this < k
+      ))))
+
+;; favor longer utterances over shorter ones.
 (define/contract (random-choose seq)
   (-> list? any/c)
-  (list-ref seq (random (length seq))))
+  (let ([sorted (sort seq > #:key string-length)])
+    (list-ref
+     sorted
+     (random-favoring-smaller-numbers (length seq)))))
 
 (define/contract (strings-containing-word w c)
   (-> string? corpus? (listof string?))
@@ -49,10 +64,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       (add-to-corpus s c)))
 
 (provide make-corpus-from-sexps)
-(define (make-corpus-from-sexps inp [sexp-mangler values] [reader read])
-  (for/fold ([c (public-make-corpus)])
-      ([form (in-port reader inp)])
-      (add-to-corpus (sexp-mangler form) c)))
+(define (make-corpus-from-sexps inp [limit #f])
+  (let/ec enough-already
+    (for/fold ([c (public-make-corpus)])
+        ([form (in-port read inp)]
+         [forms-read (in-naturals)])
+        (when (equal? limit forms-read)
+          (enough-already c))
+        (add-to-corpus (utterance-text form) c))))
 
 (provide make-corpus-from-file)
 (define (make-corpus-from-file ifn)
@@ -185,7 +204,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       (make-test-corpus))
      "Some thing else"))))
 
-
 (define-test-suite all-tests
   string->words-tests
   rarest-tests
@@ -203,9 +221,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                   ;; from the "ipython" package
                   "parsed-log"
                 (lambda (inp)
-                  (for/fold ([c (public-make-corpus)])
-                      ([line (in-lines inp)])
-                      (add-to-corpus line c)))))])
+                  (make-corpus-from-sexps inp 1000))))])
       (for ([inp (in-list (list
                            "Oh shit"
                            "Oops, ate too much cookie dough"

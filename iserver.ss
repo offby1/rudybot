@@ -33,9 +33,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
         (begin0
             (call-with-input-file ifn 
               (lambda (ip)
-                (make-corpus-from-sexps 
-                 ip
-                 utterance-text)))
+                (make-corpus-from-sexps ip)))
           (fprintf (current-error-port) "Reading log from ~a...done" ifn)))))]
    
    [(? corpus? c)
