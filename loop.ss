@@ -21,8 +21,12 @@
 
 (define (log . args)
   (for ((op (in-list (*log-ports*))))
-    (fprintf op "~a " (date->string (current-date) "~4"))
-    (apply fprintf op args)
+    (write
+     (cons
+      (date->string (current-date) "~4")
+      args)
+     op)
+    
     (newline op)))
 
 (define irc-process-line
@@ -33,7 +37,7 @@
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line)
-  (log "<= ~s" line)
+  (log '|<=| line)
   (parameterize ([*logger* log])
     (irc-process-line line)))
 

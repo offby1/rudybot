@@ -19,8 +19,8 @@
          (planet neil/numspell/numspell)
          )
 
-(define (log fmt . args)
-  (apply (*logger*) fmt args))
+(define (log . args)
+  (apply (*logger*) args))
 
 (define (is-master?)
   (let ([mm (unbox *my-master*)] [id (*full-id*)])
@@ -83,7 +83,7 @@
          ;; don't display newlines, so that Bad Guys won't be able
          ;; to inject IRC commands into our output.
          (str (regexp-replace* #rx"[\n\r]" str " <NEWLINE> ")))
-    (log "=> ~s" str)
+    (log '|=>| args)
     (fprintf (*irc-output*) "~a~%" str)))
 
 (define (pm #:notice? [notice? #f] target fmt . args)
@@ -770,7 +770,7 @@
              (proc (or (hash-ref verbs verb #f)
                        (and (is-master?) (hash-ref master-verbs verb #f)))))
         (let ([words-glued-back-together (string-join words " ")])
-          (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
+          (log (if proc "Doing" "Not doing") verb (cdr words))
           (if proc
               (proc (cdr words))
               (let ([incubot-witticism ((*incubot-server*) 'get words)])
