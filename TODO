@@ -19,6 +19,8 @@ That's the big-log (which we mine for incubot-witticisms) and the
 userinfo db.  I keep accidentally deleting them, and losing months of
 accumulated data; they should be on S3 or something.
 
+Someone suggested Dropbox; that could work!
+
 * Incubot
 ** Omit leading nicks from utterances
 The original incubot does this.  E.g., if we find
