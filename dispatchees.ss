@@ -98,7 +98,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
              (and #f (printf "~s said ~s to ~a in channel ~a~%" speaker text ostensible-target target))
              )
 
-         (inc! 'targets ostensible-target)
+         (inc! 'ostensible-targets ostensible-target)
          (inc! 'texts text)]
 
         [_
