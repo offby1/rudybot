@@ -7,34 +7,13 @@ exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
 
 ;; a bunch of hash tables in which we'll keep track of interesting
 ;; stuff we've parsed
-(define *tables*
-  (make-immutable-hash
-   (map
-    (lambda (name) (cons name (make-hash)))
-    '(
-      |328s|
-      |332s|
-      |333s|
-      |353s|
-      evals
-      lone-verbs
-      notices
-      numeric-verbs
-      oddball-speakers
-      randomness
-      servers
-      speaker-nicks
-      speaker-hosts
-      targets
-      texts
-      unknown-commands
-      uptimes
-      verbs
-      versions
-      ))))
+(define *tables* (make-hash))
 
 (provide inc!)
-(define (inc! dict-name key) (dict-update! (hash-ref *tables* dict-name) key add1 0))
+(define (inc! dict-name key)
+  (let ([table (dict-ref *tables* dict-name (make-hash))])
+    (dict-set! *tables* dict-name table)
+    (dict-update! table key add1 0)))
 
 (provide note-speaker!)
 (define (note-speaker! s)
