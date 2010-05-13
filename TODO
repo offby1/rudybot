@@ -35,3 +35,13 @@ directed at someone who probably isn't present.
 I just saw the bot respond with "\1ACTION does something or other\1",
 which was weird; it should have either said nothing, or else jsut
 "does something or other". 
+** Use the same logic ...
+... to initially create "parsed-log", as to add individual utterances
+to it.
+
+For example, I'm pretty sure I omit utterances that are addressed to
+the bot, and begin with a command; i.e., when jordanb says "rudybot:
+quote", I don't add that, since it'd be dull.
+
+And yet when log-parser creates parsed-log, it blithely adds
+everything.
