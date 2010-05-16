@@ -56,35 +56,34 @@
                      (connect-and-run server-maker (add1 consecutive-failed-connections)))])
     (let-values (((ip op)
                   (server-maker)))
-      (let ([ch (make-channel)])
-        (log "Bot version ~a starting" (git-version))
-        (let do-one-line ((cfc consecutive-failed-connections))
-          (let ((ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ip))
-                (retry (lambda ()
-                         (close-input-port ip)
-                         (close-output-port op)
-                         (connect-and-run server-maker (add1 cfc)))))
+      (log "Bot version ~a starting" (git-version))
+      (let do-one-line ((cfc consecutive-failed-connections))
+        (let ((ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ip))
+              (retry (lambda ()
+                       (close-input-port ip)
+                       (close-output-port op)
+                       (connect-and-run server-maker (add1 cfc)))))
 
-            (if (not ready-ip)
-                (begin
-                  (log
-                   "Bummer: ~a seconds passed with no news from the server"
-                   (*bot-gives-up-after-this-many-silent-seconds*))
-                  (retry))
-                (let ((line (read-line ready-ip 'return-linefeed)))
-                  (match line
-                    [(? eof-object?)
-                     (when retry-on-hangup?
-                       (log
-                        "Uh oh, server hung up on us")
-                       (retry))]
-                    [(regexp #rx"^ERROR :(.*)$" (list _ whine))
-                     (log "Hmm, error: ~s" whine)
-                     (retry)]
-                    [_
-                     (parameterize ([*irc-output* op])
-                       (slightly-more-sophisticated-line-proc line))
-                     (do-one-line 0)])))))))))
+          (if (not ready-ip)
+              (begin
+                (log
+                 "Bummer: ~a seconds passed with no news from the server"
+                 (*bot-gives-up-after-this-many-silent-seconds*))
+                (retry))
+              (let ((line (read-line ready-ip 'return-linefeed)))
+                (match line
+                  [(? eof-object?)
+                   (when retry-on-hangup?
+                     (log
+                      "Uh oh, server hung up on us")
+                     (retry))]
+                  [(regexp #rx"^ERROR :(.*)$" (list _ whine))
+                   (log "Hmm, error: ~s" whine)
+                   (retry)]
+                  [_
+                   (parameterize ([*irc-output* op])
+                     (slightly-more-sophisticated-line-proc line))
+                   (do-one-line 0)]))))))))
 
 (provide/contract
  [connect-and-run
