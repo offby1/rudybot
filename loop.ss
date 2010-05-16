@@ -42,7 +42,6 @@
          (consecutive-failed-connections 0)
          #:retry-on-hangup? (retry-on-hangup? #t))
 
-  (*connection-start-time* (current-seconds))
   (set-box! *authentication-state* 'havent-even-tried)
 
   (when (positive? consecutive-failed-connections)
@@ -56,6 +55,7 @@
                      (connect-and-run server-maker (add1 consecutive-failed-connections)))])
     (let-values (((ip op)
                   (server-maker)))
+      (*connection-start-time* (current-seconds))
       (log "Bot version ~a starting" (git-version))
       (let do-one-line ((cfc consecutive-failed-connections))
         (let ((ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ip))
