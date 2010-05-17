@@ -4,6 +4,10 @@
 that is, don't let it grow without bound, but instead, once it gets to
 a certain size, rename it and start a new file.
 
+It might be easiest to invoke "multilog" from Dan Bernstein's
+"daemontools" (http://cr.yp.to/daemontools/daemontools-0.76.tar.gz ;
+available on Ubuntu 10.04 in the "daemontools" package)
+
 * Consider making the log a sequence of sexprs
 rather than lines: this will make it easier for programs to parse
 ... and it seems I'm writing more programs that want to parse it.
@@ -33,8 +37,8 @@ That's because it looks odd for the bot to utter something that's
 directed at someone who probably isn't present.
 ** Entirely omit, or at least trim, ACTION
 I just saw the bot respond with "\1ACTION does something or other\1",
-which was weird; it should have either said nothing, or else jsut
-"does something or other". 
+which was weird; it should have either said nothing, or else just
+"does something or other".
 ** Use the same logic ...
 ... to initially create "parsed-log", as to add individual utterances
 to it.
