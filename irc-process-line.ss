@@ -769,22 +769,21 @@
       (let* ((verb (string->symbol (string-downcase (car words))))
              (proc (or (hash-ref verbs verb #f)
                        (and (is-master?) (hash-ref master-verbs verb #f)))))
-        (let ([words-glued-back-together (string-join words " ")])
-          (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
-          (if proc
-              (proc (cdr words))
-              (let ([incubot-witticism ((*incubot-server*) 'get words)])
-                (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
-                (define (trim-ACTION str)
-                  (regexp-replace #rx"\1ACTION (.*)\1" str "\\1"))
-                (define (trim-leading-nick str)
-                  (if (regexp-match #px"^http(s)?://" str)
-                      str
-                      ((strip-just-one #px"^\\w+?: *") str)))
+        (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
+        (if proc
+            (proc (cdr words))
+            (let ([incubot-witticism ((*incubot-server*) 'get words)])
+              (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
+              (define (trim-ACTION str)
+                (regexp-replace #rx"\1ACTION (.*)\1" str "\\1"))
+              (define (trim-leading-nick str)
+                (if (regexp-match #px"^http(s)?://" str)
+                    str
+                    ((strip-just-one #px"^\\w+?: *") str)))
 
-                (if incubot-witticism
-                    (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism)))
-                    (reply "eh?  Try \"~a: help\"." (unbox *my-nick*))))))
+              (if incubot-witticism
+                  (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism)))
+                  (reply "eh?  Try \"~a: help\"." (unbox *my-nick*)))))
 
         (note-we-did-something-for! for-whom)))))
 
