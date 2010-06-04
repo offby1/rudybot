@@ -172,6 +172,7 @@
              (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
              inner-words ...
              (regexp #px"(.*)\u0001$" (list _ trailing )))
+       ((*incubot-server*) 'put (string-join (append inner-words (list trailing)) " "))
        (espy target
              (format "doing ~a: ~a" extended-data-word
                      (string-join

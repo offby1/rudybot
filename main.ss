@@ -52,7 +52,9 @@ fi
                      (c "settle")
                      (meh "frotz: plotz.")
                      (c "everyone")
-                     (c "plotz")))
+                     (c "plotz")
+                     (meh "\1ACTION fred eats salami\1")
+                     (c "salami")))
                    (#f
                     ;; Typical stuff from ircd-seven
                     `(":bartol.freenode.net NOTICE * :*** No Ident response"
