@@ -5,19 +5,26 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme
-(require schemeunit schemeunit/text-ui
-         scheme/set
-         mzlib/trace
-         (only-in "log-parser.ss" utterance-text ))
+(require
+ scheme/set
+ scheme/include
+ (only-in "log-parser.ss" utterance-text ))
+
+(include "incubot-tests.ss")
 
 (provide (except-out (struct-out corpus) make-corpus))
 (define-struct corpus (strings strings-by-word) #:transparent)
+
+(provide (rename-out [public-make-corpus make-corpus]))
+(define/contract (public-make-corpus . sentences)
+  (->* () () #:rest (listof string?) corpus?)
+  (make-corpus-from-sequence  (in-list sentences)))
 
 (define (random-favoring-smaller-numbers k)
   (let (
         ;; 0 <= r < 1, but smaller numbers are more likely
         [r (/(sub1 (exp (random))) (sub1 (exp 1)))])
-    
+
     (inexact->exact
      (truncate
       (* r k) ;; 0 <= this < k
@@ -51,35 +58,36 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (string? corpus? . -> . boolean?)
   (set-member? (corpus-strings c) s))
 
-(define (hash-append h key value)
-  (hash-set h key (cons value (hash-ref h key '()))))
+(define (make-corpus-from-sequence seq [limit #f])
+  (let/ec return
+    (for/fold ([c (make-corpus
+                   (set)
+                   (make-immutable-hash '()))])
+        ([sentence seq]
+         [forms-read (in-naturals)])
+        (when (equal? limit forms-read)
+          (return c))
 
-(provide (rename-out [public-make-corpus make-corpus]))
-(define/contract (public-make-corpus . sentences)
-  (->* () () #:rest (listof string?) corpus?)
-  (for/fold ([c (make-corpus
-                 (set)
-                 (make-immutable-hash '()))])
-      ([s (in-list sentences)])
-      (add-to-corpus s c)))
+      (add-to-corpus sentence c))))
 
 (provide make-corpus-from-sexps)
 (define (make-corpus-from-sexps inp [limit #f])
-  (let/ec enough-already
-    (for/fold ([c (public-make-corpus)])
-        ([form (in-port read inp)]
-         [forms-read (in-naturals)])
-        (when (equal? limit forms-read)
-          (enough-already c))
-        (add-to-corpus (utterance-text form) c))))
+  (make-corpus-from-sequence
+   (in-port
+    (lambda (ip)
+      (let ([datum (read ip)])
+        ;; this sure seems kludgy.  I wonder if there's a better way
+        (if (eof-object? datum)
+            datum
+            (utterance-text datum))))
+    inp)
+   limit))
 
 (provide make-corpus-from-file)
 (define (make-corpus-from-file ifn)
   (call-with-input-file ifn
     (lambda (ip)
-      (for/fold ([c (public-make-corpus)])
-          ([line (in-lines ip)])
-          (add-to-corpus line c)))))
+      (make-corpus-from-sequence (in-lines ip)))))
 
 (provide add-to-corpus)
 (define/contract (add-to-corpus s c)
@@ -88,11 +96,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
    (set-add (corpus-strings c) s)
    (for/fold ([h (corpus-strings-by-word c)])
        ([w (in-set (string->words s))])
-       (hash-append h w s))))
-
-(define (legitimate-response? thing corpus)
-  (or (not thing)
-      (in-corpus? thing corpus)))
+       (hash-update h w (curry cons s) '()))))
 
 (define/contract (wordlist->wordset ws)
   ((listof string?) . -> . set?) ;; it'd be nice if I could say "a set whose
@@ -111,29 +115,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
   (string? . -> . set?)
   (wordlist->wordset (regexp-split #rx" " (string-downcase s))))
 
-(define-binary-check (check-sets-equal? actual expected)
-  (and (set-empty? (set-subtract actual expected))
-       (set-empty? (set-subtract expected actual))))
-
-(define-test-suite string->words-tests
-  (check-sets-equal? (string->words "...") (set))
-  (check-sets-equal? (string->words "Hey you!!") (set "hey" "you"))
-  (check-sets-equal? (string->words "YO MOMMA") (set "yo" "momma"))
-  (check-sets-equal? (string->words "Don't get tripped up by 'apostrophes'")
-                     (set "don't" "get" "tripped" "up" "by" "apostrophes"))
-  ;; apostrophes can really trip you up the most
-  )
-
 (define/contract (word-popularity w c)
   (string? corpus? . -> . natural-number/c)
   (length (hash-ref (corpus-strings-by-word c) w '())))
-
-(provide make-test-corpus)
-(define (make-test-corpus)
-  (public-make-corpus
-   "waka ja waka"
-   "Some thing"
-   "Some thing else"))
 
 (define/contract (rarest ws c)
   (-> set? corpus? (or/c string? #f))
@@ -155,82 +139,3 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     (and result
          (car result))))
 
-(define-test-suite rarest-tests
-  (let ([c (make-test-corpus)])
-    (check-equal? (rarest (set "some" "else") c) "else")
-    (check-equal? (rarest (set "some") c) "some")
-    (check-false (rarest (set "ummagumma") c))))
-
-(define-test-suite popularity-tests
-  (check-equal? (word-popularity "frotz" (make-test-corpus)) 0)
-  (check-equal? (word-popularity "else"  (make-test-corpus)) 1)
-
-  ;; Note that if a word appears twice or more in a given sentence, we
-  ;; only count it once.  No particular reason, except that this seems
-  ;; like it will be easy.
-  (check-equal? (word-popularity "waka"  (make-test-corpus)) 1)
-
-  (check-equal? (word-popularity "some"  (make-test-corpus)) 2)
-  (check-equal? (word-popularity "thing" (make-test-corpus)) 2)
-
-  (let ([bigger (add-to-corpus "Pound cake" (make-test-corpus))])
-    (check-equal? (word-popularity "frotz" bigger) 0)
-    (check-equal? (word-popularity "else"  bigger) 1)
-    (check-equal? (word-popularity "some"  bigger) 2)
-    (check-equal? (word-popularity "thing" bigger) 2)
-    (check-equal? (word-popularity "pound" bigger) 1)
-    (check-equal? (word-popularity "cake"  bigger) 1)))
-
-
-(define-test-suite incubot-sentence-tests
-  (let ([corpus (make-test-corpus)])
-    (let* ([input-1 "For Phillip Morris ... from Western Union"]
-           [output-1 (incubot-sentence input-1 corpus)]
-           [input-2 "I have no words in common with input-1"]
-           [output-2 (incubot-sentence input-2 corpus)])
-    (check-not-false (legitimate-response? output-1 corpus) )
-    (check-not-false (legitimate-response? output-2 corpus))
-
-    ;; Since the two input sentences have nothing in common, we should
-    ;; have come up with different outputs for each ... unless we
-    ;; failed to come up with anything for either.
-    (check-not-false (or (and (not output-1)
-                              (not output-2))
-                         (not (equal? output-1 output-2))))
-
-    (check-equal?
-     (incubot-sentence
-      "What else do you want?"
-      (make-test-corpus))
-     "Some thing else"))))
-
-(define-test-suite all-tests
-  string->words-tests
-  rarest-tests
-  incubot-sentence-tests
-  popularity-tests
-  )
-
-(define (main . args)
-  (let ([status (run-tests all-tests 'verbose)])
-    (when (positive? status)
-      (exit 1))
-    (let ([c (time
-              (call-with-input-file
-                  ;; biggest .txt file I could find already on my box
-                  ;; from the "ipython" package
-                  "parsed-log"
-                (lambda (inp)
-                  (make-corpus-from-sexps inp 1000))))])
-      (for ([inp (in-list (list
-                           "Oh shit"
-                           "Oops, ate too much cookie dough"
-                           "It's almost inconceivable that none of these words appears in that manual"
-                           "I'm impressed that I can find stuff already."))])
-        (printf "~a => ~a~%" inp (incubot-sentence inp  c)))
-      (for ([inp (in-list (list
-                           (list "whOa" "nellie")
-                           (list "Oops" "ate" "too" "much" "cookie" "dough")))])
-        (printf "~a => ~a~%" inp (incubot-sentence inp  c))))))
-
-(provide main)

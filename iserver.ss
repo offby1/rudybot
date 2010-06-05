@@ -28,14 +28,14 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                               (fprintf (current-error-port)
                                        "Ooops: ~a~%" (exn-message e))
                               (exit 1))])
-         
+
         (fprintf (current-error-port) "Reading log from ~a..." ifn)
         (begin0
-            (call-with-input-file ifn 
+            (call-with-input-file ifn
               (lambda (ip)
                 (make-corpus-from-sexps ip)))
           (fprintf (current-error-port) "Reading log from ~a...done" ifn)))))]
-   
+
    [(? corpus? c)
     (let ([*to-server*   (make-channel)]
           [*from-server* (make-channel)])
@@ -55,7 +55,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
            (match (channel-get *to-server*)
              [(cons symbol inp)
               (loop ((hash-ref funcs-by-symbol symbol) inp c))]))))
-    
+
       (lambda (command-sym inp)
         (log "incubot ~a ~s" command-sym inp)
         (channel-put *to-server* (cons command-sym inp))
