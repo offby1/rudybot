@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec mzscheme -W debug --require $0 --main -- ${1+"$@"}
+exec mzscheme --require $0 --main -- ${1+"$@"}
 |#
 
 #lang scheme
