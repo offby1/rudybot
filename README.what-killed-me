@@ -1,0 +1,23 @@
+2010-06-18T03:05:12Z <= ":toast`!~toast`@c-71-227-233-160.hsd1.wa.comcast.net PRIVMSG #scheme :ha, really?"
+2010-06-18T03:05:12Z incubot put "ha, really?"
+2010-06-18T03:05:13Z <= ":eli!~eli@winooski.ccs.neu.edu PRIVMSG #scheme :rudybot: eval ((GRAB) 'sq)"
+2010-06-18T03:05:13Z Doing eval ("((GRAB)" "'sq)")
+2010-06-18T03:05:13Z => "PRIVMSG #scheme :eli: error: reference to undefined identifier: sq"
+2010-06-18T03:05:15Z <= ":fro0g_!~dwa@87.192.28.247 JOIN :#emacs"
+2010-06-18T03:05:19Z <= ":eli!~eli@winooski.ccs.neu.edu PRIVMSG #scheme :rudybot: eval ((GRAB) 'b)"
+2010-06-18T03:05:19Z Doing eval ("((GRAB)" "'b)")
+2010-06-18T03:05:19Z => "PRIVMSG #scheme :eli: ; Value: #&2"
+2010-06-18T03:05:20Z <= ":chandler!~n@opendarwin/developer/chandler PRIVMSG #scheme :rudybot: give toast` (let* ([k #f] [v (call/cc (lambda (k^) (set! k k^) 0))]) (printf \"A value: ~a~%\" v) k)"
+2010-06-18T03:05:20Z Doing give ("toast`" "(let*" "([k" "#f]" "[v" "(call/cc" "(lambda" "(k^)" "(set!" "k" "k^)" "0))])" "(printf" "\"A" "value:" "~a~%\"" "v)" "k)")
+2010-06-18T03:05:20Z => "PRIVMSG #scheme :toast`: chandler has given you a value, say \"rudybot: eval (GRAB)\""
+2010-06-18T03:05:20Z => "PRIVMSG #scheme :chandler: ; stdout: \"A value: 0\\n\""
+2010-06-18T03:05:37Z <= ":codemac!~codemac@archlinux/developer/codemac QUIT :Ping timeout: 245 seconds"
+2010-06-18T03:05:41Z <= ":chandler!~n@opendarwin/developer/chandler PRIVMSG #scheme :toast`: Try ((GRAB) 1) ."
+2010-06-18T03:05:41Z incubot put "toast`: Try ((GRAB) 1) ."
+2010-06-18T03:05:53Z <= ":eli!~eli@winooski.ccs.neu.edu PRIVMSG #scheme :toast`: The implicit value to `eval' is the current namespace, which in my case is from my own sandbox."
+2010-06-18T03:05:53Z incubot put "toast`: The implicit value to `eval' is the current namespace, which in my case is from my own sandbox."
+2010-06-18T03:05:56Z <= ":toast`!~toast`@c-71-227-233-160.hsd1.wa.comcast.net PRIVMSG #scheme :rudybot: eval ((GRAB) 1)"
+2010-06-18T03:05:56Z Doing eval ("((GRAB)" "1)")
+
+SIGSEGV MAPERR si_code 1 fault on addr (nil)
+Aborted
