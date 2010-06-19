@@ -31,6 +31,24 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                      result))
             (reverse result)))))))
 
+;; Yes, we're screen-scraping, in direct defiance of tinyurl's wishes.
+;; I've asked them for API info as of June 2010, and will use their
+;; API if it's convenient.  If not, there are plenty of other
+;; URL-shortening services out there, at least some of which also have
+;; APIs.  From the list at
+;; http://www.shareaholic.com/account/services:
+
+
+;; | bit.ly    | free API; requires registration                |
+;; | clicky.me | ditto                                          |
+;; | digg      | unclear.  Anyway, feh.                         |
+;; | hub.tm    | seems dead                                     |
+;; | ls.gd     | apparently no API                              |
+;; | j.mp      | redirects to bit.ly                            |
+;; | su.pr     | web site blares "get more traffic" -- bad sign |
+;; | tinyurl   | supposedly has API; enquired for details       |
+;; | goo.gl    | for google products only                       |
+
 (define (url->tinyrul-html url reader)
   (call/input-url
    (string->url "http://tinyurl.com/create.php")
@@ -41,19 +59,6 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
        (parameterize ((current-alist-separator-mode 'amp))
          (alist->form-urlencoded `((url . ,url)))))
 
-      ;; this works as is, but let us note
-      ;; for the record that the "tinyurl
-      ;; creator" extension for Firefox
-      ;; (https://addons.mozilla.org/en-US/firefox/addon/126)
-      ;; passes a buttload more headers,
-      ;; namely
-
-      ;; ("User-Agent", navigator.userAgent);
-      ;; ("Accept", "text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,video/x-mng,image/png,image/jpeg,image/gif;q=0.2,*/*;q=0.1");
-      ;; ("Accept-Language", navigator.language);
-      ;; ("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-      ;; ("Referer", "http://tinyurl.com/");
-
       (cons "Content-Type: application/x-www-form-urlencoded"
             '())))
    reader))
@@ -62,12 +67,6 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define (make-tiny-url url)
   (match (url->tinyrul-html
           url
-          ;; Yes, we're screen-scraping, in direct defiance of
-          ;; tinyurl's wishes.  I've asked them for API info as of
-          ;; June 2010, and will use their API if it's convenient.  If
-          ;; not, there are plenty of other URL-shortening services
-          ;; out there, at least some of which also have APIs.  See
-          ;; http://www.shareaholic.com/account/services for a list.
           (lambda (ip) (regexp-match #px"\\[<a href=\"(http://tinyurl.com/(.*?))\"" ip)))
     [(list whole result last-bit)
      (bytes->string/utf-8 result)]
