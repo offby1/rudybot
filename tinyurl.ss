@@ -27,16 +27,15 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
        (parameterize ((current-alist-separator-mode 'amp))
          (alist->form-urlencoded `((url . ,url)))))
 
-      (cons "Content-Type: application/x-www-form-urlencoded"
-            '())))
+      (list "Content-Type: application/x-www-form-urlencoded")))
    reader))
 
 ;; string? -> string?
 (define (make-tiny-url url)
   (match  (url->tinyurl-body url port->string)
-    ["Error"
-     "??"]
-    [(regexp #rx"http://.*" url) (first url)]))
+    [(regexp #rx"http://.*" (list url))
+     url]
+    [_ "??"]))
 
 
 (define tinyurl-tests
