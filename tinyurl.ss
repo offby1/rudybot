@@ -5,16 +5,14 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 
-(require html
-         xml
-         net/uri-codec
-         net/url
-         (planet schematics/schemeunit:3)
-         (planet schematics/schemeunit:3/text-ui))
-
-(define *tinyurl-url-length-threshold* (make-parameter 75))
+(require
+ net/uri-codec
+ net/url
+ (planet schematics/schemeunit:3)
+ (planet schematics/schemeunit:3/text-ui))
 
 ;; stolen from erc-button.el in Emacs 22
+(provide url-regexp)
 (define url-regexp (pregexp "http(s)?(//[-a-zA-Z0-9_.]+:[0-9]*)?[-a-zA-Z0-9_=!?#$@~`%&*+\\/:;.,]+[-a-zA-Z0-9_=#$@~`%&*+\\/]"))
 
 (define (url->tinyurl-body url reader)
@@ -30,7 +28,7 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
       (list "Content-Type: application/x-www-form-urlencoded")))
    reader))
 
-;; string? -> string?
+(provide/contract [make-tiny-url (string? . -> . string?)])
 (define (make-tiny-url url)
   (match  (url->tinyurl-body url port->string)
     [(regexp #rx"http://.*" (list url))
@@ -70,5 +68,5 @@ exec mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define (main . args)
   (exit (run-tests tinyurl-tests 'verbose)))
-(provide/contract [make-tiny-url (string? . -> . string?)])
-(provide url-regexp main)
+
+(provide main)
