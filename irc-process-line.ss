@@ -98,12 +98,14 @@
   (log "Uh oh!"))
 
 (define (send-NICK-and-USER)
-  (log "got a NOTICE ... auth state is ~s" (unbox *authentication-state*))
   (when (eq? (unbox *authentication-state*) 'havent-even-tried)
     (out "NICK ~a" (unbox *my-nick*))
     ;; RFC 1459 suggests that most of this data is ignored.
     (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
          (git-version))
+    (if (*nickserv-password*)
+        (pm "NickServ" "identify ~a" (*nickserv-password*))
+        (log "I'd register my nick, if I had a password."))
     (set-box! *authentication-state* 'tried)))
 
 ;; This message doesn't contain much information; it really just means
@@ -126,19 +128,6 @@
        (set-box! *my-nick* new-nick)]
       [_ (log "I seem to have said ~s" (*current-words*))])
     (match (*current-words*)
-      [(list "NOTICE" my-nick ":This"  "nickname" "is" "registered."
-             yaddayaddayadda ...)
-       (when (and
-              ;; in ircd-seven, the nick is "notice"; in an older
-              ;; version, it's "NickServ"
-              (member nick (list "notice" "NickServ"))
-              (equal? id  "NickServ")
-              (equal? host "services."))
-         (if (*nickserv-password*)
-             (begin
-               (log "Gotta register my nick.")
-               (pm "NickServ" "identify ~a" (*nickserv-password*)))
-             (log "I'd register my nick, if I had a password.")))]
       [(list "KICK" target victim mumblage ...)
        (espy target (format "kicking ~a" victim) mumblage)]
       [(list "MODE" target mode-data ...)
