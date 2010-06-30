@@ -275,6 +275,13 @@
        ((1)
         (log "Yay, we're in")
         (set-box! *authentication-state* 'succeeded)
+        ;; BUGBUG --this appears to be to soon to join.  _Most_
+        ;; channels will let us join now; but some require that we
+        ;; authenticate with nickserv first, and at this point, even
+        ;; though we've already sent our password via
+        ;; send-NICK-and-USER, Nickserv hasn't processed it.  We thus
+        ;; need to wait until Nickserv has acknowledged our attempt to
+        ;; authenticate..
         (for ([c (*initial-channels*)]) (out "JOIN ~a" c)))
        ((366)
         (log "I, ~a, seem to have joined channel ~a."
