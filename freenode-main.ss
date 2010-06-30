@@ -16,23 +16,18 @@ exec mzscheme --require $0 --main -- ${1+"$@"}
 (require mzlib/trace)
 (define (main . args)
   (clearenv)
+  (command-line
+   #:program "rudybot"
+   #:once-each)
+
   (log "Main starting: ~a" (git-version))
   (parameterize ([*irc-server-hostname* "irc.freenode.org"]
                  [*irc-server-port* 6667]
                  [*userinfo-database-directory-name* "userinfo.db"]
                  [current-trace-notify (lambda (string) (log-debug string))]
                  [*incubot-server* (make-incubot-server "parsed-log")]
-                 [*incubot-logger* log])
-    (command-line
-     #:program "rudybot"
-     #:once-each
-
-     ;; BUGBUG -- pass this via the environment, rather than the
-     ;; command line.  We can retrieve the value before calling
-     ;; "clearenv".
-     [("-p" "--nickserv-password") pw
-      "Password to identify with NickServ"
-      (*nickserv-password* pw)])
+                 [*incubot-logger* log]
+                 [*nickserv-password* (get-preference '|rudybot-freenode-nickserv-password|)])
 
     (if (*nickserv-password*)
         (connect-and-run real-server)
