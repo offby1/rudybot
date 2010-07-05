@@ -22,6 +22,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 (define make-incubot-server
   (match-lambda
    [(? string? ifn)
+    (call-with-input-file ifn make-incubot-server)]
+   [(? input-port? inp)
+    (fprintf (current-error-port) "Reading log from ~a..." inp)
     (make-incubot-server
      (time
       (with-handlers ([exn? (lambda (e)
@@ -29,13 +32,9 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
                                        "Ooops: ~a~%" (exn-message e))
                               (exit 1))])
 
-        (fprintf (current-error-port) "Reading log from ~a..." ifn)
         (begin0
-            (call-with-input-file ifn
-              (lambda (ip)
-                (make-corpus-from-sexps ip)))
-          (fprintf (current-error-port) "Reading log from ~a...done" ifn)))))]
-
+            (make-corpus-from-sexps inp)
+          (fprintf (current-error-port) "Reading log from ~a...done" inp)))))]
    [(? corpus? c)
     (let ([*to-server*   (make-channel)]
           [*from-server* (make-channel)])
@@ -63,7 +62,13 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (provide main)
 (define (main . args)
-  (let ([s (make-incubot-server "parsed-log")])
+  (let ([s (make-incubot-server
+            (open-input-string
+             (string-append
+              "#s(utterance \"2010-01-19T03:01:31Z\" \"offby1\" \"##cinema\" \"Let's make hamsters race\")"
+              "\n"
+              "#s(utterance \"2010-01-19T03:01:31Z\" \"offby1\" \"##cinema\" \"Gimme some dough\")")
+             ))])
     (define (get input) (s 'get input))
     (define (put sentence) (s 'put sentence))
 
@@ -74,4 +79,3 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
     (put "What is all this shit?")
     (try "hamsters")
     (try "Oh shit")))
-
