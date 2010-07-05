@@ -282,6 +282,8 @@
         ;; send-NICK-and-USER, Nickserv hasn't processed it.  We thus
         ;; need to wait until Nickserv has acknowledged our attempt to
         ;; authenticate..
+
+        ;; ":NickServ!NickServ@services. NOTICE rudybot :You are now identified for \u0002rudebot\u0002."
         (for ([c (*initial-channels*)]) (out "JOIN ~a" c)))
        ((366)
         (log "I, ~a, seem to have joined channel ~a."
