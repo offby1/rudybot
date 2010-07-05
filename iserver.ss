@@ -74,6 +74,7 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
       (try "Oh shit")
       (try "Oops, ate too much cookie dough")
+      (try "OOPS, ATE TOO MUCH COOKIE DOUGH")
       (put "What is all this shit?")
       (try "hamsters")
       (try "Oh shit"))))
