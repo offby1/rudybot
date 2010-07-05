@@ -11,9 +11,6 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
  (only-in "vars.ss" *incubot-logger*)
  (only-in "log-parser.ss" utterance-text))
 
-(define (pf fmt . args)
-  (apply fprintf (current-error-port) fmt args))
-
 (define (log fmt . args)
   (when (*incubot-logger*)
     (apply (*incubot-logger*) fmt args)))
@@ -24,17 +21,16 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
    [(? string? ifn)
     (call-with-input-file ifn make-incubot-server)]
    [(? input-port? inp)
-    (fprintf (current-error-port) "Reading log from ~a..." inp)
+    (log "Reading log from ~a..." inp)
     (make-incubot-server
      (time
       (with-handlers ([exn? (lambda (e)
-                              (fprintf (current-error-port)
-                                       "Ooops: ~a~%" (exn-message e))
-                              (exit 1))])
+                              (log "Ooops: ~a~%" (exn-message e))
+                              (lambda ignored #f))])
 
         (begin0
             (make-corpus-from-sexps inp)
-          (fprintf (current-error-port) "Reading log from ~a...done" inp)))))]
+          (log "Reading log from ~a...done~%" inp)))))]
    [(? corpus? c)
     (let ([*to-server*   (make-channel)]
           [*from-server* (make-channel)])
@@ -62,20 +58,22 @@ exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (provide main)
 (define (main . args)
-  (let ([s (make-incubot-server
-            (open-input-string
-             (string-append
-              "#s(utterance \"2010-01-19T03:01:31Z\" \"offby1\" \"##cinema\" \"Let's make hamsters race\")"
-              "\n"
-              "#s(utterance \"2010-01-19T03:01:31Z\" \"offby1\" \"##cinema\" \"Gimme some dough\")")
-             ))])
-    (define (get input) (s 'get input))
-    (define (put sentence) (s 'put sentence))
+  (parameterize
+      ([*incubot-logger* (lambda (fmt . args) (apply fprintf (current-error-port) fmt args))])
+    (let ([s (make-incubot-server
+              (open-input-string
+               (string-append
+                "#s(utterance \"2010-01-19T03:01:31Z\" \"offby1\" \"##cinema\" \"Let's make hamsters race\")"
+                "\n"
+                "#s(utterance \"2010-01-19T03:01:31Z\" \"offby1\" \"##cinema\" \"Gimme some dough\")")
+               ))])
+      (define (get input) (s 'get input))
+      (define (put sentence) (s 'put sentence))
 
-    (define (try input) (printf "~a => ~s~%" input (time (get input))))
+      (define (try input) (printf "~a => ~s~%" input (time (get input))))
 
-    (try "Oh shit")
-    (try "Oops, ate too much cookie dough")
-    (put "What is all this shit?")
-    (try "hamsters")
-    (try "Oh shit")))
+      (try "Oh shit")
+      (try "Oops, ate too much cookie dough")
+      (put "What is all this shit?")
+      (try "hamsters")
+      (try "Oh shit"))))
