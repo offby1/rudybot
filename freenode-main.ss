@@ -25,8 +25,8 @@ exec mzscheme --require $0 --main -- ${1+"$@"}
                  [*irc-server-port* 6667]
                  [*userinfo-database-directory-name* "userinfo.db"]
                  [current-trace-notify log-debug]
-                 [*incubot-server* (make-incubot-server "parsed-log")]
                  [*incubot-logger* log]
+                 [*incubot-server* (make-incubot-server "parsed-log")]
                  [*nickserv-password* (get-preference '|rudybot-freenode-nickserv-password|)])
 
     (if (*nickserv-password*)
