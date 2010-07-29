@@ -49,3 +49,20 @@ quote", I don't add that, since it'd be dull.
 
 And yet when log-parser creates parsed-log, it blithely adds
 everything.
+
+** Underweight recent utterances
+
+#+BEGIN_EXAMPLE
+<jordanb> Offby1 should make a lolbot.
+<offby1> already did
+<jordanb> Heh
+<jordanb> Have it join. ^_^
+<jordanb> rudybot: lol
+<rudybot> jordanb: lol
+<jordanb> rudybot: lolbot                                                                                           [16:19]
+<rudybot> jordanb: Offby1 should make a lolbot.
+<jordanb> O                                                                                                         [16:21]
+* offby1 makes a mental note to underweight recent utterances
+<jordanb> I'm using emacs over X because it's less broken than tramp.
+ERC> 
+#+END_EXAMPLE
