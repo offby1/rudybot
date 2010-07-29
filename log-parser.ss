@@ -33,18 +33,25 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
                                "##cinema"
                                "rudybot: uptime"))))
 
+(define (pe fmt . args)
+  (apply fprintf (current-error-port) fmt args))
+
 (provide main)
 (define (main . args)
   (let ([test-failures (run-tests tests)])
     (when (zero? test-failures)
-      (call-with-input-file
-          (build-path (this-expression-source-directory) "big-log")
-        (lambda (ip)
-          (port-count-lines! ip)
-          (call-with-output-file "parsed-log"
-            (lambda (op)
-              (for ([line (in-lines ip)])
-                (let ([utz (string->utterance line)])
-                  (when utz (pretty-print utz op)))))
-            #:exists 'truncate)))))
-  )
+      (let ([input-file-name (build-path (this-expression-source-directory) "big-log")]
+            [output-file-name "parsed-log"])
+        (call-with-input-file
+            input-file-name
+          (lambda (ip)
+            (pe "Reading from ~a; writing to ~a..." input-file-name output-file-name)
+            (port-count-lines! ip)
+            (call-with-output-file output-file-name
+              (lambda (op)
+                (for ([line (in-lines ip)])
+                  (let ([utz (string->utterance line)])
+                    (when utz (pretty-print utz op)))))
+              #:exists 'truncate)))
+        (pe "done~%")))))
+
