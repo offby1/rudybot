@@ -3,10 +3,10 @@
 #lang scheme
 
 (require srfi/19
-         "vars.ss"
-         "git-version.ss"
-         (except-in "iserver.ss" main)
-         "reloadable.ss")
+         "vars.rkt"
+         "git-version.rkt"
+         (except-in "iserver.rkt" main)
+         "reloadable.rkt")
 
 (define *log-ports* (make-parameter (list (current-error-port)
                                           (open-output-file
@@ -26,7 +26,7 @@
     (newline op)))
 
 (define irc-process-line
-  (auto-reload-procedure "irc-process-line.ss" 'irc-process-line
+  (auto-reload-procedure "irc-process-line.rkt" 'irc-process-line
                          #:notifier log
                          #:on-reload (lambda () (git-version 'reset!))))
 

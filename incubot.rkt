@@ -1,16 +1,16 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id$
-exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
+exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme
 (require
  scheme/set
  scheme/include
- (only-in "log-parser.ss" utterance-text ))
+ (only-in "log-parser.rkt" utterance-text ))
 
-(include "incubot-tests.ss")
+(include "incubot-tests.rkt")
 
 (provide (except-out (struct-out corpus) make-corpus))
 (define-struct corpus (strings strings-by-word) #:transparent)

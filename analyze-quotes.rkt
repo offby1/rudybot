@@ -1,3 +1,4 @@
+;; Run me in "drRacket"
 #lang scheme
 (require plot
          (planet schematics/schemeunit:3)

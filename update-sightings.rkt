@@ -1,7 +1,7 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id: v4-script-template.ss 5863 2008-12-21 17:13:36Z erich $
-exec  mzscheme --require "$0" --main -- ${1+"$@"}
+exec  racket --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme
@@ -12,7 +12,7 @@ exec  mzscheme --require "$0" --main -- ${1+"$@"}
 ;;   create a file with the same name as the directory we just deleted
 ;;   write the list into that file
 
-(require "userinfo.ss")
+(require "userinfo.rkt")
 
 (define old-sightings-root "/home/erich/live-bot/sightings.db")
 (define new-sightings-root "/home/erich/live-bot/userinfo.db")

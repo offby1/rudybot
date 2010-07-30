@@ -1,17 +1,17 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec mzscheme --require $0 --main -- ${1+"$@"}
+exec racket --require $0 --main -- ${1+"$@"}
 |#
 
 #lang scheme
 
-(require "loop.ss"
-         "vars.ss"
-         "git-version.ss"
-         (except-in "clearenv.ss" main)
-         (only-in "main.ss" real-server)
-         (only-in "userinfo.ss" *userinfo-database-directory-name*)
-         (only-in "iserver.ss" make-incubot-server))
+(require "loop.rkt"
+         "vars.rkt"
+         "git-version.rkt"
+         (except-in "clearenv.rkt" main)
+         (only-in "main.rkt" real-server)
+         (only-in "userinfo.rkt" *userinfo-database-directory-name*)
+         (only-in "iserver.rkt" make-incubot-server))
 
 (require mzlib/trace)
 (define (main . args)

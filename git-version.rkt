@@ -1,6 +1,6 @@
 #lang scheme/base
 
-(require scheme/contract "utils.ss")
+(require scheme/contract "utils.rkt")
 
 (define git-versions (make-hash))
 

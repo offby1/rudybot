@@ -1,7 +1,7 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id: v4-script-template.ss 5887 2008-12-30 18:12:50Z erich $
-exec  mzscheme --require "$0" --main -- ${1+"$@"}
+exec  racket --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme

@@ -1,21 +1,21 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 if [ "x$BOTDEBUG" != "xno" ]; then
-  exec mzscheme -l errortrace --require $0 --main -- ${1+"$@"}
+  exec racket -l errortrace --require $0 --main -- ${1+"$@"}
 else
-  exec mzscheme --require $0 --main -- ${1+"$@"}
+  exec racket --require $0 --main -- ${1+"$@"}
 fi
 |#
 
 #lang scheme
 
-(require "loop.ss"
-         "vars.ss"
-         "git-version.ss"
-         (except-in "quotes.ss" main)
-         (except-in "clearenv.ss" main)
-         (only-in "incubot.ss" make-test-corpus)
-         (only-in "iserver.ss" make-incubot-server)
+(require "loop.rkt"
+         "vars.rkt"
+         "git-version.rkt"
+         (except-in "quotes.rkt" main)
+         (except-in "clearenv.rkt" main)
+         (only-in "incubot.rkt" make-test-corpus)
+         (only-in "iserver.rkt" make-incubot-server)
          scheme/port)
 
 (define (real-server)
@@ -45,7 +45,7 @@ fi
                     (display line op)
                     (display "\r\n" op))
                   (cond
-                   (#t
+                   (#f
                     (list
                      (meh "Hey everyone!  What's happening?")
                      (c "uptime")

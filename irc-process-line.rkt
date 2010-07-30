@@ -6,15 +6,15 @@
          scheme/system
          srfi/13
          srfi/14
-         (except-in "sandboxes.ss" main)
-         "vars.ss"
-         "git-version.ss"
-         "userinfo.ss"
-         "utils.ss"
-         (except-in "xlate.ss" main)
-         (except-in "spelled-out-time.ss" main)
-         (except-in "quotes.ss" main)
-         (except-in "tinyurl.ss" main)
+         (except-in "sandboxes.rkt" main)
+         "vars.rkt"
+         "git-version.rkt"
+         "userinfo.rkt"
+         "utils.rkt"
+         (except-in "xlate.rkt" main)
+         (except-in "spelled-out-time.rkt" main)
+         (except-in "quotes.rkt" main)
+         (except-in "tinyurl.rkt" main)
          (planet schematics/macro/macro)
          (planet neil/numspell/numspell)
          )
@@ -582,7 +582,7 @@
     [(not info) (reply "`~s' is a toplevel (or unbound) identifier" sym)]
     [(eq? info 'lexical) (reply "`~s' is a lexical identifier" sym)]
     [(or (not (list? info)) (not (= 7 (length info))))
-     (error "internal error, mzscheme changed on me")]
+     (error "internal error, racket changed on me")]
     [else
      (let-values ([(source-mod source-id
                     nominal-source-mod nominal-source-id

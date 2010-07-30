@@ -1,14 +1,14 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec  mzscheme --require "$0" --main -- ${1+"$@"}
+exec  racket --require "$0" --main -- ${1+"$@"}
 |#
 #lang scheme
 (require (planet schematics/schemeunit:2/test)
          (planet schematics/schemeunit:2/text-ui)
          (planet schematics/schemeunit:2/util)
-         "userinfo.ss")
+         "userinfo.rkt")
 
-(require/expose "userinfo.ss" (*downcase-nicks*))
+(require/expose "userinfo.rkt" (*downcase-nicks*))
 
 
 (define sighting-tests

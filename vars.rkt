@@ -1,6 +1,6 @@
 #lang scheme/base
 
-(require "utils.ss")
+(require "utils.rkt")
 (provide (all-defined-out))
 
 ;; This value depends on the server; this seems to work for freenode

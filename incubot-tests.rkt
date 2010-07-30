@@ -1,5 +1,5 @@
 ;; Not a complete file, as you can see; meant to be included into
-;; incubot.ss.
+;; incubot.rkt.
 (require schemeunit schemeunit/text-ui)
 
 (define-binary-check (check-sets-equal? actual expected)

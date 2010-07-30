@@ -1,15 +1,15 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
 #$Id$
-exec  mzscheme -l errortrace --require "$0" --main -- ${1+"$@"}
+exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang scheme
 
 (require
- (except-in "incubot.ss" main)
- (only-in "vars.ss" *incubot-logger*)
- (only-in "log-parser.ss" utterance-text))
+ (except-in "incubot.rkt" main)
+ (only-in "vars.rkt" *incubot-logger*)
+ (only-in "log-parser.rkt" utterance-text))
 
 (define (log fmt . args)
   (when (*incubot-logger*)
