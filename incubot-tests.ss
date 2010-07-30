@@ -91,7 +91,6 @@
     (let ([c (time
               (call-with-input-file
                   ;; biggest .txt file I could find already on my box
-                  ;; from the "ipython" package
                   "parsed-log"
                 (lambda (inp)
                   (make-corpus-from-sexps inp 1000))))])
