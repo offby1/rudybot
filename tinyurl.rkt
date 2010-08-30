@@ -54,16 +54,6 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                      "Can't contact tinyurl; skipping the test~%"))])
       (check-regexp-match
        #px"^http://tinyurl.com/.{5,6}$"
-       (make-tiny-url "http://photo.net"))))
-   (test-case
-    "including a user agent"
-    (with-handlers
-        ([exn:fail:network?
-          (lambda (e)
-            (fprintf (current-error-port)
-                     "Can't contact tinyurl; skipping the test~%"))])
-      (check-regexp-match
-       #px"^http://tinyurl.com/.{5,6}$"
        (make-tiny-url "http://photo.net"))))))
 
 (define (main . args)
