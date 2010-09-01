@@ -29,7 +29,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
                               (lambda ignored #f))])
 
         (begin0
-            (make-corpus-from-sexps inp)
+            (make-corpus-from-sexps inp 100000)
           (log "Reading log from ~a...done~%" inp)))))]
    [(? corpus? c)
     (let ([*to-server*   (make-channel)]
