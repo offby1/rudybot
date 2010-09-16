@@ -59,7 +59,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (provide main)
 (define (main . args)
   (parameterize
-      ([*incubot-logger* (lambda (fmt . args) (apply fprintf (current-error-port) fmt args))])
+      ([*incubot-logger* (curry fprintf (current-error-port))])
     (let ([s (make-incubot-server
               (open-input-string
                (string-append
