@@ -40,7 +40,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define/contract (strings-containing-word w c)
   (-> string? corpus? (listof string?))
-  (hash-ref (corpus-strings-by-word c) w))
+  (dict-ref (corpus-strings-by-word c) w))
 
 (provide  incubot-sentence)
 (define incubot-sentence
@@ -58,11 +58,16 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (string? corpus? . -> . boolean?)
   (set-member? (corpus-strings c) s))
 
+(define (make-immutable-ci-hash)
+  (make-immutable-custom-hash
+                    string-ci=?
+                    (compose equal-hash-code string-downcase)))
+
 (define (make-corpus-from-sequence seq [limit #f])
   (let/ec return
     (for/fold ([c (make-corpus
                    (set)
-                   (make-immutable-hash '()))])
+                   (make-immutable-ci-hash))])
         ([sentence seq]
          [forms-read (in-naturals)])
         (when (equal? limit forms-read)
@@ -96,7 +101,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    (set-add (corpus-strings c) s)
    (for/fold ([h (corpus-strings-by-word c)])
        ([w (in-set (string->words s))])
-       (hash-update h w (curry cons s) '()))))
+       (dict-update h w (curry cons s) '()))))
 
 (define/contract (wordlist->wordset ws)
   ((listof string?) . -> . set?) ;; it'd be nice if I could say "a set whose
@@ -117,7 +122,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define/contract (word-popularity w c)
   (string? corpus? . -> . natural-number/c)
-  (length (hash-ref (corpus-strings-by-word c) w '())))
+  (length (dict-ref (corpus-strings-by-word c) w '())))
 
 (define/contract (rarest ws c)
   (-> set? corpus? (or/c string? #f))
@@ -138,4 +143,3 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
                        (set-map ws values))])
     (and result
          (car result))))
-

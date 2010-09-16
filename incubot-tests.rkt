@@ -9,6 +9,7 @@
 (define-test-suite string->words-tests
   (check-sets-equal? (string->words "...") (set))
   (check-sets-equal? (string->words "Hey you!!") (set "hey" "you"))
+  (check-sets-equal? (string->words "HEY YOU!!") (set "hey" "you"))
   (check-sets-equal? (string->words "YO MOMMA") (set "yo" "momma"))
   (check-sets-equal? (string->words "Don't get tripped up by 'apostrophes'")
                      (set "don't" "get" "tripped" "up" "by" "apostrophes"))
@@ -75,10 +76,22 @@
         (make-test-corpus))
        "Some thing else"))))
 
+(define-test-suite lets-tests
+  (let ([corpus (public-make-corpus
+                 "Let's start with a capital letter"
+                 "let's ignore case"
+                 "LET'S SHOUT")])
+    (define (try input)
+      (printf "~s => ~s~%" input (incubot-sentence input corpus)))
+    (try "let's")
+    (try "Let's")
+    (try "LET'S")))
+
 (define-test-suite all-tests
   string->words-tests
   rarest-tests
   incubot-sentence-tests
+  lets-tests
   popularity-tests
   )
 
