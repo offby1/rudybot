@@ -82,10 +82,11 @@
                  "let's ignore case"
                  "LET'S SHOUT")])
     (define (try input)
-      (printf "~s => ~s~%" input (incubot-sentence input corpus)))
+      (check-not-false (incubot-sentence input corpus)))
     (try "let's")
     (try "Let's")
-    (try "LET'S")))
+    (try "LET'S")
+    (check-false (incubot-sentence "Snorgulation" corpus))))
 
 (define-test-suite all-tests
   string->words-tests
