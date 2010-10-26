@@ -10,7 +10,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
          (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui))
 
-(provide xlate main)
+(provide xlate t8 main)
 
 ;; Translate text using Google's translation APIs.
 
@@ -134,6 +134,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
            'responseData)
           'translatedText))
         (hash-ref stuff 'responseDetails))))
+(define t8 xlate)
 
 (define-test-suite xlate-tests
 
@@ -143,7 +144,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
   (check-equal?
    (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
-   "Chauve-souris: j'ai frotté dans votre visage encore?"))
+   "fledermaus: j'ai frotté dans votre visage encore?"))
 
 (define-test-suite all-tests
   replace-tests
