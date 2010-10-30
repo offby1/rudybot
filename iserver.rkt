@@ -19,7 +19,11 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (define make-incubot-server
   (match-lambda
    [(? string? ifn)
-    (call-with-input-file ifn make-incubot-server)]
+    (with-handlers ([exn:fail:filesystem?
+                     (lambda (e)
+                       (log "Uh oh: ~a; using empty corpus" (exn-message e))
+                       (make-corpus))])
+      (call-with-input-file ifn make-incubot-server))]
    [(? input-port? inp)
     (log "Reading log from ~a..." inp)
     (make-incubot-server
