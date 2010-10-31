@@ -473,42 +473,40 @@
         ;; (make-list 100000) is an example.
         (call-with-limits 10 20 ; 10sec, 20mb
           (lambda ()
-            (define (display-values values displayed)
-              (define (next) (display-values (cdr values) (add1 displayed)))
-              (cond ((null? values) (void))
-                    ((void? (car values)) (next))
+            (define (display-values values displayed shown?)
+              (define (next s?)
+                (display-values (cdr values) (add1 displayed) s?))
+              (cond ((null? values) shown?)
+                    ((void? (car values)) (next shown?))
                     ;; prevent flooding
                     ((>= displayed *max-values-to-display*)
                      (reply
                       "; ~a values is enough for anybody; here's the rest in a list: ~s"
                       (number->english *max-values-to-display*)
-                      (filter (lambda (x) (not (void? x))) values)))
+                      (filter (lambda (x) (not (void? x))) values))
+                     #t)
                     (else (reply "; Value~a: ~s"
                                  (if (positive? displayed)
                                    (format "#~a" (add1 displayed))
                                    "")
                                  (car values))
                           (sleep 1)
-                          (next))))
-            (define (display-output name output-getter)
-              (let ((output (output-getter s)))
-                (when (and (string? output) (positive? (string-length output)))
-                  (reply "; ~a: ~s" name output)
-                  (sleep 1))))
-            (cond ((not give-to) (display-values values 0))
-                  ((null? values)
-                   (error "no value to give"))
-                  ((not (null? (cdr values)))
-                   (error "you can only give one value"))
-                  (else
-                   (sandbox-give s give-to (car values))
-                   ;; BUGBUG -- we shouldn't put "my-nick" in the
-                   ;; string if we're talking to a nick, as opposed to
-                   ;; a channel.
-                   (let* ((msg* (format "has given you a value, say \"~a: eval (GRAB)\""
-                                        (unbox *my-nick*)))
-                          (msg  (string-append msg* " to get it (case sensitive)")))
-                     (if (not (regexp-match? #rx"^#" response-target))
+                          (next #t))))
+            (define (display-values/give)
+              (cond ((not give-to) (display-values values 0 #f))
+                    ((null? values)
+                     (error "no value to give"))
+                    ((not (null? (cdr values)))
+                     (error "you can only give one value"))
+                    (else
+                     (sandbox-give s give-to (car values))
+                     ;; BUGBUG -- we shouldn't put "my-nick" in the
+                     ;; string if we're talking to a nick, as opposed to
+                     ;; a channel.
+                     (let* ((msg* (format "has given you a value, say \"~a: eval (GRAB)\""
+                                          (unbox *my-nick*)))
+                            (msg  (string-append msg* " to get it (case sensitive)")))
+                       (if (not (regexp-match? #rx"^#" response-target))
                          ;; announce privately if given privately
                          (pm give-to "~a ~a" for-whom msg)
                          ;; cheap no-nag feature
@@ -516,14 +514,21 @@
                                 (msg (if (and l
                                               (equal? (car l) response-target)
                                               (< (- (current-seconds) (cdr l)) 120))
-                                         msg*
-                                         msg)))
+                                       msg*
+                                       msg)))
                            (set! last-give-instructions
                                  (cons response-target (current-seconds)))
                            (pm response-target
-                               "~a: ~a ~a" give-to for-whom msg))))))
-            (display-output 'stdout sandbox-get-stdout)
-            (display-output 'stderr sandbox-get-stderr)))))))
+                               "~a: ~a ~a" give-to for-whom msg))))
+                     #t))) ; said something
+            (define (display-output name output-getter)
+              (let ((output (output-getter s)))
+                (and (string? output) (positive? (string-length output))
+                     (begin (reply "; ~a: ~s" name output) (sleep 1) #t))))
+            (unless (or (display-values/give)
+                        (display-output 'stdout sandbox-get-stdout)
+                        (display-output 'stderr sandbox-get-stderr))
+              (reply "Done."))))))))
 
 (defverb #:whine (init ?lang)
   "initialize a sandbox, <lang> can be 'r5rs, 'scheme, 'scheme/base, etc"
