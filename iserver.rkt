@@ -13,7 +13,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define (log fmt . args)
   (when (*incubot-logger*)
-    (apply (*incubot-logger*) fmt args)))
+    (apply (*incubot-logger*) (string-append "incubot-server:" fmt) args)))
 
 (provide make-incubot-server)
 (define make-incubot-server
