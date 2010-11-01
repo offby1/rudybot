@@ -211,8 +211,7 @@
            (match word
              [(regexp url-regexp (list url _ _))
               (when (<= 75 (string-length url))
-                (pm #:notice? #t
-                    target
+                (pm target
                     "~a"
                     (make-tiny-url url)))]
              [_ #f])))
