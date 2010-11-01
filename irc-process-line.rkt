@@ -28,10 +28,15 @@
           [(string? mm) (equal? mm id)]
           [else #f])))
 
+;; (colon w) is a pattern that matches coloned words, and registers
+;; their position
+(define (starts-with-colon str)
+  (cond [(regexp-match-positions #rx"^:(.*)" str)
+         => (lambda (m) (substring+posn str (caadr m)))]
+        [else #f]))
 (define-match-expander colon
   (syntax-rules ()
-    [(colon w)
-     (regexp #rx"^:(.*)" (list _ w))]))
+    [(colon w) (app starts-with-colon w)]))
 
 (define (describe-since when)
   (spelled-out-time (- (current-seconds) when)))
@@ -260,7 +265,8 @@
       [(list "QUIT" (colon first-word) rest ...)
        (espy host "quitting"
              (cons first-word rest))]
-      [_ (log "~a said ~s, which I don't understand" nick (*current-words*))])))
+      [_ (log "~a said ~s, which I don't understand" nick
+              (text-from-word (*current-words*)))])))
 
 (defmatcher IRC-COMMAND (colon host)
   (match (*current-words*)
@@ -464,7 +470,7 @@
            ;; to `call-in-sandbox-context' which will deadlock.
            (error "Talk to yourself much too?"))))
   (let ((s (get-sandbox)))
-    (call-with-values (lambda () (sandbox-eval s (string-join words)))
+    (call-with-values (lambda () (sandbox-eval s (text-from-word words)))
       (lambda values
         ;; Even though the sandbox runs with strict memory and time limits, we
         ;; use call-with-limits here anyway, because it's possible that the
@@ -762,6 +768,22 @@
                   my-namespace)))))
 
 ;; ----------------------------------------------------------------------------
+;; Incubot-like
+
+(define (get-incubot-witticism words)
+  (define incubot-witticism ((*incubot-server*) 'get words))
+  (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
+  (define (trim-ACTION str)
+    (regexp-replace #rx"\1ACTION (.*)\1" str "\\1"))
+  (define (trim-leading-nick str)
+    (if (regexp-match #px"^http(s)?://" str)
+      str
+      ((strip-just-one #px"^\\w+?: *") str)))
+  (and incubot-witticism
+       (lambda ()
+         (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism))))))
+
+;; ----------------------------------------------------------------------------
 ;; Main dispatchers
 
 (define (do-cmd response-target for-whom words #:rate_limit? [rate_limit? #f])
@@ -770,28 +792,56 @@
     (if (and rate_limit? (we-recently-did-something-for for-whom))
       (log "Not doing anything for ~a, since we recently did something for them."
            for-whom)
-      (let* ((verb (string->symbol (string-downcase (car words))))
-             (proc (or (hash-ref verbs verb #f)
-                       (and (is-master?) (hash-ref master-verbs verb #f)))))
-        (log "~a ~a ~s" (if proc "Doing" "Not doing") verb (cdr words))
-        (if proc
-            (proc (cdr words))
-            (let ([incubot-witticism ((*incubot-server*) 'get words)])
-              (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
-              (define (trim-ACTION str)
-                (regexp-replace #rx"\1ACTION (.*)\1" str "\\1"))
-              (define (trim-leading-nick str)
-                (if (regexp-match #px"^http(s)?://" str)
-                    str
-                    ((strip-just-one #px"^\\w+?: *") str)))
-
-              (if incubot-witticism
-                  (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism)))
-                  (reply "eh?  Try \"~a: help\"." (unbox *my-nick*)))))
-
+      (let loop ([words words]
+                 [verb (string->symbol (string-downcase (car words)))])
+        (cond [(or (hash-ref verbs verb #f)
+                   (and (is-master?) (hash-ref master-verbs verb #f)))
+               => (lambda (p)
+                    (log "Doing for ~a: ~a ~s" for-whom verb (cdr words))
+                    (p (cdr words)))]
+              [(get-incubot-witticism words)
+               => (lambda (p)
+                    (log "Spewing wisdom for ~a re ~a"
+                         for-whom (text-from-word words))
+                    (p))]
+              [else (log "Not doing for ~a: ~a" for-whom (text-from-word words))
+                    (reply "eh?  Try \"~a: help\"." (unbox *my-nick*))])
         (note-we-did-something-for! for-whom)))))
 
+;; Maps a word to a (text . (start . end)) position in the original text
+;; (store the text to avoid worrying about a global `*current-line*'
+;; thing that can disappear)
+(define word-posns (make-weak-hasheq))
+;; Utility to get text from a word to the end (also accepts a list, and
+;; will use the first word); `emergency' is some value to use in case we
+;; don't find the text
+(define (text-from-word w [emergency w])
+  (cond [(pair? w) (text-from-word (car w) emergency)]
+        [(not (string? w))
+         (error 'text-from-word "Bad code, I have a bug -- got: ~s" w)]
+        [else (cond [(hash-ref word-posns w #f)
+                     => (lambda (p) (substring (car p) (cadr p)))]
+                    [(string? emergency) emergency]
+                    [(list? emergency) (string-join emergency " ")]
+                    [else (format "~a" emergency)])]))
+;; Sometimes we need to take a substring of a word -- so use this to
+;; register its info too
+(define (substring+posn str b [e (string-length str)])
+  (let ([p (hash-ref word-posns str #f)]
+        [r (substring str b e)])
+    (when p
+      (hash-set! word-posns r
+                 (cons (car p) (cons (+ (cadr p) b) (+ (cadr p) e)))))
+    r))
+
+(define rx:word #px"(?:\\p{L}+|\\p{N}+|\\p{S}|\\p{P})+")
 (define (irc-process-line line)
-  (let ((toks (string-tokenize line (char-set-adjoin char-set:graphic #\u0001))))
-    (parameterize ([*current-words* (cdr toks)])
-      (domatchers IRC-COMMAND (car toks)))))
+  (let* ([posns (regexp-match-positions* rx:word line)]
+         [words (map (lambda (p)
+                       (let ([s (substring line (car p) (cdr p))])
+                         (hash-set! word-posns s (cons line p))
+                         s))
+                     posns)])
+    (when (null? words) (log "BAD IRC LINE: ~a" line))
+    (parameterize ([*current-words* (cdr words)])
+      (domatchers IRC-COMMAND (car words)))))
