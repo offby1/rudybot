@@ -442,6 +442,22 @@
              whine)))
   (with-handlers ([void on-error]) (apply f args)))
 
+(define (roughly-evaluable? for-whom str)
+  (if (regexp-match? #px"\\w'\\w|\\w,|[.!?,;]$" str)
+    #f ; "obviously not"(TM) text => don't evaluate
+    (let ([sb (cond [(hash-ref *sandboxes* for-whom #f) => sandbox-evaluator]
+                    [else #f])])
+      (or sb ; has a sandbox => assume everything is intended to be evaluated
+          (let ([inp ; try  to read it with the default sandbox reader
+                 (with-handlers ([void (lambda (_) #f)])
+                   (parameterize ([current-input-port (open-input-string str)])
+                     ((sandbox-reader) 'repl)))])
+            (and inp ; must be readable
+                 ;; So there's no sandbox, but it's readable -- require
+                 ;; that the first expression is not a plain identifier
+                 (pair? inp)
+                 (not (identifier? (car inp)))))))))
+
 (define (get-sandbox [force? #f])
   (let* ([for-whom (*for-whom*)]
          [lang (userinfo-ref for-whom 'sandbox-lang *default-sandbox-language*)]
@@ -799,6 +815,8 @@
                => (lambda (p)
                     (log "Doing for ~a: ~a ~s" for-whom verb (cdr words))
                     (p (cdr words)))]
+              [(roughly-evaluable? for-whom (text-from-word words))
+               (loop (cons "eval" words) 'eval)]
               [(get-incubot-witticism words)
                => (lambda (p)
                     (log "Spewing wisdom for ~a re ~a"
