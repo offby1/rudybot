@@ -448,18 +448,18 @@
 (define (roughly-evaluable? for-whom str)
   (if (regexp-match? #px"\\w'\\w|\\w,|[.!?,;]$" str)
     #f ; "obviously not"(TM) text => don't evaluate
-    (let ([sb (cond [(hash-ref *sandboxes* for-whom #f) => sandbox-evaluator]
+    (let ([inp       ; try  to read it with the default sandbox reader
+           (with-handlers ([void (lambda (_) #f)])
+             (parameterize ([current-input-port (open-input-string str)])
+               ((sandbox-reader) 'repl)))]
+          [sb (cond [(hash-ref *sandboxes* for-whom #f) => sandbox-evaluator]
                     [else #f])])
-      (or sb ; has a sandbox => assume everything is intended to be evaluated
-          (let ([inp ; try  to read it with the default sandbox reader
-                 (with-handlers ([void (lambda (_) #f)])
-                   (parameterize ([current-input-port (open-input-string str)])
-                     ((sandbox-reader) 'repl)))])
-            (and inp ; must be readable
-                 ;; So there's no sandbox, but it's readable -- require
-                 ;; that the first expression is not a plain identifier
-                 (pair? inp)
-                 (not (identifier? (car inp)))))))))
+      (and inp
+           (or sb ; has a sandbox => assume everything is intended to be evaluated
+               (and ;; So there's no sandbox, but it's readable -- require
+                ;; that the first expression is not a plain identifier
+                (pair? inp)
+                (not (identifier? (car inp)))))))))
 
 (define (get-sandbox [force? #f])
   (let* ([for-whom (*for-whom*)]
