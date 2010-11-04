@@ -1,0 +1,17 @@
+<offby1> rudybot: twb-fix
+<rudybot> *offby1: error: reference to an identifier before its definition: twb-fix in module:
+          'program
+* offby1 honestly doesn't know if that's an error in the bot, or just an amusing quote     [22:31]
+<offby1> rudybot: eval whatever
+<rudybot> *offby1: error: reference to an identifier before its definition: whatever in module:
+          'program
+<offby1> that's sensible.                                                                  [22:33]
+ERC> /nick someone-else
+<someone-else> rudybot: who is it
+<rudybot> someone-else: who do i kill...
+ERC> /nick offby1
+<offby1> rudybot: who is it
+<rudybot> *offby1: error: reference to an identifier before its definition: who in module:
+          'program
+<offby1> bingo
+<offby1> offby1 has a sandbox; someone-else doesn't.
