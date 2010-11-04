@@ -454,12 +454,16 @@
                ((sandbox-reader) 'repl)))]
           [sb (cond [(hash-ref *sandboxes* for-whom #f) => sandbox-evaluator]
                     [else #f])])
-      (and inp
-           (or sb ; has a sandbox => assume everything is intended to be evaluated
-               (and ;; So there's no sandbox, but it's readable -- require
-                ;; that the first expression is not a plain identifier
-                (pair? inp)
-                (not (identifier? (car inp)))))))))
+      (log "~a" inp)
+      (and inp         ;; it's readable
+           (or (and sb ;; has a sandbox
+                    ;; the first expression is not a plain identifier
+                    (pair? inp)
+                    (not (identifier? (car inp))))
+               (and   ;; So there's no sandbox, but  -- require
+                ;; that it be exactly one expression
+                (equal? 1 (length inp))
+                ))))))
 
 (define (get-sandbox [force? #f])
   (let* ([for-whom (*for-whom*)]
