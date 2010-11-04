@@ -297,7 +297,11 @@
        ((433)
         (log "Nuts, gotta try a different nick")
         (set-box! *my-nick* (string-append (unbox *my-nick*) "_"))
-        (out "NICK ~a" (unbox *my-nick*))))]))
+        (out "NICK ~a" (unbox *my-nick*))))]
+    [(list)
+     (log "Completely unparseable line from the server.  current-words ~s; host ~s"
+          (*current-words*)
+          host)]))
 
 (defmatcher IRC-COMMAND _ (log "Duh?"))
 
