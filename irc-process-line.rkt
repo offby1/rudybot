@@ -487,6 +487,7 @@
                                    (format "#~a" (add1 displayed))
                                    "")
                                  (car values))
+                          ;; another precaution against flooding.
                           (sleep 1)
                           (next))))
             (define (display-output name output-getter)
