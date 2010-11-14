@@ -1,0 +1,10 @@
+ef3d04b
+
+2010-11-14T19:44:30Z <= ":offby1!~user@pdpc/supporter/monthlybyte/offby1 PRIVMSG #emacs :rudybot: for sure?"
+2010-11-14T19:44:30Z Doing for offby1: for ("sure?")
+car: expects argument of type <pair>; given ()
+ 
+ === context ===
+/usr/local/src/rudybot/irc-process-line.rkt:809:0: do-cmd
+/usr/local/src/rudybot/irc-process-line.rkt:815:6: loop
+/usr/local/src/rudybot/loop.rkt:60:6: do-one-line
