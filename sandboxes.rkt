@@ -12,6 +12,7 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 
 (define-struct sandbox (evaluator
                         last-used-time) #:transparent #:mutable)
+(provide (rename-out [public-make-sandbox make-sandbox]))
 (define (public-make-sandbox [lang '(begin (require scheme))])
   (make-sandbox
    (parameterize ((sandbox-output       'string)
@@ -226,7 +227,7 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
          sandbox-give
          sandboxes-tests
          main
-         (rename-out [public-make-sandbox make-sandbox]))
+         )
 
 (define (main . args)
   (printf "Main running ...~%")

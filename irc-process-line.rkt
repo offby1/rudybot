@@ -14,13 +14,11 @@
          (except-in "xlate.rkt" main)
          (except-in "spelled-out-time.rkt" main)
          (except-in "quotes.rkt" main)
+         (except-in "re.rkt" main)
          (except-in "tinyurl.rkt" main)
          (planet schematics/macro/macro)
          (planet neil/numspell/numspell)
          )
-
-(define (log fmt . args)
-  (apply (*logger*) fmt args))
 
 (define (is-master?)
   (let ([mm (unbox *my-master*)] [id (*full-id*)])
@@ -444,26 +442,6 @@
              (if (regexp-match? #rx"^error: " whine) "~a" "error: ~a")
              whine)))
   (with-handlers ([void on-error]) (apply f args)))
-
-(define (roughly-evaluable? for-whom str)
-  (if (regexp-match? #px"\\w'\\w|\\w,|[.!?,;]$" str)
-    #f ; "obviously not"(TM) text => don't evaluate
-    (let ([inp       ; try  to read it with the default sandbox reader
-           (with-handlers ([void (lambda (_) #f)])
-             (parameterize ([current-input-port (open-input-string str)])
-               ((sandbox-reader) 'repl)))]
-          [sb (cond [(hash-ref *sandboxes* for-whom #f) => sandbox-evaluator]
-                    [else #f])])
-      (log "~a" inp)
-      (and inp         ;; it's readable
-           (or (and sb ;; has a sandbox
-                    ;; the first expression is not a plain identifier
-                    (pair? inp)
-                    (not (identifier? (car inp))))
-               (and   ;; So there's no sandbox, but  -- require
-                ;; that it be exactly one expression
-                (equal? 1 (length inp))
-                ))))))
 
 (define (get-sandbox [force? #f])
   (let* ([for-whom (*for-whom*)]
