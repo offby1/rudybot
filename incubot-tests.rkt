@@ -15,6 +15,7 @@
                      (set "don't" "get" "tripped" "up" "by" "apostrophes"))
   ;; apostrophes can really trip you up the most
   )
+
 (provide make-test-corpus)
 (define (make-test-corpus)
   (public-make-corpus
@@ -88,6 +89,14 @@
     (try "LET'S")
     (check-false (incubot-sentence "Snorgulation" corpus))))
 
+(define-test-suite censorship-tests
+  (let* ([c (make-test-corpus)]
+         [original-size (set-count (corpus-strings c))])
+    (set! c (add-to-corpus "This is an inoffensive sentence." c))
+    (set! c (add-to-corpus "By dint of containing the nasty word 'nigger', this is an offensive sentence." c))
+    (check-equal? (- (set-count (corpus-strings c)) original-size)
+                  1)))
+
 (define-test-suite all-tests
   string->words-tests
   rarest-tests
@@ -98,7 +107,11 @@
 
 
 (define (main . args)
-  (let ([status (run-tests all-tests 'verbose)])
+  (*incubot-logger* (lambda args (apply fprintf (current-error-port) args) (newline (current-error-port))))
+  (let ([status (run-tests
+                 censorship-tests
+                 ;;all-tests
+                 'verbose)])
     (when (positive? status)
       (exit 1))
 

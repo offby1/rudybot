@@ -22,7 +22,8 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (require
  scheme/set
  scheme/include
- (only-in "log-parser.rkt" utterance-text ))
+ (only-in "log-parser.rkt" utterance-text )
+ (only-in "vars.rkt" *incubot-logger*))
 
 (include "incubot-tests.rkt")
 
@@ -108,14 +109,21 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (lambda (ip)
       (make-corpus-from-sequence (in-lines ip)))))
 
+(define (offensive? s)
+  (regexp-match #px"\\bnigger\\b" s))
+
 (provide add-to-corpus)
 (define/contract (add-to-corpus s c)
   (-> string? corpus? corpus?)
-  (make-corpus
-   (set-add (corpus-strings c) s)
-   (for/fold ([h (corpus-strings-by-word c)])
-       ([w (in-set (string->words s))])
-       (dict-update h w (curry cons s) '()))))
+  (if (offensive? s)
+      (begin0
+          c
+        ((*incubot-logger*) "Not adding offensive string ~s to corpus" s))
+      (make-corpus
+       (set-add (corpus-strings c) s)
+       (for/fold ([h (corpus-strings-by-word c)])
+           ([w (in-set (string->words s))])
+           (dict-update h w (curry cons s) '())))))
 
 (define/contract (wordlist->wordset ws)
   ((listof string?) . -> . set?) ;; it'd be nice if I could say "a set whose
