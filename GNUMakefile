@@ -1,0 +1,5 @@
+.PHONY: tags
+tags:
+	etags --language=scheme *.rkt
+
+TAGS: tags
