@@ -83,7 +83,7 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 (define (userinfo-set! nick key val)
   (info-set! nick (dict-set (info-ref nick '()) key val)))
 
-;; generic list-of-values constructor for a lookup-* and not-* functions
+;; generic list-of-values constructor for a lookup-* and note-* functions
 (define (make-limited-list-info key get-nick get-time limit)
   (define (trim vals) (drop vals (max 0 (- (length vals) limit))))
   (define (lookup nick) (trim (userinfo-ref nick key '())))
