@@ -45,6 +45,11 @@
 (define *logger*          (make-parameter #f))
 (define *incubot-logger*  (make-parameter #f))
 
+(provide log)
+(define (log fmt . args)
+  (apply (*logger*) fmt args))
+
+
 ;; Maybe I should use rnrs/enums-6 to guard against typos
 (define *authentication-state* (box 'havent-even-tried))
 

@@ -3,7 +3,7 @@
 #lang scheme
 
 (require srfi/19
-         "vars.rkt"
+         (except-in "vars.rkt" log)
          "git-version.rkt"
          (except-in "iserver.rkt" main)
          "reloadable.rkt")

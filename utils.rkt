@@ -1,8 +1,8 @@
 #lang scheme/base
 
 (require scheme/match scheme/system scheme/promise
-         (for-syntax scheme/base syntax/boundmap)
-         "vars.rkt")
+         (for-syntax scheme/base syntax/boundmap))
+
 (provide from-env run-command call-with-PATH defmatcher domatchers defautoloads)
 
 ;; this is used when this module is loaded, before `clearenv' is called
@@ -61,7 +61,3 @@
      (begin (defautoloads (lib var)) ...)]
     [(_ [lib var ...] ...)
      (begin (defautoloads (lib var ...)) ...)]))
-
-(provide log)
-(define (log fmt . args)
-  (apply (*logger*) fmt args))

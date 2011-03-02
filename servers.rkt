@@ -10,7 +10,7 @@ fi
 #lang scheme
 
 (require "loop.rkt"
-         "vars.rkt"
+         (except-in "vars.rkt" log)
          "git-version.rkt"
          (except-in "quotes.rkt" main)
          (except-in "clearenv.rkt" main)
