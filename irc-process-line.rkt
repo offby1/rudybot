@@ -149,6 +149,8 @@
        ;; session around for ever
        (when (regexp-match #rx"^duncanm" nick)
          (pm target "la la la"))
+       (when (regexp-match #rx"^klutometis" nick)
+         (pm target "\ACTION bows deeply before his master, inventor of incubot\1"))
        (espy target
              (format "joining")
              '())]
