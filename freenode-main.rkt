@@ -6,7 +6,7 @@ exec racket --require $0 --main -- ${1+"$@"}
 #lang scheme
 
 (require "loop.rkt"
-         "vars.rkt"
+         (except-in "vars.rkt" log)
          "git-version.rkt"
          (except-in "clearenv.rkt" main)
          (only-in "servers.rkt" real-server)
