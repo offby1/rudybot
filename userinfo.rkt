@@ -5,7 +5,8 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 
 #lang scheme
 
-(require schemeunit schemeunit/text-ui)
+(require (planet schematics/schemeunit:3:4)
+         (planet schematics/schemeunit:3/text-ui))
 
 (define *userinfo-database-directory-name* (make-parameter "test-userinfo.db"))
 (define *sightings-to-keep* 2)

@@ -1,6 +1,7 @@
 ;; Not a complete file, as you can see; meant to be included into
 ;; incubot.rkt.
-(require schemeunit schemeunit/text-ui)
+(require (planet schematics/schemeunit:3:4)
+         (planet schematics/schemeunit:3/text-ui))
 
 (define-binary-check (check-sets-equal? actual expected)
   (and (set-empty? (set-subtract actual expected))
