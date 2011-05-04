@@ -435,7 +435,7 @@
 ;; ----------------------------------------------------------------------------
 ;; Evaluation related stuffs
 
-(define *default-sandbox-language* '(begin (require scheme)))
+(define *default-sandbox-language* 'racket)
 
 (define (call/whine f . args)
   (define (on-error e)
