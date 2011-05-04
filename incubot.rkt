@@ -91,6 +91,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
       (add-to-corpus sentence c))))
 
 (provide make-corpus-from-sexps)
+;; TODO -- somehow arrange that, if we get a fatal signal, we finish
+;; writing out the current sexp, so that the output file remains
+;; well-formed.
 (define (make-corpus-from-sexps inp [limit #f])
   (make-corpus-from-sequence
    (in-port
