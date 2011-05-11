@@ -419,6 +419,9 @@
   (reply "git clone git://github.com/offby1/rudybot.git"))
 
 (defverb (seen nick) "did I see someone?"
+  ;; TODO -- if "nick" is fsbot, and the last time we saw 'em was
+  ;; quite a while ago, suggest /msg fledermaus (fsbot's owner).
+  ;; Thanks to jlf for the idea.
   (reply "~a" (nick->sighting-string nick)))
 
 (defverb (uptime) "how long was I awake"

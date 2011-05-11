@@ -8,6 +8,10 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 (require (planet schematics/schemeunit:3:4)
          (planet schematics/schemeunit:3/text-ui))
 
+;; TODO -- consider keeping this data someplace other than (or in
+;; addition to) a file on disk -- like Amazon's S3.  That way if I
+;; want to move the bot to a new hosting site, I don't have to bring
+;; the directory along with me.
 (define *userinfo-database-directory-name* (make-parameter "test-userinfo.db"))
 (define *sightings-to-keep* 2)
 (define *messages-to-keep* 20)
