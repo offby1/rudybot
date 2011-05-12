@@ -7,7 +7,14 @@ do
     if [ -x $f ]
     then
         echo "-----------$f--------------------"
-        ./$f
+        case $f in
+            log-parser.rkt)
+                echo "Skipping $f cuz it's slow and destructive"
+                ;;
+            *)
+                ./$f
+                ;;
+        esac
     fi
 done
 
