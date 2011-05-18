@@ -15,15 +15,15 @@ exec  racket --require "$0" --main -- ${1+"$@"}
 (provide (struct-out utterance))
 (struct utterance (timestamp speaker target text) #:prefab)
 
-;; 18 seconds
+;; 6.5 seconds
 (define eli1 #px"^ *([^ ]*) <= +(\".*\")")
 (define eli2 #px"^:([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)")
 
-;; 21 seconds
+;; 9.4 seconds
 (define me1 #px"^ *([[:print:]]*?) <= +(\".*\")")
 (define me2 #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+?) :(.*)")
 
-(define (string->utterance s [me? #f])
+(define (string->utterance s [me? #t])
   (match s
     [(regexp (if me? me1 eli1) (list _ timestamp raw-string))
      (let ([parsed-string (read (open-input-string raw-string))])
@@ -62,6 +62,8 @@ exec  racket --require "$0" --main -- ${1+"$@"}
                  (lambda (op)
                    (for ([line (in-lines ip)])
                      (let ([utz (string->utterance line)])
-                       (when utz (pretty-print utz op)))))
+                       (when utz
+                         (write utz op)
+                         (newline op)))))
                  #:exists 'truncate)))))
         (pe "done~%")))))
