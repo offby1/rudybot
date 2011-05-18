@@ -7,6 +7,7 @@ exec  racket --require "$0" --main -- ${1+"$@"}
 #lang racket
 
 (require
+ (only-in profile profile-thunk)
  (only-in mzlib/etc this-expression-source-directory)
  (planet schematics/schemeunit:3)
  (planet schematics/schemeunit:3/text-ui) )
@@ -14,12 +15,20 @@ exec  racket --require "$0" --main -- ${1+"$@"}
 (provide (struct-out utterance))
 (struct utterance (timestamp speaker target text) #:prefab)
 
-(define (string->utterance s)
+;; 18 seconds
+(define eli1 #px"^ *([^ ]*) <= +(\".*\")")
+(define eli2 #px"^:([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)")
+
+;; 21 seconds
+(define me1 #px"^ *([[:print:]]*?) <= +(\".*\")")
+(define me2 #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+?) :(.*)")
+
+(define (string->utterance s [me? #f])
   (match s
-    [(regexp #px"^ *([[:print:]]*?) <= +(\".*\")" (list _ timestamp raw-string))
+    [(regexp (if me? me1 eli1) (list _ timestamp raw-string))
      (let ([parsed-string (read (open-input-string raw-string))])
        (match parsed-string
-         [(regexp #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+?) :(.*)"
+         [(regexp (if me? me2 eli2)
                   (list _ nick id host target text))
           (utterance timestamp nick target text)]
          [_ #f]))]
@@ -47,10 +56,12 @@ exec  racket --require "$0" --main -- ${1+"$@"}
           (lambda (ip)
             (pe "Reading from ~a; writing to ~a..." input-file-name output-file-name)
             (port-count-lines! ip)
-            (call-with-output-file output-file-name
-              (lambda (op)
-                (for ([line (in-lines ip)])
-                  (let ([utz (string->utterance line)])
-                    (when utz (pretty-print utz op)))))
-              #:exists 'truncate)))
+            (profile-thunk
+             (lambda ()
+               (call-with-output-file output-file-name
+                 (lambda (op)
+                   (for ([line (in-lines ip)])
+                     (let ([utz (string->utterance line)])
+                       (when utz (pretty-print utz op)))))
+                 #:exists 'truncate)))))
         (pe "done~%")))))
