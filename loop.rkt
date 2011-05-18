@@ -33,7 +33,7 @@
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line)
-  (log "<= ~s" line)
+  (log "<= ~a" line)
   (parameterize ([*logger* log])
     (irc-process-line line)))
 
