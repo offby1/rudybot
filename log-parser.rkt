@@ -4,7 +4,7 @@
 exec  racket --require "$0" --main -- ${1+"$@"}
 |#
 
-#lang scheme
+#lang racket
 
 (require
  (only-in mzlib/etc this-expression-source-directory)
@@ -12,7 +12,7 @@ exec  racket --require "$0" --main -- ${1+"$@"}
  (planet schematics/schemeunit:3/text-ui) )
 
 (provide (struct-out utterance))
-(define-struct utterance (timestamp speaker target text) #:prefab)
+(struct utterance (timestamp speaker target text) #:prefab)
 
 (define (string->utterance s)
   (match s
@@ -21,7 +21,7 @@ exec  racket --require "$0" --main -- ${1+"$@"}
        (match parsed-string
          [(regexp #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+?) :(.*)"
                   (list _ nick id host target text))
-          (make-utterance timestamp nick target text)]
+          (utterance timestamp nick target text)]
          [_ #f]))]
     [_ #f]))
 

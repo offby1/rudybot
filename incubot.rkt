@@ -18,7 +18,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 ;; utterance chosen at random from that set, favoring the longer
 ;; (presumably more-interesting) ones.
 
-#lang scheme
+#lang racket
 (require
  scheme/set
  scheme/include
@@ -27,8 +27,8 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (include "incubot-tests.rkt")
 
-(provide (except-out (struct-out corpus) make-corpus))
-(define-struct corpus (strings strings-by-word) #:transparent)
+(provide (except-out (struct-out corpus) corpus))
+(struct corpus (strings strings-by-word) #:transparent)
 
 (provide (rename-out [public-make-corpus make-corpus]))
 (define/contract (public-make-corpus . sentences)
@@ -80,7 +80,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define (make-corpus-from-sequence seq [limit #f])
   (let/ec return
-    (for/fold ([c (make-corpus
+    (for/fold ([c (corpus
                    (set)
                    (make-immutable-ci-hash))])
         ([sentence seq]
@@ -121,8 +121,8 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (if (offensive? s)
       (begin0
           c
-        ((*incubot-logger*) "Not adding offensive string ~s to corpus" s))
-      (make-corpus
+        ((*incubot-logger*) "Not adding offensive string to corpus"))
+      (corpus
        (set-add (corpus-strings c) s)
        (for/fold ([h (corpus-strings-by-word c)])
            ([w (in-set (string->words s))])
