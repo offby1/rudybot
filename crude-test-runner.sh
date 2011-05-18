@@ -2,7 +2,7 @@
 
 # Sure be nice if there were a built-in way to run all the tests ...
 
-egrep -l schemeunit *.rkt | while read f
+(echo incubot.rkt ; egrep -l schemeunit *.rkt) | while read f
 do
     if [ -x $f ]
     then
