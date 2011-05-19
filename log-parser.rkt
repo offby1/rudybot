@@ -15,33 +15,12 @@ exec racket --require "$0" --main -- ${1+"$@"}
 (provide (struct-out utterance))
 (struct utterance (timestamp speaker target text) #:prefab)
 
-;; 4.4 seconds
-(define me1 #px"^ *([[:print:]]*?) <= +(.*)")
-(define me2 #px"^:(.*?)!(.*?)@(.*?) PRIVMSG ([[:print:]]+?) :(.*)")
-
-;; 4.4 seconds
-(define eli1 #px"^ *([^ ]*) <= +(.*)")
-(define eli2 #px"^:([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)")
-
-(define me? #f)
-
-(printf "Using ~a regexes~%" (if me? "my" "eli's"))
-
 (define (string->utterance s)
   (match s
-    [(regexp (if me? me1 eli1) (list _ timestamp right-hand-side))
+    [(regexp #px"^([^ ]*) <= :([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)$"
+          (list _ timestamp   nick    id      host            target   text))
+     (utterance timestamp nick target text)]
 
-     ;; compatibility hack: remove this once 1) we switch from ~s to
-     ;; ~a when writing out the log; and 2) I've converted the
-     ;; existing log
-     (when (char=? #\" (string-ref right-hand-side 0))
-       (set! right-hand-side (read (open-input-string right-hand-side))))
-
-     (match right-hand-side
-       [(regexp (if me? me2 eli2)
-                (list _ nick id host target text))
-        (utterance timestamp nick target text)]
-       [_ #f])]
     [_ #f]))
 
 (define-test-suite tests
@@ -49,7 +28,9 @@ exec racket --require "$0" --main -- ${1+"$@"}
          [right-hand-side ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot: uptime"]
          [sans-quotes (format "~a <= ~a" timestamp right-hand-side)]
          [with-quotes (format "~a <= ~s" timestamp right-hand-side)])
-    (for ([candidate (list sans-quotes with-quotes)])
+    (for ([candidate (list sans-quotes
+                           ;; with-quotes
+                           )])
       (check-equal? (string->utterance candidate)
                     #s(utterance "2010-01-19T03:01:31Z"
                                  "offby1"
