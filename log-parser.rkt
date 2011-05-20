@@ -26,16 +26,13 @@ exec racket --require "$0" --main -- ${1+"$@"}
 (define-test-suite tests
   (let* ([timestamp "2010-01-19T03:01:31Z"]
          [right-hand-side ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot: uptime"]
-         [sans-quotes (format "~a <= ~a" timestamp right-hand-side)]
-         [with-quotes (format "~a <= ~s" timestamp right-hand-side)])
-    (for ([candidate (list sans-quotes
-                           ;; with-quotes
-                           )])
-      (check-equal? (string->utterance candidate)
-                    #s(utterance "2010-01-19T03:01:31Z"
-                                 "offby1"
-                                 "##cinema"
-                                 "rudybot: uptime")))))
+         [sans-quotes (format "~a <= ~a" timestamp right-hand-side)])
+
+    (check-equal? (string->utterance sans-quotes)
+                  #s(utterance "2010-01-19T03:01:31Z"
+                               "offby1"
+                               "##cinema"
+                               "rudybot: uptime"))))
 
 (define (pe fmt . args)
   (apply fprintf (current-error-port) fmt args))
