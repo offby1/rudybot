@@ -17,7 +17,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (if (directory-exists? (*userinfo-database-directory-name*))
       (map (lambda (fn)
              (unwrap (contents fn)))
-           (find-files file-exists? (*userinfo-database-directory-name*)))
+           (sort
+            (find-files file-exists? (*userinfo-database-directory-name*))
+            string<? #:key path->string))
       '()))
 
 (provide main)
@@ -27,7 +29,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
       "/tmp/whee"
     (lambda (op)
       (for ([sighting-list (snarf-userinfo)])
-        (for ([s sighting-list])
-        (write s op)
-        (newline op))))
+        (for ([s (sort sighting-list < #:key sighting-when)])
+          (write s op)
+          (newline op))))
     #:exists 'replace))
