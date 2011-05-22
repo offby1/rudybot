@@ -12,6 +12,7 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 ;; addition to) a file on disk -- like Amazon's S3.  That way if I
 ;; want to move the bot to a new hosting site, I don't have to bring
 ;; the directory along with me.
+(provide *userinfo-database-directory-name*)
 (define *userinfo-database-directory-name* (make-parameter "test-userinfo.db"))
 (define *sightings-to-keep* 2)
 (define *messages-to-keep* 20)
@@ -21,6 +22,7 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 ;; records and a list of message values in these cases respectively, and a
 ;; bunch of additional information bits can hang there.
 
+(provide/contract [canonicalize-nick (-> string? string?)])
 (define (canonicalize-nick n)
   ;; TODO -- consider nixing _leading_ underscores as well; I've seen
   ;; those in the wild.
@@ -83,6 +85,9 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
           [else (loop (sub1 n) (mcdr cache) cache)])))
 
 ;; generic setter for some property
+(provide/contract
+ [userinfo-ref (->* (string? any/c) (any/c) any)]
+ [userinfo-set! (-> string? any/c any/c any)])
 (define (userinfo-ref nick key [default #f])
   (dict-ref (info-ref nick '()) key default))
 (define (userinfo-set! nick key val)
@@ -104,6 +109,14 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 ;; Some limited lists infos
 
 (define-struct sighting (who where when action? words) #:prefab)
+(provide/contract [struct sighting ((who string?)
+                   (where string?)
+                   (when natural-number/c)
+                   (action? (or/c string? not))
+                   (words (listof string?)))])
+
+(provide/contract [lookup-sightings (-> string? (listof sighting?))]
+                  [note-sighting (-> sighting? void?)])
 (define-values (lookup-sightings note-sighting)
   (make-limited-list-info
    'sightings sighting-who sighting-when *sightings-to-keep*))
@@ -112,19 +125,6 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 (define-values (lookup-messages note-message)
   (make-limited-list-info
    'messages message-who message-when *messages-to-keep*))
-
-(provide *userinfo-database-directory-name*)
-(provide/contract
- [struct sighting ((who string?)
-                   (where string?)
-                   (when natural-number/c)
-                   (action? (or/c string? not))
-                   (words (listof string?)))]
- [lookup-sightings (-> string? (listof sighting?))]
- [note-sighting (-> sighting? void?)]
- [canonicalize-nick (-> string? string?)]
- [userinfo-ref (->* (string? any/c) (any/c) any)]
- [userinfo-set! (-> string? any/c any/c any)])
 
 (define-test-suite all-tests
   canonicalize-nick-tests)
