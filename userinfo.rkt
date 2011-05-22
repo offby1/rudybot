@@ -115,6 +115,22 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
                    (action? (or/c string? not))
                    (words (listof string?)))])
 
+(provide/contract [sighting->dict (-> sighting? dict?)])
+(define (sighting->dict s)
+  `((who     . ,(sighting-who     s))
+    (where   . ,(sighting-where   s))
+    (when    . ,(sighting-when    s))
+    (action? . ,(sighting-action? s))
+    (words   . ,(sighting-words   s))))
+
+(define-test-suite sighting->dict-tests
+  (let ([s  (make-sighting "who" "where" 0 #t '("word1" "word2"))])
+    (check-equal? (dict-ref (sighting->dict s) 'who    ) "who")
+    (check-equal? (dict-ref (sighting->dict s) 'where  ) "where")
+    (check-equal? (dict-ref (sighting->dict s) 'when   ) 0)
+    (check-equal? (dict-ref (sighting->dict s) 'action?) #t)
+    (check-equal? (dict-ref (sighting->dict s) 'words  ) '("word1" "word2"))))
+
 (provide/contract [lookup-sightings (-> string? (listof sighting?))]
                   [note-sighting (-> sighting? void?)])
 (define-values (lookup-sightings note-sighting)
@@ -127,7 +143,8 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
    'messages message-who message-when *messages-to-keep*))
 
 (define-test-suite all-tests
-  canonicalize-nick-tests)
+  canonicalize-nick-tests
+  sighting->dict-tests)
 
 (provide main)
 (define (main . args)
