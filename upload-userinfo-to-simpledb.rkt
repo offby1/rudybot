@@ -22,14 +22,30 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
             string<? #:key path->string))
       '()))
 
+(define (sighting->simpledb-attrs s)
+  (cons
+   (cons (format "ItemName") (sighting-who s))
+   (append*
+    (for/list ([(p i) (in-indexed
+                       (sort
+                        (for/fold ([result '()])
+                            ([(k v) (in-dict (sighting->dict s))])
+                            (cons (cons k v) result))
+                        string<?
+                        #:key (compose symbol->string car)))])
+      (list
+       (cons (format "Attribute.~a.Name"  (add1 i)) (symbol->string (car p)))
+       (cons (format "Attribute.~a.Value" (add1 i)) (cdr p)))))))
+
 (provide main)
 (define (main . args)
-  (printf "Hi~%")
-  (call-with-output-file
-      "/tmp/whee"
+  (call-with-output-file "/tmp/whee"
     (lambda (op)
-      (for ([sighting-list (snarf-userinfo)])
-        (for ([s (sort sighting-list < #:key sighting-when)])
-          (write s op)
-          (newline op))))
+      (for ([thing (reverse
+                    (for/fold ([all '()])
+                        ([sighting-list (snarf-userinfo)])
+                        (append (map sighting->simpledb-attrs (sort sighting-list < #:key sighting-when)) all)
+                      ))])
+        (write thing op)
+        (newline op)))
     #:exists 'replace))
