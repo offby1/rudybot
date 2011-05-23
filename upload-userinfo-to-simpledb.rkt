@@ -6,23 +6,22 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 #lang racket
 (require (except-in "userinfo.rkt" main))
 
-(define (unwrap thing)
-  (match thing
-    [(list (list 'sightings s ...) _ ...) s]))
-
-(define (contents p)
-  (call-with-input-file p read))
-
 (define (snarf-userinfo)
+
+  (define (unwrap thing)
+    (match thing
+      [(list (list 'sightings s ...) _ ...) s]))
+
   (if (directory-exists? (*userinfo-database-directory-name*))
-      (map (lambda (fn)
-             (unwrap (contents fn)))
-           (sort
-            (find-files file-exists? (*userinfo-database-directory-name*))
-            string<? #:key path->string))
+      (sort
+       (append-map (lambda (fn)
+              (unwrap (call-with-input-file fn read)))
+            (find-files file-exists? (*userinfo-database-directory-name*)))
+       string<?
+       #:key (lambda (s) (format "~a ~a" (sighting-who s) (sighting-when s))))
       '()))
 
-(define (sighting->simpledb-attrs s)
+(define (sighting->simpledb-attrs s [index 0])
   (cons
    (cons (format "ItemName") (sighting-who s))
    (append*
@@ -34,18 +33,19 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                         string<?
                         #:key (compose symbol->string car)))])
       (list
-       (cons (format "Attribute.~a.Name"  (add1 i)) (symbol->string (car p)))
+       (cons (format "Attribute.~a.Name"  (add1 i)) (format "~a.~a" index (car p)))
        (cons (format "Attribute.~a.Value" (add1 i)) (cdr p)))))))
 
 (provide main)
 (define (main . args)
   (call-with-output-file "/tmp/whee"
     (lambda (op)
-      (for ([thing (reverse
-                    (for/fold ([all '()])
-                        ([sighting-list (snarf-userinfo)])
-                        (append (map sighting->simpledb-attrs (sort sighting-list < #:key sighting-when)) all)
-                      ))])
-        (write thing op)
-        (newline op)))
+      (let loop ([h (make-immutable-hash '())]
+                 [things (snarf-userinfo)])
+        (when (not (null? things))
+          (let* ([key (sighting-who (car things))]
+                 [h (hash-update h key add1 -1)])
+            (write (sighting->simpledb-attrs (car things) (hash-ref h key)) op)
+            (newline op)
+            (loop h (cdr things))))))
     #:exists 'replace))
