@@ -4,7 +4,23 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang racket
-(require (except-in "userinfo.rkt" main))
+(require (only-in "userinfo.rkt"
+                  *userinfo-database-directory-name*
+                  sighting->dict
+                  sighting-when
+                  sighting-who
+                  )
+
+         ;; This is a symlink, created thus:
+
+         #|
+         ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
+         |#
+         (only-in amazon/simpledb simpledb-post)
+
+         ;; Eventually I should make my amazon package presentable,
+         ;; and upload it to PLaneT.
+         )
 
 (define (snarf-userinfo)
 
@@ -22,30 +38,37 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
       '()))
 
 (define (sighting->simpledb-attrs s [index 0])
+  (define (stringify v)
+    (cond
+     ((string? v)
+      v)
+     ((boolean? v)
+      (if v "true" "false"))
+     ((number? v)
+      (number->string v))
+     ((list? v)
+      (string-join v " "))))
+
   (cons
-   (cons (format "ItemName") (sighting-who s))
+   (cons 'ItemName (sighting-who s))
    (append*
     (for/list ([(p i) (in-indexed
                        (sort
                         (for/fold ([result '()])
                             ([(k v) (in-dict (sighting->dict s))])
-                            (cons (cons k v) result))
+                            (cons (cons k (stringify v)) result))
                         string<?
                         #:key (compose symbol->string car)))])
       (list
-       (cons (format "Attribute.~a.Name"  (add1 i)) (format "~a.~a" index (car p)))
-       (cons (format "Attribute.~a.Value" (add1 i)) (cdr p)))))))
+       (cons (string->symbol (format "Attribute.~a.Name"  (add1 i))) (format "~a.~a" index (car p)))
+       (cons (string->symbol (format "Attribute.~a.Value" (add1 i))) (cdr p)))))))
 
 (provide main)
 (define (main . args)
-  (call-with-output-file "/tmp/whee"
-    (lambda (op)
-      (let loop ([h (make-immutable-hash '())]
-                 [things (snarf-userinfo)])
-        (when (not (null? things))
-          (let* ([key (sighting-who (car things))]
-                 [h (hash-update h key add1 -1)])
-            (write (sighting->simpledb-attrs (car things) (hash-ref h key)) op)
-            (newline op)
-            (loop h (cdr things))))))
-    #:exists 'replace))
+  (let loop ([h (make-immutable-hash '())]
+             [things (snarf-userinfo)])
+    (when (not (null? things))
+      (let* ([key (sighting-who (car things))]
+             [h (hash-update h key add1 -1)])
+        (simpledb-post (sighting->simpledb-attrs (car things) (hash-ref h key)))
+        (loop h (cdr things))))))
