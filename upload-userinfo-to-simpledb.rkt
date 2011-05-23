@@ -70,5 +70,10 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (when (not (null? things))
       (let* ([key (sighting-who (car things))]
              [h (hash-update h key add1 -1)])
-        (simpledb-post (sighting->simpledb-attrs (car things) (hash-ref h key)))
+        (simpledb-post (append
+                        '((DomainName . "frotz")
+                          (Action . "PutAttributes"))
+                        (sighting->simpledb-attrs
+                         (car things)
+                         (hash-ref h key))))
         (loop h (cdr things))))))
