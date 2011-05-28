@@ -1,0 +1,40 @@
+* Do I map individual sightings to individual sdb items?
+
+  Or do I group all the sightings of a given nick (there are typically
+  two) and map those into one item, with multiple values as needed?
+
+  The former -- it's dirt-simple.
+
+* What do I use for the ItemName?
+
+  I'm not sure what this is for, really.  It seems I can query on any
+  attribute, so ... maybe it's supposed to be a primary key; in which
+  case I could use an auto-incrementing integer, or a hash of all the
+  attributes.
+
+  I'm tending towards a hash.  Something like this is required in
+  order to map sightings one-to-one to sdb items.
+
+- Exactly how am I gonna be using this, anyway?
+
+  Initially I'll want to upload the existing database.
+
+  Then as the bot runs, it'll generate individual sightings, one at a
+  time, and somehow add each to sdb.
+
+  The "seen" command will do a query like 'select * from frotz where
+  who = "the-nick"'.  That should return enough to generate some
+  sightings.
+
+- Should I cache?
+
+  Reading: dunno how quick these queries are.  If I can reliably get a
+  response in, say, 50ms, that's probably good enough.
+
+  Writing: if writing to sdb is sometimes slow, I can avoid blocking
+  the whole bot by having a separate thread that does the writing, fed
+  with an async channel; the bot's main thread would just drop a
+  sighting onto that channel, which is quick, then continue; the
+  writing thread would eventually retrieve that sighting and send up a
+  POST to sdb.  Given that we're probably only writing one or two
+  sightings per second in the long run, this should be fine.

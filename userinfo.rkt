@@ -109,12 +109,16 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 ;; Some limited lists infos
 
 (define-struct sighting (who where when action? words) #:prefab)
-(provide/contract [struct sighting ((who string?)
-                   (where string?)
-                   (when natural-number/c)
-                   (action? (or/c string? not))
-                   (words (listof string?)))])
 
+(provide/contract [struct sighting
+                          ((who string?)
+                           (where string?)
+                           (when natural-number/c)
+                           (action? (or/c string? not))
+                           (words (listof string?)))])
+
+;; TODO -- see if there's some clever way to get Racket to write this
+;; for me, by examining the struct type.
 (provide/contract [sighting->dict (-> sighting? dict?)])
 (define (sighting->dict s)
   `((who     . ,(sighting-who     s))
@@ -122,6 +126,9 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
     (when    . ,(sighting-when    s))
     (action? . ,(sighting-action? s))
     (words   . ,(sighting-words   s))))
+
+(provide/contract [sighting-hash (-> sighting? fixnum?)])
+(define sighting-hash equal-hash-code)
 
 (define-test-suite sighting->dict-tests
   (let ([s  (make-sighting "who" "where" 0 #t '("word1" "word2"))])
