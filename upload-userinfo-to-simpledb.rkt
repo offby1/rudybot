@@ -54,6 +54,10 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
       (stringify (symbol->string v)))))
 
   (cons
+   ;; As far as I can tell, ItemName is more or less the primary key
+   ;; for the datum we're about to upload.  So it might as well be a
+   ;; hash of the contents.  An autoincrementing integer or a
+   ;; timestamp would probably work as well.
    (cons 'ItemName (stringify (sighting-hash s)))
    (append*
     (for/list ([(p i) (in-indexed
