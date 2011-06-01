@@ -1,28 +1,22 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
+exec racket --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang racket
 (require
- racket/trace
  rackunit
  rackunit/text-ui
  )
 
 (define (eat-ws inp)
  (regexp-try-match #px"^[[:space:]]+" inp))
-;(trace eat-ws)
 
-(define (parse-prefix inp )
+(define (parse-prefix inp)
   (regexp-match #px"[[:graph:]]+" inp))
-;(trace parse-prefix)
 
 (define (parse-command inp)
-  (if (char-numeric? (peek-char inp))
-      (regexp-match #px"[0-9]{3}" inp)
-      (regexp-match #px"[[:alpha:]]+" inp)))
-;(trace parse-command)
+  (regexp-match #px"[0-9]{3}|[[:alpha:]]+" inp))
 
 (define (parse-params inp)
   (let loop ([result '()])
@@ -33,15 +27,12 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      ((char=? #\: (peek-char inp))
       (begin
         (read-char inp)
-        (loop (cons `(param . ,(regexp-match #px"[^\u0000\r\n]+" inp)) result))))
+        (loop (cons `(param . ,(regexp-match #px"[^\u0000\r\n]+"  inp)) result))))
      (else
-      (loop (cons `(param . ,(regexp-match #px"[^\u0000\r\n ]+" inp)) result))))))
-
-;(trace parse-params)
+      (loop   (cons `(param . ,(regexp-match #px"[^\u0000\r\n ]+" inp)) result))))))
 
 (define (parse-crlf inp )
   (regexp-match #px"\r\n" inp))
-;(trace parse-crlf)
 
 (provide parse-message)
 (define/contract parse-message
@@ -63,6 +54,23 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                `((command . ,(parse-command message))
                  (params . ,(parse-params message)))
              (parse-crlf message)))))]))
+
+(check-equal?
+ (parse-message
+  ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot:   uptime")
+ '((prefix #"offby1!n=user@pdpc/supporter/monthlybyte/offby1")
+   (command #"PRIVMSG")
+
+   ;; Ahh! It honors multiple consecutive spaces!  The old way didn't.
+   (params (param #"##cinema") (param #"rudybot:   uptime"))))
+
+(check-equal?
+ (parse-message
+  ":nick!knack@frotz 123 #channel :some stuff")
+ '((prefix #"nick!knack@frotz")
+   (command #"123")
+   (params (param #"#channel")
+           (param #"some stuff"))))
 
 (provide main)
 (define (main)
