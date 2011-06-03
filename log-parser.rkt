@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-#$Id: v4-script-template.ss 5887 2008-12-30 18:12:50Z erich $
+exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 exec racket --require "$0" --main -- ${1+"$@"}
 |#
 
@@ -16,23 +16,38 @@ exec racket --require "$0" --main -- ${1+"$@"}
 (struct utterance (timestamp speaker target text) #:prefab)
 
 (define (string->utterance s)
+  (define (ensure-string x)
+    (cond
+     ((string? x)
+      x)
+     ((bytes? x)
+      (bytes->string/utf-8 x))))
   (match s
     [(regexp #px"^([^ ]*) <= :([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)$"
           (list _ timestamp   nick    id      host            target   text))
      (utterance timestamp nick target text)]
 
+    [(regexp #px"^([[:print:]]+) <= +(\\(.*\\))" (list _ timestamp raw-string))
+     (match  (read (open-input-string raw-string))
+       [(list (list 'prefix (regexp #rx"(.*)!(.*)@(.*)" (list _ nick _ _)))
+              (list 'command #"PRIVMSG")
+              (list 'params
+                    (list 'param target)
+                    (list 'param text)))
+        (apply utterance (map ensure-string (list timestamp nick target text)))])
+     ]
     [_ #f]))
 
 (define-test-suite tests
-  (let* ([timestamp "2010-01-19T03:01:31Z"]
-         [right-hand-side ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot: uptime"]
-         [sans-quotes (format "~a <= ~a" timestamp right-hand-side)])
+  (for ([line '("2010-01-19T03:01:31Z <= \":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot: uptime\""
+                "2010-01-19T03:01:31Z <= ((prefix #\"offby1!n=user@pdpc/supporter/monthlybyte/offby1\") (command #\"PRIVMSG\") (params (param #\"##cinema\") (param #\"rudybot: uptime\")))")])
 
-    (check-equal? (string->utterance sans-quotes)
+    (check-equal? (string->utterance line)
                   #s(utterance "2010-01-19T03:01:31Z"
                                "offby1"
                                "##cinema"
-                               "rudybot: uptime"))))
+                               "rudybot: uptime")))
+  )
 
 (define (pe fmt . args)
   (apply fprintf (current-error-port) fmt args))

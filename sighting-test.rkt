@@ -2,7 +2,7 @@
 #| Hey Emacs, this is -*-scheme-*- code!
 exec  racket --require "$0" --main -- ${1+"$@"}
 |#
-#lang scheme
+#lang racket
 (require (planet schematics/schemeunit:2/test)
          (planet schematics/schemeunit:2/text-ui)
          (planet schematics/schemeunit:2/util)

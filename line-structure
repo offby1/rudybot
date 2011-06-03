@@ -1,0 +1,23 @@
+sender matches .+!.+@.+
+colon is a literal :
+command is just alphanumeric (typically PRIVMSG, JOIN, or QUIT)
+target is either a nick or a channel
+a nick is nonwhite
+a channel is nonwhite, typically beginning with a #
+text is anything except a newline
+typical line: colon sender command target colon text
+
+hostname usuall looks like alphanum.alphanum.alphanum but I've also seen just "services."
+server greeting line: colon hostname digits nick stuff
+
+notice line: colon (hostname or sender) NOTICE target colon text
+
+ping line: PING colon hostname
+notice line: NOTICE nonwhite colon stuff
+join line: colon sender JOIN colon target
+kick line: colon sender KICK target target colon stuff
+mode line: colon sender MODE target flags
+nick line: colon sender NICK colon stuff
+part line: colon sender PART target
+quit line: colon sender QUIT colon stuff
+topic line: colon sender TOPIC target colon stuff

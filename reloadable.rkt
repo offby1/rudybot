@@ -1,4 +1,4 @@
-#lang scheme/base
+#lang racket/base
 
 ;; based on handin-server/private/reloadable
 

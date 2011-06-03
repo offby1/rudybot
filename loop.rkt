@@ -1,12 +1,15 @@
 #| Hey Emacs, this is -*-scheme-*- code!
 |#
-#lang scheme
+#lang racket
 
-(require srfi/19
-         (except-in "vars.rkt" log)
-         "git-version.rkt"
-         (except-in "iserver.rkt" main)
-         "reloadable.rkt")
+(require
+ "git-version.rkt"
+ "reloadable.rkt"
+ (except-in "iserver.rkt" main)
+ (except-in "vars.rkt" log)
+ (only-in "lexer.rkt" parse-message)
+ srfi/19
+ )
 
 (define *log-ports* (make-parameter (list (current-error-port)
                                           (open-output-file
@@ -33,7 +36,7 @@
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
 (define (slightly-more-sophisticated-line-proc line)
-  (log "<= ~a" line)
+  (log "<= ~s" (parse-message line))
   (parameterize ([*logger* log])
     (irc-process-line line)))
 
