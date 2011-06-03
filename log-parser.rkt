@@ -23,10 +23,12 @@ exec racket --require "$0" --main -- ${1+"$@"}
      ((bytes? x)
       (bytes->string/utf-8 x))))
   (match s
-    [(regexp #px"^([^ ]+) <= \":([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)\"$"
+    ;; old style: the guts are an unparsed scheme string
+    [(regexp #px"^([[:print:]]+) <= \":([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)\"$"
           (list _ timestamp   nick    id      host            target   text))
      (utterance timestamp nick target text)]
 
+    ;; new style: the guts are an s-expression
     [(regexp #px"^([[:print:]]+) <= +(\\(.*\\))" (list _ timestamp raw-string))
      (match  (read (open-input-string raw-string))
        [(list (list 'prefix (regexp #rx"(.*)!(.*)@(.*)" (list _ nick _ _)))
