@@ -121,7 +121,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (if (offensive? s)
       (begin0
           c
-        ((*incubot-logger*) "Not adding offensive string ~s to corpus" s))
+        ((*incubot-logger*) "Not adding offensive string to corpus"))
       (make-corpus
        (set-add (corpus-strings c) s)
        (for/fold ([h (corpus-strings-by-word c)])
