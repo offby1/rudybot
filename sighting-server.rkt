@@ -10,7 +10,7 @@
 ;; /usr/local/src/plt/collects/web-server/default-web-root/servlets/; done
 ;;
 ;; http://server:8080/servlets/sighting-server.ss
-#lang scheme
+#lang racket
 
 (require (planet offby1/offby1/zdate)
          mzlib/etc

@@ -18,7 +18,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 ;; utterance chosen at random from that set, favoring the longer
 ;; (presumably more-interesting) ones.
 
-#lang scheme
+#lang racket
 (require
  scheme/set
  scheme/include

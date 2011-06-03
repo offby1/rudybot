@@ -3,7 +3,7 @@
 exec  racket  --require "$0" --main -- ${1+"$@"}
 |#
 
-#lang scheme
+#lang racket
 
 (require (planet schematics/schemeunit:3:4)
          (planet schematics/schemeunit:3/text-ui))

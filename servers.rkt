@@ -7,7 +7,7 @@ else
 fi
 |#
 
-#lang scheme
+#lang racket
 
 (require "loop.rkt"
          (except-in "vars.rkt" log)

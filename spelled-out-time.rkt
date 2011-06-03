@@ -3,7 +3,7 @@
 exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 |#
 
-#lang scheme
+#lang racket
 
 (require (planet neil/numspell/numspell)
          (planet schematics/schemeunit:3)

@@ -4,7 +4,7 @@
 exec  racket --require "$0" --main -- ${1+"$@"}
 |#
 
-#lang scheme
+#lang racket
 
 ;; if this directory contains no subdirectories
 ;;   read the contents of all the files, stick them in a list

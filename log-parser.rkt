@@ -3,7 +3,7 @@
 exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
-#lang scheme
+#lang racket
 
 (require
  (only-in mzlib/etc this-expression-source-directory)

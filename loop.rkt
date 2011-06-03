@@ -1,6 +1,6 @@
 #| Hey Emacs, this is -*-scheme-*- code!
 |#
-#lang scheme
+#lang racket
 
 (require
  "git-version.rkt"

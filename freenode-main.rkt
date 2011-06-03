@@ -1,9 +1,9 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec racket --require $0 --main -- ${1+"$@"}
+exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
-#lang scheme
+#lang racket
 
 (require "loop.rkt"
          (except-in "vars.rkt" log)
@@ -13,7 +13,6 @@ exec racket --require $0 --main -- ${1+"$@"}
          (only-in "userinfo.rkt" *userinfo-database-directory-name*)
          (only-in "iserver.rkt" make-incubot-server))
 
-(require mzlib/trace)
 (define (main . args)
   (clearenv)
   (command-line
@@ -24,7 +23,6 @@ exec racket --require $0 --main -- ${1+"$@"}
   (parameterize* ([*irc-server-hostname* "irc.freenode.org"]
                   [*irc-server-port* 6667]
                   [*userinfo-database-directory-name* "userinfo.db"]
-                  [current-trace-notify (lambda (string) (log-debug string))]
                   [*incubot-logger* log]
                   [*incubot-server* (make-incubot-server "parsed-log")]
                   [*nickserv-password* (get-preference '|rudybot-freenode-nickserv-password|)])
