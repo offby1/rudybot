@@ -67,6 +67,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    [(list (? set? ws) (? corpus? c))
     (let ([rare (rarest ws c)])
       (and rare
+           ((*incubot-logger*) "incubot chose ~s" rare)
            (random-choose (strings-containing-word rare c))))]))
 
 (define/contract (in-corpus? s c)
