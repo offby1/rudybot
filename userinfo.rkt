@@ -113,9 +113,9 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 (provide/contract [struct sighting
                           ((who string?)
                            (where string?)
-                           (when natural-number/c)
-                           (action? (or/c string? not))
-                           (words (listof string?)))])
+                           (when real?)
+                           (action? boolean?)
+                           (words string?))])
 
 ;; TODO -- see if there's some clever way to get Racket to write this
 ;; for me, by examining the struct type.

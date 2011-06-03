@@ -54,7 +54,7 @@
                         (aif it (sighting-action? info) (string-append it " ") "")
                         (sighting-where info)
                         (describe-since (sighting-when  info))
-                        (let ((words (string-join (sighting-words info))))
+                        (let ((words (sighting-words info)))
                           (if (positive? (string-length words))
                               (format ", saying \"~a\"" words)
                               ""))))
