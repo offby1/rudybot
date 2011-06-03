@@ -23,7 +23,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
      ((bytes? x)
       (bytes->string/utf-8 x))))
   (match s
-    [(regexp #px"^([^ ]*) <= :([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)$"
+    [(regexp #px"^([^ ]+) <= \":([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)\"$"
           (list _ timestamp   nick    id      host            target   text))
      (utterance timestamp nick target text)]
 
