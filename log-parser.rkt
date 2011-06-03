@@ -54,23 +54,33 @@ exec racket --require "$0" --main -- ${1+"$@"}
 
 (provide main)
 (define (main . args)
-  (let ([test-failures (run-tests tests)])
-    (when (zero? test-failures)
-      (let ([input-file-name (build-path (this-expression-source-directory) "big-log")]
-            [output-file-name "parsed-log"])
-        (call-with-input-file
-            input-file-name
-          (lambda (ip)
-            (pe "Reading from ~a; writing to ~a..." input-file-name output-file-name)
-            (port-count-lines! ip)
-            (profile-thunk
-             (lambda ()
-               (call-with-output-file output-file-name
-                 (lambda (op)
-                   (for ([line (in-lines ip)])
-                     (let ([utz (string->utterance line)])
-                       (when utz
-                         (write utz op)
-                         (newline op)))))
-                 #:exists 'truncate)))))
-        (pe "done~%")))))
+  (define input-file-names
+    (command-line
+     #:program "log-parser"
+     #:args input-file-names
+     input-file-names))
+  (cond
+   ((null? input-file-names)
+    (displayln "You didn't specify any input files; running unit tests instead of parsing" (current-error-port))
+    (exit (if (positive?  (run-tests tests)) 1 0)))
+   ((< 1 (length input-file-names))
+    (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names))
+   (else
+    (let ([input-file-name (build-path (this-expression-source-directory) (car input-file-names))]
+          [output-file-name "parsed-log"])
+      (call-with-input-file
+          input-file-name
+        (lambda (ip)
+          (pe "Reading from ~a; writing to ~a..." input-file-name output-file-name)
+          (port-count-lines! ip)
+          (profile-thunk
+           (lambda ()
+             (call-with-output-file output-file-name
+               (lambda (op)
+                 (for ([line (in-lines ip)])
+                   (let ([utz (string->utterance line)])
+                     (when utz
+                       (write utz op)
+                       (newline op)))))
+               #:exists 'truncate)))))
+      (pe "done~%")))))
