@@ -3,18 +3,17 @@
 exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 |#
 
-#lang scheme
+#lang racket
 
 (require scheme/sandbox
          net/url
          (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui))
 
-(define-struct sandbox (evaluator
-                        last-used-time) #:transparent #:mutable)
+(struct sandbox (evaluator last-used-time) #:transparent #:mutable)
 (provide (rename-out [public-make-sandbox make-sandbox]))
 (define (public-make-sandbox [lang '(begin (require scheme))])
-  (make-sandbox
+  (sandbox
    (parameterize ((sandbox-output       'string)
                   (sandbox-error-output 'string)
                   (sandbox-eval-limits '(10 20)))

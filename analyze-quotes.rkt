@@ -1,5 +1,5 @@
 ;; Run me in "drRacket"
-#lang scheme
+#lang racket
 (require plot
          (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui))

@@ -1,4 +1,4 @@
-#lang scheme
+#lang racket
 
 (provide irc-process-line)
 
@@ -86,7 +86,7 @@
          ;; don't display newlines, so that Bad Guys won't be able
          ;; to inject IRC commands into our output.
          (str (regexp-replace* #rx"[\n\r]" str " <NEWLINE> ")))
-    (log "=> ~s" str)
+    (log "=> ~a" str)
     (fprintf (*irc-output*) "~a~%" str)))
 
 (define (pm #:notice? [notice? #f] target fmt . args)

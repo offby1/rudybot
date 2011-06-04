@@ -4,7 +4,7 @@
 exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
-#lang scheme
+#lang racket
 (require net/url
          (planet dherman/json:3:0)
          (planet schematics/schemeunit:3)
