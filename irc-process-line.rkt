@@ -122,8 +122,6 @@
 
 (defmatcher IRC-COMMAND (regexp #rx"^:((.*)!(.*)@(.*))$"
                                 (list _ full-id nick id host))
-  (define (espy target action words)
-    (note-sighting (make-sighting nick target (current-seconds) action words)))
   (if (equal? nick (unbox *my-nick*))
     (match (*current-words*)
       [(list "NICK" (colon new-nick))
@@ -131,47 +129,19 @@
        (set-box! *my-nick* new-nick)]
       [_ (log "I seem to have said ~s" (*current-words*))])
     (match (*current-words*)
-      [(list "KICK" target victim mumblage ...)
-       (espy target (format "kicking ~a" victim) mumblage)]
-      [(list "MODE" target mode-data ...)
-       (espy target (format "changing the mode to '~a'" mode-data) '())]
-      [(list "INVITE" lucky-recipient (colon party) further ...)
-       (espy host (format "inviting ~a to ~a" lucky-recipient party)
-             further)]
-      [(list "NICK" (colon first-word) rest ...)
-       (espy host (format "changing their nick to ~a" first-word) '())]
-      [(list "TOPIC" target (colon first-word) rest ...)
-       (espy target
-             (format "changing the channel's topic to '~a'"
-                     (string-join (cons first-word rest))) '())]
       [(list "JOIN" (colon target))
        ;; Alas, this pretty much never triggers, since duncanm keeps his client
        ;; session around for ever
        (when (regexp-match #rx"^duncanm" nick)
          (pm target "la la la"))
        (when (regexp-match #rx"^klutometis" nick)
-         (pm target "\1ACTION bows deeply before his master, inventor of incubot\1"))
-       (espy target
-             (format "joining")
-             '())]
-      [(list "NICK" (colon new-nick))
-       ;; TODO -- call espy with the old nick, or the new one, or both?
-       (log "~a wants to be known as ~a" nick new-nick)]
-      [(list "PART" target (colon first-word) rest ...)
-       (espy target
-             "leaving the channel"
-             (cons first-word rest))]
+         (pm target "\1ACTION bows deeply before his master, inventor of incubot\1"))]
       [(list "PRIVMSG"
              target
              (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
              inner-words ...
              (regexp #px"(.*)\u0001$" (list _ trailing )))
-       ((*incubot-server*) 'put (string-join (append inner-words (list trailing)) " "))
-       (espy target
-             (format "doing ~a: ~a" extended-data-word
-                     (string-join
-                      (append inner-words (list trailing))))
-             '())]
+       ((*incubot-server*) 'put (string-join (append inner-words (list trailing)) " "))]
       ;; Hard to see how this will ever match, given that the above clause
       ;; would seem to match VERSION
       [(list "PRIVMSG"
@@ -203,11 +173,6 @@
          (set! first-word (car rest))
          (set! rest (cdr rest)))
 
-       ;; fledermaus points out that people may be surprised
-       ;; to find "private" messages -- those where "target"
-       ;; is (unbox *my-nick*) -- recorded in the sightings log.
-       (when (not (equal? target (unbox *my-nick*)))
-         (espy target #f (cons first-word rest)))
        ;; look for long URLs to tiny-ify, but only if we're The
        ;; Original Rudybot, so avoid annoying duplicates from multiple
        ;; bots
@@ -261,11 +226,9 @@
             ((*incubot-server*) 'put (string-join (cons first-word rest) " "))
             ])])]
 
-      [(list "QUIT" (colon first-word) rest ...)
-       (espy host "quitting"
-             (cons first-word rest))]
       [_ (log "~a said ~s, which I don't understand" nick
               (text-from-word (*current-words*)))])))
+
 
 (defmatcher IRC-COMMAND (colon host)
   (match (*current-words*)

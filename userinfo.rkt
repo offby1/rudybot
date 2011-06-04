@@ -138,12 +138,6 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
     (check-equal? (dict-ref (sighting->dict s) 'action?) #t)
     (check-equal? (dict-ref (sighting->dict s) 'words  ) '("word1" "word2"))))
 
-(provide/contract [lookup-sightings (-> string? (listof sighting?))]
-                  [note-sighting (-> sighting? void?)])
-(define-values (lookup-sightings note-sighting)
-  (make-limited-list-info
-   'sightings sighting-who sighting-when *sightings-to-keep*))
-
 (define-struct message (who from where when words) #:prefab)
 (define-values (lookup-messages note-message)
   (make-limited-list-info
