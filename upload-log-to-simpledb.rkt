@@ -15,8 +15,11 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
          #|
          ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
          |#
-         (only-in amazon/simpledb simpledb-post )
-         (only-in amazon/group group)
+         (only-in amazon/simpledb
+                  close-upload-queue
+                  make-simple-db-upload-queue
+                  simpledb-enqueue
+                  )
          )
 
 (define pe (curry fprintf (current-error-port)))
@@ -198,6 +201,17 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (check-zdate->seconds
    2000 1 1 0 0 0))
 
+(define-values [enqueue-log-message-for-simpledb-batch flush-simpledb-queue]
+  (let ([upload-queue #f])
+    (values
+     (lambda (m)
+       (when (not upload-queue)
+         (set! upload-queue  (make-simple-db-upload-queue)))
+       (simpledb-enqueue upload-queue m))
+
+     (lambda ()
+       (close-upload-queue upload-queue)))))
+
 (provide main)
 (define (main . args)
   (define input-file-names
@@ -223,9 +237,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
       (my-call-with-input-file
           input-file-name
         (lambda (ip)
-          (pe "Reading from ~a..." input-file-name)
+          (pe "Reading from ~a..." ip)
           (for ([line (in-lines ip)])
             (cond
-             ((log-line->alist line) => (curry pe " => ~a~%")))
+             ((log-line->alist line) => enqueue-log-message-for-simpledb-batch))
             )))
       (pe "done~%")))))
