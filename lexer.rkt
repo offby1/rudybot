@@ -27,9 +27,14 @@ exec racket --require "$0" --main -- ${1+"$@"}
      ((char=? #\: (peek-char inp))
       (begin
         (read-char inp)
-        (loop (cons `(param . ,(regexp-match #px"[^\u0000\r\n]+"  inp)) result))))
+        (if (eof-object? (peek-char inp))
+            result
+            (loop (cons `(param . ,(regexp-match #px"[^\u0000\r\n]+"  inp)) result)))))
      (else
       (loop   (cons `(param . ,(regexp-match #px"[^\u0000\r\n ]+" inp)) result))))))
+
+(check-equal? (parse-params (open-input-string ":"))
+              '())
 
 (define (parse-crlf inp )
   (regexp-match #px"\r\n" inp))
