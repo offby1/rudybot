@@ -67,6 +67,13 @@ ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
 ;; into simpledb
 (define (message->flat-alist m)
   (match m
+    ;; Deal with some bugaceous data in the logs
+    [(list (list 'prefix prefix)
+           (list 'command command)
+           (list 'params '(param . #f)))
+     `((prefix ,prefix)
+       (command ,command))]
+
     [(list (list 'prefix prefeces ...)  ; usually there's one prefix,
                                         ; but sometimes there's zero.
            (list 'command command)
@@ -137,6 +144,13 @@ ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
    '((prefix)
      (command #"PING")
      (param-0 #"niven.freenode.net")))
+  (check-equal?
+   (message->flat-alist
+    '((prefix #"ade!~ade@72.1.197.9")
+      (command #"QUIT")
+      (params (param . #f))))
+   '((prefix #"ade!~ade@72.1.197.9")
+     (command #"QUIT")))
   (check-equal?
    (make-numbered-dict '(1 2 3))
    '((param-0 1) (param-1 2) (param-2 3))))
