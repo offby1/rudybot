@@ -8,6 +8,18 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (require racket/trace
          rackunit rackunit/text-ui)
 
+;; This is a symlink, created thus:
+
+#|
+ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
+|#
+(require
+ (only-in amazon/simpledb simpledb-post )
+ (only-in amazon/group group))
+
+;; Eventually I should make my amazon package presentable,
+;; and upload it to PLaneT.
+
 (struct sighting (who when description) #:prefab)
 
 ;; grovel log, pulling out new-style sexps (and associated timestamps)
@@ -47,6 +59,30 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                   (second (first params)) ))))]
     [_ 'wtf]))
 
+(define (make-numbered-dict seq)
+  (for/list ([(elt i) (in-indexed seq)])
+    (list (string->symbol (format "param-~a" i)) elt)))
+
+;; Massage our rfc1459 structure into a flat list suitable for shoving
+;; into simpledb
+(define (message->flat-alist m)
+  (match m
+    [(list (list 'prefix prefeces ...)  ; usually there's one prefix,
+                                        ; but sometimes there's zero.
+           (list 'command command)
+           (list 'params params ...))
+     `((prefix ,@prefeces)
+       (command ,command)
+       ,@(make-numbered-dict (map second params)))
+     ]))
+
+(define (log-line->alist l)
+  (match l
+    [(regexp #px"^([[:graph:]]+) <= (\\(.*\\))$" (list _ timestamp stuff))
+     (cons timestamp (message->flat-alist (read (open-input-string stuff))))]
+    [_ #f])  )
+
+
 (define-test-suite tests
   (check-equal? (trim-action #"frotz")
                 "saying \"frotz\"")
@@ -83,7 +119,27 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                    (prefix #"monqy")
                    (command #"QUIT")
                    (params (param #""))))
-                "quitting"))
+                "quitting")
+  (check-equal?
+   (message->flat-alist
+    '((prefix #"monqy!~chap@pool-71-102-217-117.snloca.dsl-w.verizon.net")
+      (command #"QUIT")
+      (params
+       (param #"Quit: cant see a thing")
+       (param #"Oh, by the way"))))
+   '((prefix #"monqy!~chap@pool-71-102-217-117.snloca.dsl-w.verizon.net")
+     (command #"QUIT")
+     (param-0 #"Quit: cant see a thing")
+     (param-1 #"Oh, by the way")))
+  (check-equal?
+   (message->flat-alist
+    '((prefix) (command #"PING") (params (param #"niven.freenode.net"))))
+   '((prefix)
+     (command #"PING")
+     (param-0 #"niven.freenode.net")))
+  (check-equal?
+   (make-numbered-dict '(1 2 3))
+   '((param-0 1) (param-1 2) (param-2 3))))
 
 (provide main)
 (define (main . args)
@@ -108,10 +164,8 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
         (lambda (ip)
           (pe "Reading from ~a..." input-file-name)
           (for ([line (in-lines ip)])
-            (match line
-              [(regexp #px"^([[:graph:]]+) <= (\\(.*\\))$" (list _ timestamp stuff))
-               (pe "Timestamp: ~a; stuff: ~a~%" timestamp stuff)
-               (exit 0)]
-              [_ #f])
-            )))
+            (pe "~s" line)
+            (cond
+             ((log-line->alist line) => (curry pe " => ~a")))
+            (pe "~%"))))
       (pe "done~%")))))
