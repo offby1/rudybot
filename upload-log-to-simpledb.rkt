@@ -6,7 +6,10 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 #lang racket
 
 (require racket/trace
+         (only-in racket/date find-seconds)
          rackunit rackunit/text-ui)
+
+(define pe (curry fprintf (current-error-port)))
 
 ;; This is a symlink, created thus:
 
@@ -61,32 +64,61 @@ ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
 
 (define (make-numbered-dict seq)
   (for/list ([(elt i) (in-indexed seq)])
-    (list (string->symbol (format "param-~a" i)) elt)))
+    (cons (string->symbol (format "param-~a" i)) elt)))
 
 ;; Massage our rfc1459 structure into a flat list suitable for shoving
 ;; into simpledb
 (define (message->flat-alist m)
+  (define prefix
+    (match (assq 'prefix m)
+      [(list 'prefix) '()]
+      [(list 'prefix prefeces ...) (car prefeces)]))
   (match m
     ;; Deal with some bugaceous data in the logs
     [(list (list 'prefix prefix)
            (list 'command command)
            (list 'params '(param . #f)))
-     `((prefix ,prefix)
-       (command ,command))]
+     `((prefix  . ,prefix)
+       (command . ,command))]
 
-    [(list (list 'prefix prefeces ...)  ; usually there's one prefix,
-                                        ; but sometimes there's zero.
+    [(list (list 'prefix _ ...)
            (list 'command command)
            (list 'params params ...))
-     `((prefix ,@prefeces)
-       (command ,command)
+     `((prefix . ,prefix)
+       (command . ,command)
        ,@(make-numbered-dict (map second params)))
      ]))
+
+(define (zdate->seconds str)
+  (match str
+      [(regexp #px"([[:digit:]]{4})-([[:digit:]]{2})-([[:digit:]]{2})T([[:digit:]]{2}):([[:digit:]]{2}):([[:digit:]]{2})Z"
+               (list _ yr mo dy hr min sc))
+       (apply find-seconds (append (map string->number (list sc min hr dy mo yr)) (list #f)))]))
+
+(define-simple-check (check-zdate->seconds yr mo dy hr mn sc)
+  (let ()
+    (define (zero-fill-left thing min-width)
+      (let loop ([result (format "~a" thing)])
+        (if (<= min-width (string-length result))
+            result
+            (loop (string-append "0" result)))))
+    (equal?
+     (zdate->seconds
+      (format "~a-~a-~aT~a:~a:~aZ"
+              (zero-fill-left yr 4)
+              (zero-fill-left mo 2)
+              (zero-fill-left dy 2)
+              (zero-fill-left hr 2)
+              (zero-fill-left mn 2)
+              (zero-fill-left sc 2)))
+     (find-seconds
+      sc mn hr dy mo yr
+      #f))))
 
 (define (log-line->alist l)
   (match l
     [(regexp #px"^([[:graph:]]+) <= (\\(.*\\))$" (list _ timestamp stuff))
-     (cons timestamp (message->flat-alist (read (open-input-string stuff))))]
+     (cons (zdate->seconds timestamp) (message->flat-alist (read (open-input-string stuff))))]
     [_ #f])  )
 
 
@@ -134,26 +166,31 @@ ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
       (params
        (param #"Quit: cant see a thing")
        (param #"Oh, by the way"))))
-   '((prefix #"monqy!~chap@pool-71-102-217-117.snloca.dsl-w.verizon.net")
-     (command #"QUIT")
-     (param-0 #"Quit: cant see a thing")
-     (param-1 #"Oh, by the way")))
+   '((prefix  . #"monqy!~chap@pool-71-102-217-117.snloca.dsl-w.verizon.net")
+     (command . #"QUIT")
+     (param-0 . #"Quit: cant see a thing")
+     (param-1 . #"Oh, by the way")))
   (check-equal?
    (message->flat-alist
     '((prefix) (command #"PING") (params (param #"niven.freenode.net"))))
    '((prefix)
-     (command #"PING")
-     (param-0 #"niven.freenode.net")))
+     (command . #"PING")
+     (param-0 . #"niven.freenode.net")))
   (check-equal?
    (message->flat-alist
     '((prefix #"ade!~ade@72.1.197.9")
       (command #"QUIT")
       (params (param . #f))))
-   '((prefix #"ade!~ade@72.1.197.9")
-     (command #"QUIT")))
+   '((prefix  . #"ade!~ade@72.1.197.9")
+     (command . #"QUIT")))
   (check-equal?
    (make-numbered-dict '(1 2 3))
-   '((param-0 1) (param-1 2) (param-2 3))))
+   '((param-0 . 1)
+     (param-1 . 2)
+     (param-2 . 3)))
+
+  (check-zdate->seconds
+   2000 1 1 0 0 0))
 
 (provide main)
 (define (main . args)
@@ -163,8 +200,6 @@ ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
      #:args input-file-names
      input-file-names))
 
-  (define pe (curry fprintf (current-error-port)))
-
   (cond
    ((null? input-file-names)
     (displayln "You didn't specify any input files; running unit tests instead of parsing" (current-error-port))
@@ -172,8 +207,14 @@ ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
    ((< 1 (length input-file-names))
     (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names))
    (else
+
+    (define (my-call-with-input-file name proc)
+      (if (string=? name "-")
+          (proc (current-input-port))
+          (call-with-input-file name proc)))
+
     (let ([input-file-name (car input-file-names)])
-      (call-with-input-file
+      (my-call-with-input-file
           input-file-name
         (lambda (ip)
           (pe "Reading from ~a..." input-file-name)
