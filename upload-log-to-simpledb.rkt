@@ -7,18 +7,19 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (require racket/trace
          (only-in racket/date find-seconds)
-         rackunit rackunit/text-ui)
+         rackunit
+         rackunit/text-ui
+
+         ;; This is a symlink, created thus:
+
+         #|
+         ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
+         |#
+         (only-in amazon/simpledb simpledb-post )
+         (only-in amazon/group group)
+         )
 
 (define pe (curry fprintf (current-error-port)))
-
-;; This is a symlink, created thus:
-
-#|
-ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
-|#
-(require
- (only-in amazon/simpledb simpledb-post )
- (only-in amazon/group group))
 
 ;; Eventually I should make my amazon package presentable,
 ;; and upload it to PLaneT.
@@ -97,11 +98,16 @@ ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
 
 (define-simple-check (check-zdate->seconds yr mo dy hr mn sc)
   (let ()
+
+    ;; I wanted to use (planet ashinn/fmt:1:1/fmt) instead of writing
+    ;; this myself, but it fails to compile, complaining about
+    ;; call-with-output-string not being defined
     (define (zero-fill-left thing min-width)
       (let loop ([result (format "~a" thing)])
         (if (<= min-width (string-length result))
             result
             (loop (string-append "0" result)))))
+
     (equal?
      (zdate->seconds
       (format "~a-~a-~aT~a:~a:~aZ"
@@ -219,8 +225,7 @@ ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
         (lambda (ip)
           (pe "Reading from ~a..." input-file-name)
           (for ([line (in-lines ip)])
-            (pe "~s" line)
             (cond
-             ((log-line->alist line) => (curry pe " => ~a")))
-            (pe "~%"))))
+             ((log-line->alist line) => (curry pe " => ~a~%")))
+            )))
       (pe "done~%")))))
