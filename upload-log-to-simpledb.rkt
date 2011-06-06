@@ -15,11 +15,13 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
          #|
          ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
          |#
-         (only-in amazon/simpledb
+         (only-in amazon/upload-queue
                   close-upload-queue
                   make-simple-db-upload-queue
                   simpledb-enqueue
                   )
+         (only-in amazon/simpledb
+                  simpledb-post)
          )
 
 (define pe (curry fprintf (current-error-port)))
@@ -208,7 +210,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (values
      (lambda (m)
        (when (not upload-queue)
-         (set! upload-queue  (make-simple-db-upload-queue "freenode")))
+         (set! upload-queue  (make-simple-db-upload-queue simpledb-post "freenode")))
 
        (simpledb-enqueue upload-queue m))
 
