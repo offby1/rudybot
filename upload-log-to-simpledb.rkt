@@ -238,6 +238,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
           (proc (current-input-port))
           (call-with-input-file name proc)))
 
+    ;; I should really fetch the high-water mark from simpledb, and
+    ;; then only upload stuff that's newer.  That way, running this
+    ;; twice in a row, the second time will be quicker.
     (let ([input-file-name (car input-file-names)])
       (my-call-with-input-file
           input-file-name
