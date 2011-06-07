@@ -74,27 +74,25 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 ;; Massage our rfc1459 structure into a flat list suitable for shoving
 ;; into simpledb
 (define (message->flat-alist m)
-  (define prefix
-    (match (assq 'prefix m)
-      [(list 'prefix) #f]
-      [(list 'prefix prefeces ...) (car prefeces)]))
   (match m
-    ;; Deal with some bugaceous data in the logs
-    [(list (list 'prefix prefix)
-           (list 'command command)
-           (list 'params '(param . #f)))
-     `(("prefix"  . ,prefix)
-       ("command" . ,command))]
+    [(? dict? parsed)
+     (let ([prefix  (dict-ref parsed 'prefix)]
+           [nick    (dict-ref parsed 'nick '())]
+           [command (dict-ref parsed 'command)]
+           [params  (dict-ref parsed 'params)])
 
-    [(list (list 'prefix _ ...)
-           (list 'command command)
-           (list 'params params ...))
-     ((if prefix
-          (curry cons `("prefix" . ,prefix))
-          values)
-     `(("command" . ,command)
-       ,@(make-numbered-dict (map second params))))
-     ]))
+       ((if (null? prefix)
+            values
+            (curry cons `("prefix" . ,(car prefix))))
+        ((if (null? nick)
+             values
+             (curry cons `("nick" . ,(car nick))))
+         ((if (null? command)
+              values
+              (curry cons `("command" . ,(car command))))
+          (if (equal? params '((param . #f)))
+              '()
+              (make-numbered-dict (map second params)))))))]))
 
 (define (zdate->seconds str)
   (match str
@@ -190,10 +188,12 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      ("param-0" . #"niven.freenode.net")))
   (check-equal?
    (message->flat-alist
-    '((prefix #"ade!~ade@72.1.197.9")
+    '((prefix  #"ade!~ade@72.1.197.9")
+      (nick    #"ade")
       (command #"QUIT")
-      (params (param . #f))))
+      (params  (param . #f))))
    '(("prefix"  . #"ade!~ade@72.1.197.9")
+     ("nick"    . #"ade")
      ("command" . #"QUIT")))
   (check-equal?
    (make-numbered-dict '(1 2 3))
