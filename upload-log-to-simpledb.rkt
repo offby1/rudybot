@@ -46,12 +46,11 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define (timestamp+message->description m)
   (match m
-    [(list timestamp
-           (list 'prefix prefix)
-           (list 'command command)
-           (list 'params params ...))
+    [(cons timestamp (? dict? parsed))
 
-     (let* ([command-str (bytes->string/utf-8 command)])
+     (let* ([command (car (dict-ref parsed 'command))]
+            [params  (dict-ref parsed 'params)]
+            [command-str (bytes->string/utf-8 command)])
        (case (string->symbol command-str)
          ((JOIN)
           (format "~aing ~a"      (string-downcase command-str) (second (first params))))
