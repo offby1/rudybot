@@ -67,9 +67,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                   (second (first params)) ))))]
     [_ 'wtf]))
 
-(define (make-numbered-dict seq)
+(define (make-numbered-dict prefix seq)
   (for/list ([(elt i) (in-indexed seq)])
-    (cons (format "param-~a" i) elt)))
+    (cons (format "~a~a" prefix i) elt)))
 
 ;; Massage our rfc1459 structure into a flat list suitable for shoving
 ;; into simpledb
@@ -81,9 +81,11 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
            [command (dict-ref parsed 'command)]
            [params  (dict-ref parsed 'params)])
 
-       (for/fold ([alist (if (equal? params '((param . #f)))
-                             '()
-                             (make-numbered-dict (map second params)))])
+       (for/fold ([alist
+                   ;; work around some bugaceous data in the logs
+                   (if (equal? params '((param . #f)))
+                       '()
+                       (make-numbered-dict "param-" (map second params)))])
            ([k '(command nick prefix)]) ;order matters because I'm too
                                         ;lazy to make the tests ignore order
            (let ([v (dict-ref parsed k '())])
@@ -194,10 +196,10 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      ("nick"    . #"ade")
      ("command" . #"QUIT")))
   (check-equal?
-   (make-numbered-dict '(1 2 3))
-   '(("param-0" . 1)
-     ("param-1" . 2)
-     ("param-2" . 3)))
+   (make-numbered-dict "frotz" '(0 1 2))
+   '(("frotz0" . 0)
+     ("frotz1" . 1)
+     ("frotz2" . 2)))
 
   (check-zdate->seconds
    2000 1 1 0 0 0))
