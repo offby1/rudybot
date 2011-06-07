@@ -81,18 +81,16 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
            [command (dict-ref parsed 'command)]
            [params  (dict-ref parsed 'params)])
 
-       ((if (null? prefix)
-            values
-            (curry cons `("prefix" . ,(car prefix))))
-        ((if (null? nick)
-             values
-             (curry cons `("nick" . ,(car nick))))
-         ((if (null? command)
-              values
-              (curry cons `("command" . ,(car command))))
-          (if (equal? params '((param . #f)))
-              '()
-              (make-numbered-dict (map second params)))))))]))
+       (for/fold ([alist (if (equal? params '((param . #f)))
+                             '()
+                             (make-numbered-dict (map second params)))])
+           ([k '(command nick prefix)]) ;order matters because I'm too
+                                        ;lazy to make the tests ignore order
+           (let ([v (dict-ref parsed k '())])
+             (if (null? v)
+                 alist
+                 `((,(symbol->string k) . ,(car v))
+                   ,@alist)))))]))
 
 (define (zdate->seconds str)
   (match str
