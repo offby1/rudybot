@@ -5,8 +5,10 @@ exec racket --require "$0" --main -- ${1+"$@"}
 
 #lang racket
 (require
+ racket/trace
  rackunit
  rackunit/text-ui
+ (only-in amazon/aws-common run-tests/maybe-exit)
  )
 
 (define (eat-ws inp)
@@ -33,11 +35,25 @@ exec racket --require "$0" --main -- ${1+"$@"}
      (else
       (loop   (cons `(param . ,(regexp-match #px"[^\u0000\r\n ]+" inp)) result))))))
 
-(check-equal? (parse-params (open-input-string ":"))
-              '())
+;; I have the feeling I'm reinventing the wheel here.
+(define-check (check-dicts-equal? d1 d2)
+  (with-check-info (['actual d1]
+                    ['expected d2])
+      (when (not (equal?  (make-immutable-hash (dict->list d1))
+                          (make-immutable-hash (dict->list d2))))
+        (fail-check))))
 
 (define (parse-crlf inp )
   (regexp-match #px"\r\n" inp))
+
+(define (canonicalize-nick n)
+  (string->bytes/utf-8
+   (string-downcase (regexp-replace #rx"(?<=.)([`_]*)$" (bytes->string/utf-8 n) ""))))
+
+(define (prefix->canonical-nick prefix)
+  (match prefix
+    [(regexp #rx"(.*)!(.*)@(.*)" (list _ nick id host)) (canonicalize-nick nick)]
+    [_ "wtf"]))
 
 (provide parse-message)
 (define/contract parse-message
@@ -46,39 +62,68 @@ exec racket --require "$0" --main -- ${1+"$@"}
    [(? string? message)
     (parse-message (open-input-string message))]
    [(? input-port? message)
-    (begin0
-        (cons
-         (if (char=? #\: (peek-char message))
-             (begin
-               (read-char message)
-               (cons 'prefix (parse-prefix message)))
-             '(prefix))
+    (append
+     (if (char=? #\: (peek-char message))
          (begin
-           (eat-ws message)
-           (begin0
-               `((command . ,(parse-command message))
-                 (params . ,(parse-params message)))
-             (parse-crlf message)))))]))
+           (read-char message)
+           (let* ([prefix (first (parse-prefix message))]
+                  [nick (prefix->canonical-nick prefix)])
+             `((prefix ,prefix)
+               (nick ,nick))))
+         '((prefix) (nick)))
+     (begin
+       (eat-ws message)
+       (begin0
+           `((command . ,(parse-command message))
+             (params . ,(parse-params message)))
+         (parse-crlf message))))]))
 
-(check-equal?
- (parse-message
-  ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot:   uptime")
- '((prefix #"offby1!n=user@pdpc/supporter/monthlybyte/offby1")
-   (command #"PRIVMSG")
+(define-test-suite all-tests
+  (check-dicts-equal?
+   (parse-message
+    ":nick!knack@frotz 123 #channel :some stuff")
+   '((prefix #"nick!knack@frotz")
+     (command #"123")
+     (nick #"nick")
+     (params (param #"#channel")
+             (param #"some stuff"))))
 
-   ;; Ahh! It honors multiple consecutive spaces!  The old way didn't.
-   (params (param #"##cinema") (param #"rudybot:   uptime"))))
+  (check-dicts-equal?
+   (parse-message
+    ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot:   uptime")
+   '((prefix #"offby1!n=user@pdpc/supporter/monthlybyte/offby1")
+     (command #"PRIVMSG")
+     (nick #"offby1")
 
-(check-equal?
- (parse-message
-  ":nick!knack@frotz 123 #channel :some stuff")
- '((prefix #"nick!knack@frotz")
-   (command #"123")
-   (params (param #"#channel")
-           (param #"some stuff"))))
+     ;; Ahh! It honors multiple consecutive spaces!  The old way didn't.
+     (params (param #"##cinema") (param #"rudybot:   uptime"))))
+
+  ;; As above, but with subtly different nick
+  (check-dicts-equal?
+   (parse-message
+    ":offby1`!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot:   uptime")
+   '((prefix #"offby1`!n=user@pdpc/supporter/monthlybyte/offby1")
+     (nick #"offby1")
+     (command #"PRIVMSG")
+
+     ;; Ahh! It honors multiple consecutive spaces!  The old way didn't.
+     (params (param #"##cinema") (param #"rudybot:   uptime"))))
+
+  (check-dicts-equal?
+   (parse-message
+    "COMMAND target :text shmext")
+   '((prefix)
+     (nick)
+     (command #"COMMAND")
+     (params (param #"target")
+             (param #"text shmext"))))
+
+  (check-equal? (parse-params (open-input-string ":"))
+                '()))
 
 (provide main)
 (define (main)
+  (run-tests/maybe-exit all-tests)
   (if #t
       (call-with-input-file
           "incoming"
