@@ -23,18 +23,26 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
                      (lambda (e)
                        (log "Uh oh: ~a; using empty corpus" (exn-message e))
                        (make-incubot-server (make-corpus)))])
-      (call-with-input-file ifn make-incubot-server))]
-   [(? input-port? inp)
-    (log "Reading log from ~a..." inp)
-    (make-incubot-server
-     (time
-      (with-handlers ([exn? (lambda (e)
-                              (log "Ooops: ~a~%" (exn-message e))
-                              (lambda ignored #f))])
 
+      ;; Load the server up asynchronously, so we don't have to wait
+      ;; for it.
+      (let ([the-server (make-incubot-server (make-corpus))])
         (begin0
-            (make-corpus-from-sexps inp 100000)
-          (log "Reading log from ~a...done~%" inp)))))]
+            the-server
+          (thread
+           (lambda ()
+             (log "Reading log from ~a..." ifn)
+             (time
+              (with-handlers ([exn? (lambda (e)
+                                      (log "Ooops: ~a~%" (exn-message e))
+                                      (lambda ignored #f))])
+
+                (call-with-input-file ifn
+                  (lambda (inp)
+                    (for ([utterance (in-port read inp)])
+                      (the-server 'put (utterance-text utterance)))
+                    (log "Reading log from ~a...done~%" inp))))))))))]
+
    [(? corpus? c)
     (let ([*to-server*   (make-channel)]
           [*from-server* (make-channel)])
@@ -56,7 +64,6 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
               (loop ((hash-ref funcs-by-symbol symbol) inp c))]))))
 
       (lambda (command-sym inp)
-        (log "incubot ~a ~s" command-sym inp)
         (channel-put *to-server* (cons command-sym inp))
         (channel-get *from-server*)))]))
 
