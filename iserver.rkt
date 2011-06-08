@@ -44,6 +44,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
                     (log "Reading log from ~a...done~%" inp))))))))))]
 
    [(? corpus? c)
+    ;; TODO, low priority: Racket threads have a built-in "mailbox",
+    ;; which is essentially an async channel; we could replace one of
+    ;; these channels with it.
     (let ([*to-server*   (make-channel)]
           [*from-server* (make-channel)])
       (define funcs-by-symbol
