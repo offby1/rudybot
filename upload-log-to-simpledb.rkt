@@ -195,9 +195,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
        (when (not upload-queue)
          (set! upload-queue  (make-simple-db-upload-queue #:domainname "freenode")))
 
-       (displayln m)
-       ;; (simpledb-enqueue upload-queue m)
-       )
+       (simpledb-enqueue upload-queue m))
 
      (lambda ()
        (close-upload-queue upload-queue)
