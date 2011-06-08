@@ -5,7 +5,7 @@
 (require
  "git-version.rkt"
  "reloadable.rkt"
- (except-in "iserver.rkt" main)
+ "iserver.rkt"
  (except-in "vars.rkt" log)
  (only-in "lexer.rkt" parse-message)
  srfi/19
