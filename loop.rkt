@@ -8,6 +8,7 @@
  "iserver.rkt"
  (except-in "vars.rkt" log)
  (only-in "lexer.rkt" parse-message)
+ (planet offby1/offby1:2:1/zdate)
  srfi/19
  )
 
@@ -24,7 +25,7 @@
 
 (define (log . args)
   (for ((op (in-list (*log-ports*))))
-    (fprintf op "~a " (date->string (current-date) "~4"))
+    (fprintf op "~a " (zdate #:offset 0))
     (apply fprintf op args)
     (newline op)))
 
