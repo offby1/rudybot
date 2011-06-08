@@ -55,10 +55,10 @@ exec racket --require "$0" --main -- ${1+"$@"}
 
 (provide prefix->canonical-nick)
 (define/contract (prefix->canonical-nick prefix)
-  (bytes? . -> . bytes?)
+  (bytes? . -> . (or/c bytes? false/c))
   (match prefix
     [(regexp #rx"(.*)!(.*)@(.*)" (list _ nick id host)) (canonicalize-nick nick)]
-    [_ #"wtf"]))
+    [_ #f]))
 
 (provide parse-message)
 (define/contract parse-message
@@ -74,7 +74,9 @@ exec racket --require "$0" --main -- ${1+"$@"}
            (let* ([prefix (first (parse-prefix message))]
                   [nick (prefix->canonical-nick prefix)])
              `((prefix ,prefix)
-               (nick ,nick))))
+               ,(if nick
+                    `(nick ,nick)
+                    `(nick)))))
          '((prefix) (nick)))
      (begin
        (eat-ws message)

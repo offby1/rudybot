@@ -66,8 +66,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
          ((PRIVMSG)
           (format "~a ~a" (trim-action
                            (second (second params)))
-                  (second (first params)) ))))]
-    [_ 'wtf]))
+                  (second (first params)) ))))]))
 
 (define (make-numbered-dict prefix seq)
   (for/list ([(elt i) (in-indexed seq)])
@@ -101,9 +100,11 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
    ((dict-ref parsed 'nick #f) parsed)
    ((dict-ref parsed 'prefix #f)
     => (lambda (prefix)
-         (if (pair? prefix)
-             (dict-set parsed 'nick (list (prefix->canonical-nick (first prefix))))
-             parsed)))
+         (let ([canon (and (pair? prefix)
+                           (prefix->canonical-nick (first prefix)))])
+           (if canon
+               (dict-set parsed 'nick (list canon))
+               parsed))))
    (else
     parsed)))
 
