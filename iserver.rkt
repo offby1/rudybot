@@ -39,8 +39,11 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
                 (call-with-input-file ifn
                   (lambda (inp)
-                    (for ([utterance (in-port read inp)])
-                      (the-server 'put (utterance-text utterance)))
+                    (let/ec return
+                      (for ([(utterance i) (in-indexed (in-port read inp))])
+                        (the-server 'put (utterance-text utterance))
+                        (when (= i 100000)
+                          (return))))
                     (log "Reading log from ~a...done~%" inp))))))))))]
 
    [(? corpus? c)
