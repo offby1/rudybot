@@ -172,8 +172,8 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      ("frotz2" . 2)))
 
   (check-equal?
-   (log-line->alist "2000-01-01T00:00:00Z <= ((prefix \"prefix\") (nick \"danger\") (command \"begone\") (params))")
-   '("946684800" ("prefix" . "prefix") ("nick" . "danger") ("command" . "begone"))))
+   (log-line->alist "2000-01-01T00:00:00Z <= ((prefix \"nick!nick@nite\") (command \"begone\") (params))")
+   '("946684800" ("prefix" . "prefix") ("nick" . "nick") ("command" . "begone"))))
 
 (define-values [enqueue-log-message-for-simpledb-batch flush-simpledb-queue]
   (let ([upload-queue #f])
@@ -182,10 +182,13 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
        (when (not upload-queue)
          (set! upload-queue  (make-simple-db-upload-queue #:domainname "freenode")))
 
-       (simpledb-enqueue upload-queue m))
+       (displayln m)
+       ;; (simpledb-enqueue upload-queue m)
+       )
 
      (lambda ()
-       (close-upload-queue upload-queue)))))
+       (close-upload-queue upload-queue)
+       ))))
 
 (provide main)
 (define (main . args)
