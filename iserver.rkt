@@ -1,9 +1,3 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-#$Id$
-exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
-|#
-
 #lang racket
 
 (require
@@ -23,19 +17,33 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
                      (lambda (e)
                        (log "Uh oh: ~a; using empty corpus" (exn-message e))
                        (make-incubot-server (make-corpus)))])
-      (call-with-input-file ifn make-incubot-server))]
-   [(? input-port? inp)
-    (log "Reading log from ~a..." inp)
-    (make-incubot-server
-     (time
-      (with-handlers ([exn? (lambda (e)
-                              (log "Ooops: ~a~%" (exn-message e))
-                              (lambda ignored #f))])
 
+      ;; Load the server up asynchronously, so we don't have to wait
+      ;; for it.
+      (let ([the-server (make-incubot-server (make-corpus))])
         (begin0
-            (make-corpus-from-sexps inp 100000)
-          (log "Reading log from ~a...done~%" inp)))))]
+            the-server
+          (thread
+           (lambda ()
+             (log "Reading log from ~a..." ifn)
+             (time
+              (with-handlers ([exn? (lambda (e)
+                                      (log "Ooops: ~a~%" (exn-message e))
+                                      (lambda ignored #f))])
+
+                (call-with-input-file ifn
+                  (lambda (inp)
+                    (let/ec return
+                      (for ([(utterance i) (in-indexed (in-port read inp))])
+                        (the-server 'put (utterance-text utterance))
+                        (when (= i 100000)
+                          (return))))
+                    (log "Reading log from ~a...done~%" inp))))))))))]
+
    [(? corpus? c)
+    ;; TODO, low priority: Racket threads have a built-in "mailbox",
+    ;; which is essentially an async channel; we could replace one of
+    ;; these channels with it.
     (let ([*to-server*   (make-channel)]
           [*from-server* (make-channel)])
       (define funcs-by-symbol
@@ -56,29 +64,5 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
               (loop ((hash-ref funcs-by-symbol symbol) inp c))]))))
 
       (lambda (command-sym inp)
-        (log "incubot ~a ~s" command-sym inp)
         (channel-put *to-server* (cons command-sym inp))
         (channel-get *from-server*)))]))
-
-(provide main)
-(define (main . args)
-  (parameterize
-      ([*incubot-logger* (curry fprintf (current-error-port))])
-    (let ([s (make-incubot-server
-              (open-input-string
-               (string-append
-                "#s(utterance \"2010-01-19T03:01:31Z\" \"offby1\" \"##cinema\" \"Let's make hamsters race\")"
-                "\n"
-                "#s(utterance \"2010-01-19T03:01:31Z\" \"offby1\" \"##cinema\" \"Gimme some dough\")")
-               ))])
-      (define (get input) (s 'get input))
-      (define (put sentence) (s 'put sentence))
-
-      (define (try input) (printf "~a => ~s~%" input (time (get input))))
-
-      (try "Oh shit")
-      (try "Oops, ate too much cookie dough")
-      (try "OOPS, ATE TOO MUCH COOKIE DOUGH")
-      (put "What is all this shit?")
-      (try "hamsters")
-      (try "Oh shit"))))

@@ -35,6 +35,9 @@ exec racket --require "$0" --main -- ${1+"$@"}
      (else
       (loop   (cons `(param . ,(regexp-match #px"[^\u0000\r\n ]+" inp)) result))))))
 
+(check-equal? (parse-params (open-input-string ":"))
+              '())
+
 ;; I have the feeling I'm reinventing the wheel here.
 (define-check (check-dicts-equal? d1 d2)
   (with-check-info (['actual d1]

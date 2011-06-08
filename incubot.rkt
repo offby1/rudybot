@@ -66,6 +66,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (incubot-sentence (string->words s) c)]
    [(list (? set? ws) (? corpus? c))
     (let ([rare (rarest ws c)])
+      ((*incubot-logger*) "incubot corpus has ~a entries" (set-count (corpus-strings c)))
       (and rare
            ((*incubot-logger*) "incubot chose ~s" rare)
            (random-choose (strings-containing-word rare c))))]))
@@ -84,8 +85,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (for/fold ([c (corpus
                    (set)
                    (make-immutable-ci-hash))])
-        ([sentence seq]
-         [forms-read (in-naturals)])
+        ([(sentence forms-read) (in-indexed seq)])
         (when (equal? limit forms-read)
           (return c))
 
