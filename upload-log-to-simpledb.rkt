@@ -6,6 +6,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 #lang racket
 
 (require racket/trace
+         (only-in "lexer.rkt" prefix->canonical-nick)
          (only-in racket/date find-seconds)
          (only-in (planet offby1/offby1:2:2/zdate) zdate)
          rackunit
@@ -95,11 +96,20 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                  `((,(symbol->string k) . ,(car v))
                    ,@alist)))))]))
 
+(define (ensure-nick parsed)
+  (cond
+   ((dict-ref parsed 'nick #f) parsed)
+   ((dict-ref parsed 'prefix #f)
+    => (lambda (prefix)
+         (dict-set parsed 'nick (list (prefix->canonical-nick (first prefix))))))
+   (else
+    parsed)))
+
 (define (log-line->alist l)
   (match l
     [(regexp #px"^([[:graph:]]+) <= (\\(.*\\))$" (list _ timestamp stuff))
      (cons (format "~a" (zdate timestamp #:format "~s"))
-           (message->flat-alist (read (open-input-string stuff))))]
+           (message->flat-alist (ensure-nick (read (open-input-string stuff)))))]
     [_ #f])  )
 
 
@@ -172,8 +182,8 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      ("frotz2" . 2)))
 
   (check-equal?
-   (log-line->alist "2000-01-01T00:00:00Z <= ((prefix \"nick!nick@nite\") (command \"begone\") (params))")
-   '("946684800" ("prefix" . "prefix") ("nick" . "nick") ("command" . "begone"))))
+   (log-line->alist "2000-01-01T00:00:00Z <= ((prefix #\"nick!nick@nite\") (command #\"begone\") (params))")
+   '("946684800" ("prefix" . #"nick!nick@nite") ("nick" . #"nick") ("command" . #"begone"))))
 
 (define-values [enqueue-log-message-for-simpledb-batch flush-simpledb-queue]
   (let ([upload-queue #f])
