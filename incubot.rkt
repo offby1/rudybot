@@ -85,8 +85,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (for/fold ([c (corpus
                    (set)
                    (make-immutable-ci-hash))])
-        ([sentence seq]
-         [forms-read (in-naturals)])
+        ([(sentence forms-read) (in-indexed seq)])
         (when (equal? limit forms-read)
           (return c))
 
