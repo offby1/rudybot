@@ -101,7 +101,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
    ((dict-ref parsed 'nick #f) parsed)
    ((dict-ref parsed 'prefix #f)
     => (lambda (prefix)
-         (dict-set parsed 'nick (list (prefix->canonical-nick (first prefix))))))
+         (if (pair? prefix)
+             (dict-set parsed 'nick (list (prefix->canonical-nick (first prefix))))
+             parsed)))
    (else
     parsed)))
 
@@ -226,23 +228,23 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
     ;; twice in a row, the second time will be quicker.
     (let ([input-file-name (car input-file-names)])
       (my-call-with-input-file
-          input-file-name
-        (lambda (ip)
-          (pe "Reading from ~a..." ip)
-          (for ([line (in-lines ip)])
-            (cond
+       input-file-name
+       (lambda (ip)
+         (pe "Reading from ~a..." ip)
+         (for ([line (in-lines ip)])
+           (cond
 
-             ;; A query like this will find the two most recent log
-             ;; entries from this nick:
+            ;; A query like this will find the two most recent log
+            ;; entries from this nick:
 
-;; select *
-;;    from freenode
-;;    where prefix like 'pjb%'
-;;      and ItemName() > '0'
-;;    order by ItemName()
-;; limit 2
-             ((log-line->alist line) => enqueue-log-message-for-simpledb-batch))
+            ;; select *
+            ;;    from freenode
+            ;;    where prefix like 'pjb%'
+            ;;      and ItemName() > '0'
+            ;;    order by ItemName()
+            ;; limit 2
+            ((log-line->alist line) => enqueue-log-message-for-simpledb-batch))
 
-            )))
+           )))
       (flush-simpledb-queue)
       (pe "done~%")))))
