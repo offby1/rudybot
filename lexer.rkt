@@ -53,10 +53,12 @@ exec racket --require "$0" --main -- ${1+"$@"}
   (string->bytes/utf-8
    (string-downcase (regexp-replace #rx"(?<=.)([`_]*)$" (bytes->string/utf-8 n) ""))))
 
-(define (prefix->canonical-nick prefix)
+(provide prefix->canonical-nick)
+(define/contract (prefix->canonical-nick prefix)
+  (bytes? . -> . bytes?)
   (match prefix
     [(regexp #rx"(.*)!(.*)@(.*)" (list _ nick id host)) (canonicalize-nick nick)]
-    [_ "wtf"]))
+    [_ #"wtf"]))
 
 (provide parse-message)
 (define/contract parse-message
