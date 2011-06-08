@@ -7,6 +7,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (require racket/trace
          (only-in racket/date find-seconds)
+         (only-in (planet offby1/offby1:2:2/zdate) zdate)
          rackunit
          rackunit/text-ui
 
@@ -94,41 +95,10 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                  `((,(symbol->string k) . ,(car v))
                    ,@alist)))))]))
 
-(define (zdate->seconds str)
-  (match str
-      [(regexp #px"([[:digit:]]{4})-([[:digit:]]{2})-([[:digit:]]{2})T([[:digit:]]{2}):([[:digit:]]{2}):([[:digit:]]{2})Z"
-               (list _ yr mo dy hr min sc))
-       (apply find-seconds (append (map string->number (list sc min hr dy mo yr)) (list #f)))]))
-
-(define-simple-check (check-zdate->seconds yr mo dy hr mn sc)
-  (let ()
-
-    ;; I wanted to use (planet ashinn/fmt:1:1/fmt) instead of writing
-    ;; this myself, but it fails to compile, complaining about
-    ;; call-with-output-string not being defined
-    (define (zero-fill-left thing min-width)
-      (let loop ([result (format "~a" thing)])
-        (if (<= min-width (string-length result))
-            result
-            (loop (string-append "0" result)))))
-
-    (equal?
-     (zdate->seconds
-      (format "~a-~a-~aT~a:~a:~aZ"
-              (zero-fill-left yr 4)
-              (zero-fill-left mo 2)
-              (zero-fill-left dy 2)
-              (zero-fill-left hr 2)
-              (zero-fill-left mn 2)
-              (zero-fill-left sc 2)))
-     (find-seconds
-      sc mn hr dy mo yr
-      #f))))
-
 (define (log-line->alist l)
   (match l
     [(regexp #px"^([[:graph:]]+) <= (\\(.*\\))$" (list _ timestamp stuff))
-     (cons (format "~a" (zdate->seconds timestamp))
+     (cons (format "~a" (zdate timestamp #:format "~s"))
            (message->flat-alist (read (open-input-string stuff))))]
     [_ #f])  )
 
@@ -201,8 +171,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      ("frotz1" . 1)
      ("frotz2" . 2)))
 
-  (check-zdate->seconds
-   2000 1 1 0 0 0))
+  (check-equal?
+   (log-line->alist "2000-01-01T00:00:00Z <= ((prefix \"prefix\") (nick \"danger\") (command \"begone\") (params))")
+   '("946684800" ("prefix" . "prefix") ("nick" . "danger") ("command" . "begone"))))
 
 (define-values [enqueue-log-message-for-simpledb-batch flush-simpledb-queue]
   (let ([upload-queue #f])
