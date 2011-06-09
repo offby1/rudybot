@@ -129,9 +129,14 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
            ([w (in-set (string->words s))])
            (dict-update h w (curry cons s) '())))))
 
+(define (setof pred)
+  (lambda (thing)
+    (and (set? thing)
+         (for/and ([item (in-set thing)])
+                  (pred item)))))
+
 (define/contract (wordlist->wordset ws)
-  ((listof string?) . -> . set?) ;; it'd be nice if I could say "a set whose
-  ;; elements are all strings"
+  ((listof string?) . -> . (setof string?))
   (define (strip rx) (curryr (curry regexp-replace* rx) ""))
   (apply
    set
