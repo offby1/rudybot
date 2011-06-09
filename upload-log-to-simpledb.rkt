@@ -17,13 +17,13 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
          #|
          ln -s /home/erich/doodles/plt-scheme/web/amazon/ ~/.racket/5.1.1/collects/
          |#
-         (only-in amazon/upload-queue
-                  close-upload-queue
-                  make-simple-db-upload-queue
-                  simpledb-enqueue
-                  )
          (only-in amazon/simpledb
+                  find-time-of-most-recent-entry
                   simpledb-post)
+         (only-in amazon/upload-queue
+                  simpledb-enqueue
+                  with-upload-queue
+                  )
          )
 
 (define pe (curry fprintf (current-error-port)))
@@ -108,7 +108,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
    (else
     parsed)))
 
-(define (log-line->alist l)
+(define (log-line->timestamp+alist l)
   (match l
     [(regexp #px"^([[:graph:]]+) <= (\\(.*\\))$" (list _ timestamp stuff))
      (cons (format "~a" (zdate timestamp #:format "~s"))
@@ -185,21 +185,8 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      ("frotz2" . 2)))
 
   (check-equal?
-   (log-line->alist "2000-01-01T00:00:00Z <= ((prefix #\"nick!nick@nite\") (command #\"begone\") (params))")
+   (log-line->timestamp+alist "2000-01-01T00:00:00Z <= ((prefix #\"nick!nick@nite\") (command #\"begone\") (params))")
    '("946684800" ("prefix" . #"nick!nick@nite") ("nick" . #"nick") ("command" . #"begone"))))
-
-(define-values [enqueue-log-message-for-simpledb-batch flush-simpledb-queue]
-  (let ([upload-queue #f])
-    (values
-     (lambda (m)
-       (when (not upload-queue)
-         (set! upload-queue  (make-simple-db-upload-queue #:domainname "freenode")))
-
-       (simpledb-enqueue upload-queue m))
-
-     (lambda ()
-       (close-upload-queue upload-queue)
-       ))))
 
 (provide main)
 (define (main . args)
@@ -222,28 +209,23 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
           (proc (current-input-port))
           (call-with-input-file name proc)))
 
-    ;; I should really fetch the high-water mark from simpledb, and
-    ;; then only upload stuff that's newer.  That way, running this
-    ;; twice in a row, the second time will be quicker.
+    ;; Fetch the high-water mark from simpledb, and then only upload
+    ;; stuff that's newer.  That way, running this twice in a row, the
+    ;; second time will be quicker.
+    (define high-water-mark (find-time-of-most-recent-entry))
+    (fprintf (current-error-port)
+             "high-water-mark: ~s~%" (zdate (inexact->exact (round high-water-mark))))
     (let ([input-file-name (car input-file-names)])
       (my-call-with-input-file
        input-file-name
        (lambda (ip)
          (pe "Reading from ~a..." ip)
-         (for ([line (in-lines ip)])
-           (cond
-
-            ;; A query like this will find the two most recent log
-            ;; entries from this nick:
-
-            ;; select *
-            ;;    from freenode
-            ;;    where prefix like 'pjb%'
-            ;;      and ItemName() > '0'
-            ;;    order by ItemName()
-            ;; limit 2
-            ((log-line->alist line) => enqueue-log-message-for-simpledb-batch))
-
-           )))
-      (flush-simpledb-queue)
+         (with-upload-queue
+          #:domainname "freenode"
+          (lambda (q)
+            (for ([line (in-lines ip)])
+              (let ([alist (log-line->timestamp+alist line)])
+                (when (and alist
+                           (> (string->number (first alist)) high-water-mark))
+                  (simpledb-enqueue q alist))))))))
       (pe "done~%")))))
