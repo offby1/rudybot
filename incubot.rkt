@@ -152,20 +152,14 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define/contract (rarest ws c)
   (-> set? corpus? (or/c string? #f))
-  (let ([result (foldl (lambda (w accum)
-                         (let ([p (word-popularity w c)])
-                           (cond
-                            ((positive? p)
-                             (cond
-                              ((not accum)
-                               (cons w p))
-                              ((< p (cdr accum))
-                               (cons w p))
-                              (else
-                               accum)))
-                            (else
-                             accum))))
-                       #f
-                       (set-map ws values))])
-    (and result
-         (car result))))
+  (let-values ([(_ tied-for-rarest)
+                (for/fold ([smallest-ranking +inf.0]
+                           [rarest-words-so-far (set)])
+                    ([word (in-set ws)])
+                    (let ([p (word-popularity word c)])
+                      (if (and (positive? p)
+                               (<= p smallest-ranking))
+                          (values p (set-add rarest-words-so-far word))
+                          (values smallest-ranking rarest-words-so-far))))])
+    (and (positive? (set-count tied-for-rarest))
+         (random-choose (set-map tied-for-rarest values)))))
