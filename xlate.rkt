@@ -126,25 +126,36 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (define (xlate from to text)
   (let* ([stuff (snag text from to)]
          [responseStatus (hash-ref stuff 'responseStatus)])
-    (if (equal? 200 responseStatus)
-        (replace-html-entities
-         (hash-ref
-          (hash-ref
-           stuff
-           'responseData)
-          'translatedText))
-        (hash-ref stuff 'responseDetails))))
+    (cond
+     ((equal? responseStatus 200)
+      (replace-html-entities
+       (hash-ref
+        (hash-ref
+         stuff
+         'responseData)
+        'translatedText)))
+     ((and (equal? responseStatus 400)
+           (regexp-match #rx"invalid.*pair" (hash-ref stuff 'responseDetails)))
+      (format "~a: see http://code.google.com/apis/language/translate/v1/reference.html#LangNameArray"
+              (hash-ref stuff 'responseDetails)))
+     (else
+      (hash-ref stuff 'responseDetails)))))
+
 (define t8 xlate)
 
 (define-test-suite xlate-tests
 
   (check-equal?
    (xlate "en" "it" "forty-five separate amendments")
-   "quarantacinque emendamenti separati")
+   "45 modifiche a parte")
 
   (check-equal?
    (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
-   "fledermaus: j'ai frotté dans votre visage encore?"))
+   "Fledermaus: j'ai frotté présent dans votre visage encore?")
+
+  (check-regexp-match
+   #rx"invalid.*http://"
+   (xlate "frotz" "plotz" "I doubt this will get translated properly")))
 
 (define-test-suite all-tests
   replace-tests
