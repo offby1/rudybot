@@ -644,7 +644,7 @@
 
 (define remove-doc-dir
   (regexp (string-append "^" (regexp-quote (path->string (find-doc-dir))) "/")))
-(define doc-url "http://docs.plt-scheme.org/")
+(define doc-url "http://docs.racket-lang.org/")
 (defverb #:whine (doc id) "find documentation for a binding"
   (define-values (sym identifier info) (binding-info id))
   (define xref
