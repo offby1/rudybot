@@ -66,3 +66,13 @@ everything.
 <jordanb> I'm using emacs over X because it's less broken than tramp.
 ERC> 
 #+END_EXAMPLE
+* Use 'racket-lang' URLs in output of "doc"
+Note the below interaction (version 738f2ae if it matters)
+#+BEGIN_EXAMPLE
+<Daemmerung> rudybot: doc even?
+<rudybot> Daemmerung:                                                                                 
+                                                                                                      
+http://docs.plt-scheme.org/reference/number-types.html#(def._((quote._~23~25kernel)._even~3f))
+#+END_EXAMPLE
+It'd be nice if that URL began with "docs.racket-lang.org" rather than
+"docs.plt-scheme.org".
