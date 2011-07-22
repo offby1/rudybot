@@ -22,16 +22,16 @@ exec racket --require "$0" --main -- ${1+"$@"}
   (let loop ([result '()])
     (eat-ws inp)
     (cond
-     ((eof-object? (peek-char inp))
-      (reverse result))
-     ((char=? #\: (peek-char inp))
+     [(eof-object? (peek-char inp))
+      (reverse result)]
+     [(char=? #\: (peek-char inp))
       (begin
         (read-char inp)
         (if (eof-object? (peek-char inp))
             result
-            (loop (cons `(param . ,(regexp-match #px"[^\u0000\r\n]+"  inp)) result)))))
-     (else
-      (loop   (cons `(param . ,(regexp-match #px"[^\u0000\r\n ]+" inp)) result))))))
+            (loop (cons `(param . ,(regexp-match #px"[^\u0000\r\n]+"  inp)) result))))]
+     [else
+      (loop   (cons `(param . ,(regexp-match #px"[^\u0000\r\n ]+" inp)) result))])))
 
 (check-equal? (parse-params (open-input-string ":"))
               '())
@@ -56,8 +56,8 @@ exec racket --require "$0" --main -- ${1+"$@"}
          (begin
            (eat-ws message)
            (begin0
-               `((command . ,(parse-command message))
-                 (params . ,(parse-params message)))
+               `([command . ,(parse-command message)]
+                 [params . ,(parse-params message)])
              (parse-crlf message)))))]))
 
 (check-equal?

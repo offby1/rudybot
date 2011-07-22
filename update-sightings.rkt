@@ -21,8 +21,8 @@ exec  racket --require "$0" --main -- ${1+"$@"}
   (reverse
    (fold-files
     (lambda (path flavor accum)
-      (let* ((rel (find-relative-path old-sightings-root path))
-             (depth (length (explode-path rel))))
+      (let* ([rel (find-relative-path old-sightings-root path)]
+             [depth (length (explode-path rel))])
         (if (and (= 2 depth)
                  (directory-exists? path))
             (cons path accum)
@@ -32,16 +32,16 @@ exec  racket --require "$0" --main -- ${1+"$@"}
 
 (define (upgrade! nick-dir)
   (fprintf (current-error-port) "~a ... ~%" nick-dir)
-  (let* ((files
+  (let* ([files
           (map (lambda (rel)
                  (build-path nick-dir rel))
-               (directory-list nick-dir)))
-         (structs (for/list ([f files])
-                    (call-with-input-file f read))))
+               (directory-list nick-dir))]
+         [structs (for/list ([f files])
+                    (call-with-input-file f read))])
     (delete-directory/files nick-dir)
-    (let ((nick-file (regexp-replace #rx"/$"
+    (let ([nick-file (regexp-replace #rx"/$"
                                      (path->string (simplify-path nick-dir))
-                                     "")))
+                                     "")])
     (call-with-output-file nick-file
       (lambda (op)
         (pretty-print (list (cons 'sightings structs)) op)

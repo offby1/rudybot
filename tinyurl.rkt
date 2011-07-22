@@ -22,8 +22,8 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      (post-pure-port
       create-url
       (string->bytes/utf-8
-       (parameterize ((current-alist-separator-mode 'amp))
-         (alist->form-urlencoded `((url . ,url)))))
+       (parameterize ([current-alist-separator-mode 'amp])
+         (alist->form-urlencoded `([url . ,url]))))
 
       (list "Content-Type: application/x-www-form-urlencoded")))
    reader))

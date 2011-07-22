@@ -44,7 +44,7 @@
   ;; nick.  If we were to display them all, they might get truncated,
   ;; due to the 500-character output limit.  So userinfo always gives
   ;; us at most two of the recent ones.
-  (let ((ss (lookup-sightings n)))
+  (let ([ss (lookup-sightings n)])
     (if (null? ss)
         (format "No sign of ~a" n)
         (string-join
@@ -54,7 +54,7 @@
                         (aif it (sighting-action? info) (string-append it " ") "")
                         (sighting-where info)
                         (describe-since (sighting-when  info))
-                        (let ((words (string-join (sighting-words info))))
+                        (let ([words (string-join (sighting-words info))])
                           (if (positive? (string-length words))
                               (format ", saying \"~a\"" words)
                               ""))))
@@ -79,13 +79,13 @@
 (define last-give-instructions #f)
 
 (define (out format-string . args)
-  (let* ((str (apply format format-string args))
-         (str (if (> (string-length str) *max-output-line*)
+  (let* ([str (apply format format-string args)]
+         [str (if (> (string-length str) *max-output-line*)
                 (string-append (substring str 0 (- *max-output-line* 4)) " ...")
-                str))
+                str)]
          ;; don't display newlines, so that Bad Guys won't be able
          ;; to inject IRC commands into our output.
-         (str (regexp-replace* #rx"[\n\r]" str " <NEWLINE> ")))
+         [str (regexp-replace* #rx"[\n\r]" str " <NEWLINE> ")])
     (log "=> ~a" str)
     (fprintf (*irc-output*) "~a~%" str)))
 
@@ -208,21 +208,9 @@
        ;; is (unbox *my-nick*) -- recorded in the sightings log.
        (when (not (equal? target (unbox *my-nick*)))
          (espy target #f (cons first-word rest)))
-       ;; look for long URLs to tiny-ify, but only if we're The
-       ;; Original Rudybot, so avoid annoying duplicates from multiple
-       ;; bots
-       (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
-         (for ((word (in-list (cons first-word rest))))
-           (match word
-             [(regexp url-regexp (list url _ _))
-              (when (<= 75 (string-length url))
-                (pm target
-                    "~a"
-                    (make-tiny-url url)))]
-             [_ #f])))
 
        (cond
-        [(regexp-match? #rx"bot$" nick)
+        [(regexp-match? #rx"[Bb]ot$" nick)
          (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
               nick)]
         [(equal? target (unbox *my-nick*))
@@ -231,6 +219,16 @@
          (parameterize ([*full-id* full-id])
            (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))]
         [else
+         ;; look for long URLs to tiny-ify, but only if we're The
+         ;; Original Rudybot, so avoid annoying duplicates from multiple
+         ;; bots
+         (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
+           (for ([word (in-list (cons first-word rest))])
+             (match word
+               [(regexp url-regexp (list url _ _))
+                (when (<= 75 (string-length url))
+                  (pm target "~a" (make-tiny-url url)))]
+               [_ #f])))
          (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
                     (regexp-match? #rx"^(?i:jordanb)" nick))
            (log "KOMEDY GOLD: ~s" (cons first-word rest)))
@@ -241,9 +239,9 @@
            ;; our nick, rather than just the comma and colon I've
            ;; hard-coded here.
            [(regexp #px"^([[:alnum:]_-]+)[,:](.*)" (list _ addressee garbage))
-            (let ((words (if (positive? (string-length garbage))
+            (let ([words (if (positive? (string-length garbage))
                              (cons garbage rest)
-                             rest)))
+                             rest)])
               (if (and (not (null? words))
                        (equal? addressee (unbox *my-nick*)))
                   (parameterize ([*full-id* full-id])
@@ -251,8 +249,7 @@
                             (and #f
                                  (not (regexp-match #rx"^offby1" nick))
                                  (equal? target "#emacs" ))))
-                  ((*incubot-server*) 'put (string-join (cons first-word rest) " ")))
-              )]
+                  ((*incubot-server*) 'put (string-join (cons first-word rest) " "))))]
            [(regexp #px",+\\.+")
             (when (equal? target "#emacs")
               (pm target "Woof."))]
@@ -277,7 +274,7 @@
 
     [(list digits mynick blather ...)
      (case (string->number digits)
-       ((1)
+       [(1)
         (log "Yay, we're in")
         (set-box! *authentication-state* 'succeeded)
         ;; BUGBUG --this appears to be to soon to join.  _Most_
@@ -289,15 +286,15 @@
         ;; authenticate..
 
         ;; ":NickServ!NickServ@services. NOTICE rudybot :You are now identified for \u0002rudebot\u0002."
-        (for ([c (*initial-channels*)]) (out "JOIN ~a" c)))
-       ((366)
+        (for ([c (*initial-channels*)]) (out "JOIN ~a" c))]
+       [(366)
         (log "I, ~a, seem to have joined channel ~a."
              mynick
-             (car blather)))
-       ((433)
+             (car blather))]
+       [(433)
         (log "Nuts, gotta try a different nick")
         (set-box! *my-nick* (string-append (unbox *my-nick*) "_"))
-        (out "NICK ~a" (unbox *my-nick*))))]
+        (out "NICK ~a" (unbox *my-nick*))])]
     [(list)
      (log "Completely unparseable line from the server.  current-words ~s; host ~s"
           (*current-words*)
@@ -382,12 +379,12 @@
       [_ (raise-syntax-error 'defverb "malformed defverb" stx)])))
 
 (define (reply fmt . args)
-  (let* ((response-target (*response-target*))
-         (for-whom        (*for-whom*))
-         (response-prefix (if (equal? response-target for-whom)
+  (let* ([response-target (*response-target*)]
+         [for-whom        (*for-whom*)]
+         [response-prefix (if (equal? response-target for-whom)
                             (if (is-master?) "* " "")
                             (format (if (is-master?) "*~a: " "~a: ")
-                                    for-whom))))
+                                    for-whom))])
     (pm response-target "~a~a" response-prefix (apply format fmt args))))
 
 ;; ----------------------------------------------------------------------------
@@ -409,7 +406,7 @@
   (reply "~a" (git-version)))
 
 (defverb (quote) "words of wisdom"
-  (let ((q (one-quote)))
+  (let ([q (one-quote)])
     ;; special case: jordanb doesn't want quotes prefixed with his nick.
     (match (*for-whom*)
       [(regexp #rx"^jordanb") (pm (*response-target*) "~a" q)]
@@ -442,7 +439,7 @@
 
 (define (call/whine f . args)
   (define (on-error e)
-    (let ((whine (if (exn? e) (exn-message e) (format "~s" e))))
+    (let ([whine (if (exn? e) (exn-message e) (format "~s" e))])
       (reply ;; make sure our error message begins with "error: ".
              (if (regexp-match? #rx"^error: " whine) "~a" "error: ~a")
              whine)))
@@ -470,12 +467,12 @@
   ;; catch _all_ exceptions from the sandbox, to prevent "eval (raise 1)" or
   ;; any other error from killing this thread (including creating the sandbox).
   (when give-to
-    (cond ((equal? give-to (unbox *my-nick*)) (error "I'm full, thanks."))
-          ((equal? give-to for-whom)
+    (cond [(equal? give-to (unbox *my-nick*)) (error "I'm full, thanks.")]
+          [(equal? give-to for-whom)
            ;; allowing giving a value to yourself can lead to a nested call
            ;; to `call-in-sandbox-context' which will deadlock.
-           (error "Talk to yourself much too?"))))
-  (let ((s (get-sandbox)))
+           (error "Talk to yourself much too?")]))
+  (let ([s (get-sandbox)])
     (call-with-values (lambda () (sandbox-eval s (text-from-word words)))
       (lambda values
         ;; Even though the sandbox runs with strict memory and time limits, we
@@ -488,30 +485,30 @@
             (define (display-values values displayed shown?)
               (define (next s?)
                 (display-values (cdr values) (add1 displayed) s?))
-              (cond ((null? values) shown?)
-                    ((void? (car values)) (next shown?))
+              (cond [(null? values) shown?]
+                    [(void? (car values)) (next shown?)]
                     ;; prevent flooding
-                    ((>= displayed *max-values-to-display*)
+                    [(>= displayed *max-values-to-display*)
                      (reply
                       "; ~a values is enough for anybody; here's the rest in a list: ~s"
                       (number->english *max-values-to-display*)
                       (filter (lambda (x) (not (void? x))) values))
-                     #t)
-                    (else (reply "; Value~a: ~s"
+                     #t]
+                    [else (reply "; Value~a: ~s"
                                  (if (positive? displayed)
                                    (format "#~a" (add1 displayed))
                                    "")
                                  (car values))
                           ;; another precaution against flooding.
                           (sleep 1)
-                          (next #t))))
+                          (next #t)]))
             (define (display-values/give)
-              (cond ((not give-to) (display-values values 0 #f))
-                    ((null? values)
-                     (error "no value to give"))
-                    ((not (null? (cdr values)))
-                     (error "you can only give one value"))
-                    (else
+              (cond [(not give-to) (display-values values 0 #f)]
+                    [(null? values)
+                     (error "no value to give")]
+                    [(not (null? (cdr values)))
+                     (error "you can only give one value")]
+                    [else
                      (sandbox-give s give-to (car values))
                      ;; BUGBUG -- we shouldn't put "my-nick" in the
                      ;; string if we're talking to a nick, as opposed to
@@ -533,9 +530,9 @@
                                  (cons response-target (current-seconds)))
                            (pm response-target
                                "~a: ~a ~a" give-to for-whom msg))))
-                     #t))) ; said something
+                     #t])) ; said something
             (define (display-output name output-getter)
-              (let ((output (output-getter s)))
+              (let ([output (output-getter s)])
                 (and (string? output) (positive? (string-length output))
                      (begin (reply "; ~a: ~s" name output) (sleep 1) #t))))
             (unless (or (display-values/give)

@@ -18,13 +18,13 @@
                                            #:mode 'text
                                            #:exists 'append))))
 
-(for ((op (in-list (*log-ports*))))
+(for ([op (in-list (*log-ports*))])
   (fprintf (current-error-port) "Whopping port ~a~%" op)
   (with-handlers ([exn:fail? values])
     (file-stream-buffer-mode op 'line)))
 
 (define (log . args)
-  (for ((op (in-list (*log-ports*))))
+  (for ([op (in-list (*log-ports*))])
     (fprintf op "~a " (zdate #:offset 0))
     (apply fprintf op args)
     (newline op)))
@@ -57,16 +57,15 @@
                    (lambda (exn)
                      (printf "Oh noes! ~a!~%" (exn-message exn))
                      (connect-and-run server-maker (add1 consecutive-failed-connections)))])
-    (let-values (((ip op)
-                  (server-maker)))
+    (let-values ([(ip op) (server-maker)])
       (*connection-start-time* (current-seconds))
       (log "Bot version ~a starting" (git-version))
-      (let do-one-line ((cfc consecutive-failed-connections))
-        (let ((ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ip))
-              (retry (lambda ()
+      (let do-one-line ([cfc consecutive-failed-connections])
+        (let ([ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ip)]
+              [retry (lambda ()
                        (close-input-port ip)
                        (close-output-port op)
-                       (connect-and-run server-maker (add1 cfc)))))
+                       (connect-and-run server-maker (add1 cfc)))])
 
           (if (not ready-ip)
               (begin
@@ -74,7 +73,7 @@
                  "Bummer: ~a seconds passed with no news from the server"
                  (*bot-gives-up-after-this-many-silent-seconds*))
                 (retry))
-              (let ((line (read-line ready-ip 'return-linefeed)))
+              (let ([line (read-line ready-ip 'return-linefeed)])
                 (match line
                   [(? eof-object?)
                    (when retry-on-hangup?
