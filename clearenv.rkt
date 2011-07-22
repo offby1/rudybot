@@ -11,7 +11,7 @@ exec  racket --require "$0" --main -- ${1+"$@"}
 (unsafe!)
 
 (define (clearenv)
-  (let ((func (get-ffi-obj 'clearenv #f (_fun  ->  _void))))
+  (let ([func (get-ffi-obj 'clearenv #f (_fun  ->  _void))])
     (when (procedure? func)
       (func))))
 

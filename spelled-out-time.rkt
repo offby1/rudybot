@@ -10,39 +10,39 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
          (planet schematics/schemeunit:3/text-ui))
 
 (define (seconds->english secs)
-  (let loop ((units secs)
-             (divisors '((second . 60)
+  (let loop ([units secs]
+             [divisors '((second . 60)
                          (minute . 60)
                          (hour   . 24)
                          (day    .  7)
                          (week   . 52)
-                         (year   . 100)))
-             (accum '()))
+                         (year   . 100))]
+             [accum '()])
 
     (cond
-     ((zero? units)
+     [(zero? units)
       (if (null? accum)
           '((second . 0))
-          accum))
-     ((null? divisors)
-      (cons `(century . ,units) accum))
-     (else
-      (let ((d (car divisors)))
-        (let-values (((q r) (quotient/remainder units (cdr d))))
+          accum)]
+     [(null? divisors)
+      (cons `(century . ,units) accum)]
+     [else
+      (let ([d (car divisors)])
+        (let-values ([(q r) (quotient/remainder units (cdr d))])
           (loop
            q
            (cdr divisors)
-           (cons (cons (car d) r) accum))))))))
+           (cons (cons (car d) r) accum))))])))
 
 (define (number->english/plural n unit-name)
 
   (define (y->ie n unit-name)
     (cond
-     ((equal? 1 n)
-      unit-name)
-     ((equal? unit-name "century")
-      "centurie")
-     (else unit-name)))
+     [(equal? 1 n)
+      unit-name]
+     [(equal? unit-name "century")
+      "centurie"]
+     [else unit-name]))
 
   (string-append (number->english n)
                  " "
@@ -52,16 +52,16 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
                      "s")))
 
 (define (safe-take lst pos)
-  (let ((pos (min pos (length lst))))
+  (let ([pos (min pos (length lst))])
     (take lst pos)))
 
 (define (spelled-out-time secs)
-  (let* ((result (safe-take (seconds->english secs) 1))
-         (final (list (car result)))
-         (final (if (and (< 1 (length result))
+  (let* ([result (safe-take (seconds->english secs) 1)]
+         [final (list (car result))]
+         [final (if (and (< 1 (length result))
                          (zero? (cdr (second result))))
                      final
-                     (append final (cdr result)))))
+                     (append final (cdr result)))])
     (string-join
      (map (lambda (p)
             (number->english/plural

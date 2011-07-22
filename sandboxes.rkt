@@ -14,9 +14,9 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 (provide (rename-out [public-make-sandbox make-sandbox]))
 (define (public-make-sandbox [lang '(begin (require scheme))])
   (sandbox
-   (parameterize ((sandbox-output       'string)
-                  (sandbox-error-output 'string)
-                  (sandbox-eval-limits '(10 20)))
+   (parameterize ([sandbox-output       'string]
+                  [sandbox-error-output 'string]
+                  [sandbox-eval-limits '(10 20)])
      (call-with-limits 10 #f
        (lambda ()
          (let ([port (and (string? lang)
@@ -126,24 +126,24 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 
 (define sandboxes-tests
 
-  (let ((*sandboxes-by-nick* (make-hash)))
+  (let ([*sandboxes-by-nick* (make-hash)])
     (test-suite
      "sandboxes"
 
      (test-case
       "simple get"
-      (let ((s  (get-sandbox-by-name *sandboxes-by-nick*"charlie")))
+      (let ([s (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
         (check-pred sandbox? s)
         (check-equal? (sandbox-eval s "3") 3)))
 
      (test-case
       "command line args inaccessible"
-      (let ((s  (get-sandbox-by-name *sandboxes-by-nick* "charlie")))
-        (check-pred zero? (vector-length (sandbox-eval s "(current-command-line-arguments)")) )))
+      (let ([s (get-sandbox-by-name *sandboxes-by-nick* "charlie")])
+        (check-pred zero? (vector-length (sandbox-eval s "(current-command-line-arguments)")))))
 
      (test-case
       "output"
-      (let ((s  (get-sandbox-by-name *sandboxes-by-nick*"charlie")))
+      (let ([s (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
         (sandbox-eval s "(display \"You bet!\")")
         (check-equal? (sandbox-get-stdout s) "You bet!")
         (sandbox-eval s "(display \"Whatever\")")
@@ -168,8 +168,8 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
           "("
           ))))
 
-     (let ((charlies-sandbox #f)
-           (keiths-sandbox   #f))
+     (let ([charlies-sandbox #f]
+           [keiths-sandbox   #f])
 
        (test-suite
         "distinct "
@@ -184,7 +184,7 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
         (test-case
          "remembers state"
          (sandbox-eval charlies-sandbox "(define x 99)")
-         (let ((this-better-still-be-charlies (get-sandbox-by-name *sandboxes-by-nick*"charlie")))
+         (let ([this-better-still-be-charlies (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
            (check-equal? (sandbox-eval this-better-still-be-charlies
                                        "x")
                          99))
@@ -200,7 +200,7 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 
 ;;;      (test-case
 ;;;       "environment"
-;;;       (let ((s (get-sandbox-by-name *sandboxes-by-nick* "yow")))
+;;;       (let ([s (get-sandbox-by-name *sandboxes-by-nick* "yow")])
 ;;;         (check-false (sandbox-eval s "(getenv \"HOME\")"))))
 
      (test-case

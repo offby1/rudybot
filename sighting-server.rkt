@@ -54,17 +54,17 @@
    (request-client-ip initial-request)
    (url->string (request-uri initial-request)))
 
-  (let ((requested-sort-column
-         (let ((datum (cond
-                       ((assq 'column (request-bindings initial-request)) => cdr)
-                       (else 'who))))
+  (let ([requested-sort-column
+         (let ([datum (cond
+                       [(assq 'column (request-bindings initial-request)) => cdr]
+                       [else 'who])])
            (cond
-            ((string? datum) (string->symbol datum))
-            (else datum)))))
+            [(string? datum) (string->symbol datum)]
+            [else datum]))])
 
     (define generate-response
       (lambda ()
-        (let ((s (*sightings*)))
+        (let ([s (*sightings*)])
         `(html
           (body
            (h3
@@ -74,7 +74,7 @@
               (zdate (file-or-directory-modify-seconds *sightings-file-path*))
               requested-sort-column))
 
-           (table ((rules "all"))
+           (table ([rules "all"])
 
                   (tr
                    (form ([method "get"]
@@ -93,23 +93,23 @@
                       s
                       (lambda (p1 p2)
                         (case requested-sort-column
-                          ((who)
+                          [(who)
                            (string-ci<? (car p1)
-                                        (car p2)))
-                          ((where)
+                                        (car p2))]
+                          [(where)
                            (string-ci<? (sighting-where (cdr p1))
-                                        (sighting-where (cdr p2))))
+                                        (sighting-where (cdr p2)))]
 
                           ;; newest first
-                          ((when)
+                          [(when)
                            (> (sighting-when (cdr p1))
-                              (sighting-when (cdr p2))))
+                              (sighting-when (cdr p2)))]
 
-                          (else
+                          [else
                            (string-ci<? (string-join
                                          (sighting-words (cdr p1)) " ")
                                         (string-join
-                                         (sighting-words (cdr p2)) " ")))))))))))))
+                                         (sighting-words (cdr p2)) " "))]))))))))))
 
     (with-errors-to-browser send/finish generate-response))
   )

@@ -48,14 +48,14 @@
           [*from-server* (make-channel)])
       (define funcs-by-symbol
         (make-immutable-hash
-         `((get .
+         `([get .
                 ,(lambda (inp c)
                    (channel-put *from-server* (incubot-sentence inp c))
-                   c))
-           (put .
+                   c)]
+           [put .
                 ,(lambda (sentence c)
                    (channel-put *from-server* #t)
-                   (add-to-corpus sentence c))))))
+                   (add-to-corpus sentence c))])))
       (thread
        (lambda ()
          (let loop ([c c])
