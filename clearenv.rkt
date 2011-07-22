@@ -6,14 +6,9 @@ exec  racket --require "$0" --main -- ${1+"$@"}
 #lang racket
 (require (planet schematics/schemeunit:3)
          (planet schematics/schemeunit:3/text-ui)
-         scheme/foreign)
+         ffi/unsafe)
 
-(unsafe!)
-
-(define (clearenv)
-  (let ([func (get-ffi-obj 'clearenv #f (_fun  ->  _void))])
-    (when (procedure? func)
-      (func))))
+(define clearenv (get-ffi-obj 'clearenv #f (_fun -> _void)))
 
 (define hmm-tests
 
