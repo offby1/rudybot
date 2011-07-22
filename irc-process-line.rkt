@@ -208,21 +208,9 @@
        ;; is (unbox *my-nick*) -- recorded in the sightings log.
        (when (not (equal? target (unbox *my-nick*)))
          (espy target #f (cons first-word rest)))
-       ;; look for long URLs to tiny-ify, but only if we're The
-       ;; Original Rudybot, so avoid annoying duplicates from multiple
-       ;; bots
-       (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
-         (for ((word (in-list (cons first-word rest))))
-           (match word
-             [(regexp url-regexp (list url _ _))
-              (when (<= 75 (string-length url))
-                (pm target
-                    "~a"
-                    (make-tiny-url url)))]
-             [_ #f])))
 
        (cond
-        [(regexp-match? #rx"bot$" nick)
+        [(regexp-match? #rx"[Bb]ot$" nick)
          (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
               nick)]
         [(equal? target (unbox *my-nick*))
@@ -231,6 +219,16 @@
          (parameterize ([*full-id* full-id])
            (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))]
         [else
+         ;; look for long URLs to tiny-ify, but only if we're The
+         ;; Original Rudybot, so avoid annoying duplicates from multiple
+         ;; bots
+         (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
+           (for ((word (in-list (cons first-word rest))))
+             (match word
+               [(regexp url-regexp (list url _ _))
+                (when (<= 75 (string-length url))
+                  (pm target "~a" (make-tiny-url url)))]
+               [_ #f])))
          (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
                     (regexp-match? #rx"^(?i:jordanb)" nick))
            (log "KOMEDY GOLD: ~s" (cons first-word rest)))
