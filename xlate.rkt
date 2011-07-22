@@ -107,9 +107,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    (make-url
     "http" #f "ajax.googleapis.com" #f #t
     (map ((curryr make-path/param) '()) (list "ajax" "services" "language" "translate"))
-    `((v . "1.0")
-      (q . ,text)
-      (langpair . ,(format "~a|~a" from to))) #f)
+    `([v . "1.0"]
+      [q . ,text]
+      [langpair . ,(format "~a|~a" from to)]) #f)
    get-pure-port
    read-json))
 
@@ -127,19 +127,19 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (let* ([stuff (snag text from to)]
          [responseStatus (hash-ref stuff 'responseStatus)])
     (cond
-     ((equal? responseStatus 200)
+     [(equal? responseStatus 200)
       (replace-html-entities
        (hash-ref
         (hash-ref
          stuff
          'responseData)
-        'translatedText)))
-     ((and (equal? responseStatus 400)
+        'translatedText))]
+     [(and (equal? responseStatus 400)
            (regexp-match #rx"invalid.*pair" (hash-ref stuff 'responseDetails)))
       (format "~a: see http://code.google.com/apis/language/translate/v1/reference.html#LangNameArray"
-              (hash-ref stuff 'responseDetails)))
-     (else
-      (hash-ref stuff 'responseDetails)))))
+              (hash-ref stuff 'responseDetails))]
+     [else
+      (hash-ref stuff 'responseDetails)])))
 
 (define t8 xlate)
 

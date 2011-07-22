@@ -15,7 +15,7 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
      (let re-read ()
        (fprintf (current-error-port)
                 "Reading quotes file~%")
-       (let push-one ((all (shuffle (call-with-input-file "quotes" read))))
+       (let push-one ([all (shuffle (call-with-input-file "quotes" read))])
          (if (null? all)
              (re-read)
              (begin

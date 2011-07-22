@@ -18,10 +18,10 @@ exec racket --require "$0" --main -- ${1+"$@"}
 (define (string->utterance s)
   (define (ensure-string x)
     (cond
-     ((string? x)
-      x)
-     ((bytes? x)
-      (bytes->string/utf-8 x))))
+     [(string? x)
+      x]
+     [(bytes? x)
+      (bytes->string/utf-8 x)]))
   (match s
     ;; old style: the guts are an unparsed scheme string
     [(regexp #px"^([[:print:]]+) <= \":([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)\"$"
@@ -30,7 +30,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
 
     ;; new style: the guts are an s-expression
     [(regexp #px"^([[:print:]]+) <= +(\\(.*\\))" (list _ timestamp raw-string))
-     (match  (read (open-input-string raw-string))
+     (match (read (open-input-string raw-string))
        [(list (list 'prefix (regexp #rx"(.*)!(.*)@(.*)" (list _ nick _ _)))
               (list 'command #"PRIVMSG")
               (list 'params
@@ -62,12 +62,12 @@ exec racket --require "$0" --main -- ${1+"$@"}
      #:args input-file-names
      input-file-names))
   (cond
-   ((null? input-file-names)
+   [(null? input-file-names)
     (displayln "You didn't specify any input files; running unit tests instead of parsing" (current-error-port))
-    (exit (if (positive?  (run-tests tests)) 1 0)))
-   ((< 1 (length input-file-names))
-    (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names))
-   (else
+    (exit (if (positive?  (run-tests tests)) 1 0))]
+   [(< 1 (length input-file-names))
+    (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names)]
+   [else
     (let ([input-file-name (build-path (this-expression-source-directory) (car input-file-names))]
           [output-file-name "parsed-log"])
       (call-with-input-file
@@ -85,4 +85,4 @@ exec racket --require "$0" --main -- ${1+"$@"}
                        (write utz op)
                        (newline op)))))
                #:exists 'truncate)))))
-      (pe "done~%")))))
+      (pe "done~%"))]))

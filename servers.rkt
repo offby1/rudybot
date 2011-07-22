@@ -19,14 +19,14 @@ fi
          scheme/port)
 
 (define (real-server)
-  (let-values (((ip op) (tcp-connect (*irc-server-hostname*) (*irc-server-port*))))
+  (let-values ([(ip op) (tcp-connect (*irc-server-hostname*)
+                                     (*irc-server-port*))])
     (file-stream-buffer-mode op 'line)
     (values ip op)))
 
 (define (make-preloaded-server op)
   (lambda ()
-    (values (let-values (((ip op)
-                          (make-pipe)))
+    (values (let-values ([(ip op) (make-pipe)])
               (thread
                (lambda ()
                  (define (meh str)
@@ -108,7 +108,7 @@ fi
                       ,(format ":n!n@n PRIVMSG #not-emacs :,...")
                       ,(format ":n!n@n PRIVMSG #c :~a:~a" (unbox *my-nick*) "lookboynospaces")
                       ,(format ":n!n@n PRIVMSG #c :~a:" (unbox *my-nick*) )
-                      ,@(for/list ((action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))))
+                      ,@(for/list ([action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))])
                           (c (format "seen ~a" action)))
 
                       ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
@@ -118,14 +118,14 @@ fi
 
                       ,@(apply
                          append
-                         (for/list ((expr (in-list '((+ 2 1)
+                         (for/list ([expr (in-list '((+ 2 1)
                                                      (begin (display (+ 2 1)) (newline))
                                                      (let loop ()
                                                        (printf "Yaa!!")
                                                        (loop))
                                                      (require srfi/1)
                                                      (make-list 100000)
-                                                     (apply values (make-list 100000))))))
+                                                     (apply values (make-list 100000))))])
                            (list
                             (c (format "eval ~s" expr))
                             (p (format "eval ~s" expr)))))
@@ -148,15 +148,14 @@ fi
             op)))
 
 (define (make-log-replaying-ip-port log-file-name (max-lines 'all))
-  (let-values (((ip op)
-                (make-pipe)))
+  (let-values ([(ip op) (make-pipe)])
     (thread
      (lambda ()
        (call-with-input-file log-file-name
          (lambda (ip)
            (let/ec return
-             (for ((line (in-lines ip))
-                   (lines-handled (in-naturals)))
+             (for ([line (in-lines ip)]
+                   [lines-handled (in-naturals)])
                (when (equal? lines-handled max-lines)
                  (return))
                (match line
@@ -188,22 +187,19 @@ fi
 (define (make-random-server)
 
   (define (random-bytes [length 200])
-    (let ((r (make-bytes length)))
-      (for ((i (in-range length)))
+    (let ([r (make-bytes length)])
+      (for ([i (in-range length)])
         (let new-byte ()
-          (let ((b (random 256)))
+          (let ([b (random 256)])
             (case b
-              ((10 13)
-               (new-byte))
-              (else
-               (bytes-set! r i b))))))
+              [(10 13) (new-byte)]
+              [else    (bytes-set! r i b)]))))
       r))
 
-  (let-values (((ip op)
-                (make-pipe)))
+  (let-values ([(ip op) (make-pipe)])
     (thread
      (lambda ()
-       (let loop ((lines-emitted 0))
+       (let loop ([lines-emitted 0])
          (when (< lines-emitted 200)
            (display #":ow!ow@ow PRIVMSG #ow :" op)
            (display (random-bytes) op)
@@ -215,15 +211,14 @@ fi
 
 (define (make-hanging-up-server)
   (lambda ()
-    (let-values (((ip op)
-                  (make-pipe)))
+    (let-values ([(ip op) (make-pipe)])
       (thread
        (lambda ()
-         (for ((line (in-list '("NOTICE AUTH :*** Looking up your hostname..."
+         (for ([line (in-list '("NOTICE AUTH :*** Looking up your hostname..."
                                 "NOTICE AUTH :*** Found your hostname, welcome back"
                                 "NOTICE AUTH :*** Checking ident"
                                 "NOTICE AUTH :*** No identd (auth) response"
-                                "ERROR :Closing Link: 127.0.0.1 (Connection Timed Out)"))))
+                                "ERROR :Closing Link: 127.0.0.1 (Connection Timed Out)"))])
            (fprintf op "~a\r~%" line))
 
          (sleep 1)
@@ -233,8 +228,8 @@ fi
 
 
 (define (replay-main . args)
-  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-                 (*log-ports* (list (current-error-port))))
+  (parameterize ([*bot-gives-up-after-this-many-silent-seconds* 1/4]
+                 [*log-ports* (list (current-error-port))])
     (log "Main starting.")
     (connect-and-run
      (make-log-replaying-server "big-log")
@@ -252,27 +247,27 @@ fi
 
 (define (localhost-main . args)
   (log "Main starting: ~a" (git-version))
-  (parameterize ((*irc-server-hostname* "localhost"))
+  (parameterize ([*irc-server-hostname* "localhost"])
     (connect-and-run real-server)))
 
 (define (flaky-main . args)
-  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-                 (*log-ports* (list (current-error-port))))
+  (parameterize ([*bot-gives-up-after-this-many-silent-seconds* 1/4]
+                 [*log-ports* (list (current-error-port))])
     (random-seed 0)
     (connect-and-run
      (make-flaky-server "big-log")
      #:retry-on-hangup? #t)))
 
 (define (random-main . args)
-  (parameterize ((*bot-gives-up-after-this-many-silent-seconds* 1/4)
-                 (*log-ports* (list (current-error-port))))
+  (parameterize ([*bot-gives-up-after-this-many-silent-seconds* 1/4]
+                 [*log-ports* (list (current-error-port))])
     (random-seed 0)
     (connect-and-run
      make-random-server
      #:retry-on-hangup? #f)))
 
 (define (hanging-up-main . args)
-  (parameterize ((*log-ports* (list (current-error-port))))
+  (parameterize ([*log-ports* (list (current-error-port))])
     (connect-and-run
      (make-hanging-up-server))))
 
