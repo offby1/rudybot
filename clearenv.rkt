@@ -8,6 +8,7 @@ exec  racket --require "$0" --main -- ${1+"$@"}
          (planet schematics/schemeunit:3/text-ui)
          ffi/unsafe)
 
+;; Doesn't work on OS X, alas
 (define clearenv (get-ffi-obj 'clearenv #f (_fun -> _void)))
 
 (define hmm-tests
