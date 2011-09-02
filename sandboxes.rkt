@@ -16,7 +16,7 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
   (sandbox
    (parameterize ([sandbox-output       'string]
                   [sandbox-error-output 'string]
-                  [sandbox-eval-limits '(10 20)])
+                  [sandbox-eval-limits '(10 50)])
      (call-with-limits 10 #f
        (lambda ()
          (let ([port (and (string? lang)
