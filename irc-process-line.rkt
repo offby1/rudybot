@@ -11,7 +11,6 @@
          "git-version.rkt"
          "userinfo.rkt"
          "utils.rkt"
-         (except-in "xlate.rkt" main)
          (except-in "spelled-out-time.rkt" main)
          (except-in "quotes.rkt" main)
          (except-in "re.rkt" main)
@@ -425,9 +424,6 @@
   (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
          (describe-since *start-time*)
          (describe-since (*connection-start-time*))))
-
-(defverb #:whine (t8 from to text ...) "translate TEXT from FROM to TO"
-  (reply (xlate from to (string-join text " "))))
 
 (defverb #:hidden (ping) "am I alive?"
   (reply "pong"))
