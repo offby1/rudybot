@@ -1,3 +1,9 @@
+Start the bot via "./freenode-main.rkt" at the shell.  I think doing
+"racket freenode-main.rkt" will fail mysteriously.
+
+Getting an error about "rackunit" not being available?  That can be
+caused by using the "racket-textual" package instead of "racket".
+
 specs etc:
 http://tools.ietf.org/html/rfc1459
 http://www.irchelp.org/irchelp/rfc/ctcpspec.html
