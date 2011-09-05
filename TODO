@@ -8,10 +8,6 @@ It might be easiest to invoke "multilog" from Dan Bernstein's
 "daemontools" (http://cr.yp.to/daemontools/daemontools-0.76.tar.gz ;
 available on Ubuntu 10.04 in the "daemontools" package)
 
-* Consider making the log a sequence of sexprs
-rather than lines: this will make it easier for programs to parse
-... and it seems I'm writing more programs that want to parse it.
-
 * Get rid of "in/on" in the output of the "seen" command
 surely I can figure out which preposition is appropriate.
 
