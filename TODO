@@ -62,3 +62,9 @@ everything.
 <jordanb> I'm using emacs over X because it's less broken than tramp.
 ERC> 
 #+END_EXAMPLE
+
+* Replace minion
+
+<jcowan> Having IRC-based messaging is very nice
+<jcowan> I like phenny-style:  "rudybot: ask/tell <user> <message>", where the user is case insensitive
+         and ignores underscores.
