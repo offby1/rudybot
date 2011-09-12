@@ -249,7 +249,7 @@
                                  (not (regexp-match #rx"^offby1" nick))
                                  (equal? target "#emacs" ))))
                   ((*incubot-server*) 'put (string-join (cons first-word rest) " "))))]
-           [(regexp #px",+\\.+")
+           [",..."
             (when (equal? target "#emacs")
               (pm target "Woof."))]
 
