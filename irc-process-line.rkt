@@ -143,7 +143,7 @@
        (espy target
              (format "changing the channel's topic to '~a'"
                      (string-join (cons first-word rest))) '())]
-      [(list "JOIN" (colon target))
+      [(list "JOIN" (or target (colon target)))
        ;; Alas, this pretty much never triggers, since duncanm keeps his client
        ;; session around for ever
        (when (regexp-match #rx"^duncanm" nick)
@@ -151,7 +151,7 @@
        (when (regexp-match #rx"^klutometis" nick)
          (pm target "\1ACTION bows deeply before his master, inventor of incubot\1"))
        (espy target
-             (format "joining")
+             "joining"
              '())]
       [(list "NICK" (colon new-nick))
        ;; TODO -- call espy with the old nick, or the new one, or both?

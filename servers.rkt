@@ -80,6 +80,7 @@ fi
                       ":action!n=No@unaffiliated/clue PRIVMSG #ch :\u0001ACTION does an action!\u0001"
                       ":invite!n=No@unaffiliated/clue INVITE upstartbot :##mircscripts"
                       ":join!n=Aaron@b415.adsl.ecomtel.com.au JOIN :#scheme"
+                      ":join!n=Aaron@b415.adsl.ecomtel.com.au JOIN #scheme" ; both flavors have been seen in the wild
                       ":duncanm!n=duncanm@b415.adsl.ecomtel.com.au JOIN :#scheme"
                       ":kick!n=chandler@opendarwin/developer/chandler KICK #scheme lumon :http://www.penny-arcade.com/comic/2003/11/07/"
                       ":kick2!n=asc@pdpc/supporter/active/kensanata KICK #emacs jordanb :you too"
