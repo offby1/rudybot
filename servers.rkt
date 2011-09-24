@@ -237,10 +237,10 @@ fi
 
 (define (preload-main . args)
   (log "Main starting.")
-  (parameterize ([*bot-gives-up-after-this-many-silent-seconds* 1/4]
-                 [*log-ports* (list (current-error-port))]
-                 [*incubot-server* (make-incubot-server (make-test-corpus))]
-                 [*incubot-logger* log])
+  (parameterize* ([*bot-gives-up-after-this-many-silent-seconds* 1/4]
+                  [*log-ports* (list (current-error-port))]
+                  [*incubot-logger* log]
+                  [*incubot-server* (make-incubot-server (make-test-corpus))])
     (connect-and-run
      (make-preloaded-server (open-output-nowhere))
      #:retry-on-hangup? #f)))
