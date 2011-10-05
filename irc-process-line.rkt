@@ -414,6 +414,9 @@
 (defverb (source) "my source location"
   (reply "git clone git://github.com/offby1/rudybot.git"))
 
+(defverb (url) "my web page"
+  (reply "https://github.com/offby1/rudybot"))
+
 (defverb (seen nick) "did I see someone?"
   ;; TODO -- if "nick" is fsbot, and the last time we saw 'em was
   ;; quite a while ago, suggest /msg fledermaus (fsbot's owner).
