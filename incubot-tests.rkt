@@ -116,21 +116,24 @@
     (when (positive? status)
       (exit 1))
 
-    (let ([c (time
-              (call-with-input-file
-                  ;; biggest .txt file I could find already on my box
-                  "parsed-log"
-                (lambda (inp)
-                  (make-corpus-from-sexps inp 1000))))])
-      (for ([inp (in-list (list
-                           "Oh shit"
-                           "Oops, ate too much cookie dough"
-                           "It's almost inconceivable that none of these words appears in that manual"
-                           "I'm impressed that I can find stuff already."))])
-        (printf "~a => ~a~%" inp (incubot-sentence inp  c)))
-      (for ([inp (in-list (list
-                           (list "whOa" "nellie")
-                           (list "Oops" "ate" "too" "much" "cookie" "dough")))])
-        (printf "~a => ~a~%" inp (incubot-sentence inp  c))))))
+    (with-handlers ([exn:fail:filesystem?
+                     (lambda (e)
+                       (printf "Skipping some tests because ~s~%" (exn-message e)))])
+      (let ([c (time
+                (call-with-input-file
+                    ;; biggest .txt file I could find already on my box
+                    "parsed-log"
+                  (lambda (inp)
+                    (make-corpus-from-sexps inp 1000))))])
+        (for ([inp (in-list (list
+                             "Oh shit"
+                             "Oops, ate too much cookie dough"
+                             "It's almost inconceivable that none of these words appears in that manual"
+                             "I'm impressed that I can find stuff already."))])
+          (printf "~a => ~a~%" inp (incubot-sentence inp  c)))
+        (for ([inp (in-list (list
+                             (list "whOa" "nellie")
+                             (list "Oops" "ate" "too" "much" "cookie" "dough")))])
+          (printf "~a => ~a~%" inp (incubot-sentence inp  c)))))))
 
 (provide main)
