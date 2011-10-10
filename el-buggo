@@ -1,0 +1,5 @@
+2011-10-10T19:44:34Z <= ((prefix #"rapacity!~prwg@unaffiliated/rapacity") (command #"PRIVMSG") (params (param #"#racket") (param #"rudybot: (for ([i (in-range 999999999)]) (place-channel-put b (list 1 2 3 4)))")))
+2011-10-10T19:44:34Z Doing for rapacity: eval ("(for" "([i" "(in-range" "999999999)])" "(place-channel-put" "b" "(list" "1" "2" "3" "4)))")
+Killed
+
+I assume "Killed" means that the racket process used up more memory than is available, but am not sure.
