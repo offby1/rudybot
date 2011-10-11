@@ -389,6 +389,9 @@
 ;; ----------------------------------------------------------------------------
 ;; Misc utilities
 
+(defverb (bug more ...) "You suck."
+  (reply "Yes, I know I suck: https://github.com/offby1/rudybot/issues"))
+
 (defverb (help ?what) "what tricks can I do?"
   (let ([what (and ?what (string->symbol ?what))]
         [master? (is-master?)])
