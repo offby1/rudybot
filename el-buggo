@@ -1,5 +1,16 @@
-2011-10-10T19:44:34Z <= ((prefix #"rapacity!~prwg@unaffiliated/rapacity") (command #"PRIVMSG") (params (param #"#racket") (param #"rudybot: (for ([i (in-range 999999999)]) (place-channel-put b (list 1 2 3 4)))")))
+2011-10-10T19:40:53Z Doing for samth: doc ("sync")
+2011-10-10T19:40:59Z Doing for rapacity: eval ("(require" "racket/place)")
+2011-10-10T19:41:14Z Doing for rapacity: eval ("(define-values" "(a" "b)" "(place-channel))")
+2011-10-10T19:41:43Z Doing for rapacity: eval ("(place-channel-put" "b" "(list" "1" "2" "3" "4))")
+--
 2011-10-10T19:44:34Z Doing for rapacity: eval ("(for" "([i" "(in-range" "999999999)])" "(place-channel-put" "b" "(list" "1" "2" "3" "4)))")
+2011-10-10T21:47:48Z (re)loading module from irc-process-line.rkt
+2011-10-10T21:47:49Z Main starting: 39b750d
+2011-10-10T21:47:50Z incubot-server:Reading log from parsed-log...
+2011-10-10T21:47:50Z Bot version 39b750d starting
+
+...
+
 Killed
 
 I assume "Killed" means that the racket process used up more memory than is available, but am not sure.
