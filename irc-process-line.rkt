@@ -463,6 +463,9 @@
         (reply "your sandbox is ready")))
     sb))
 
+(define (some seq)
+  (ormap values seq))
+
 (define (do-eval words give-to)
   (define for-whom (*for-whom*))
   (define response-target (*response-target*))
@@ -537,9 +540,11 @@
               (let ([output (output-getter s)])
                 (and (string? output) (positive? (string-length output))
                      (begin (reply "; ~a: ~s" name output) (sleep 1) #t))))
-            (unless (or (display-values/give)
-                        (display-output 'stdout sandbox-get-stdout)
-                        (display-output 'stderr sandbox-get-stderr))
+            (unless (some
+                     (list
+                      (display-values/give)
+                      (display-output 'stdout sandbox-get-stdout)
+                      (display-output 'stderr sandbox-get-stderr)))
               (reply "Done."))))))))
 
 (defverb #:whine (init ?lang)
