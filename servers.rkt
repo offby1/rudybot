@@ -44,106 +44,11 @@ fi
                   (lambda (line)
                     (display line op)
                     (display "\r\n" op))
-                  (cond
-                   (#f
-                    (list
-                     (meh "Hey everyone!  What's happening?")
-                     (c "uptime")
-                     (c "settle")
-                     (meh "frotz: plotz.")
-                     (c "everyone")
-                     (c "plotz")
-                     (meh "\1ACTION fred eats salami\1")
-                     (c "salami")))
-                   (#f
-                    ;; Typical stuff from ircd-seven
-                    `(":bartol.freenode.net NOTICE * :*** No Ident response"
-                      ":notice!NickServ@services. NOTICE rudybot :This nickname is registered. Please choose a different nickname, or identify via \u0002/msg NickServ identify <password>\u0002.")
-                    )
-                   (#f
-                    `(
-                      ":t8!n=foo@bar PRIVMSG #ch :,t8"
-                      ":t8!n=foo@bar PRIVMSG #ch :,t8 fr"
-                      ":t8!n=foo@bar PRIVMSG #ch :,t8 fr de"
-                      ,(format ":t8!n=foo@bar PRIVMSG #ch :~a: t8 en it kits, cats, sacks, wives: how many were going to St Ives?" (unbox *my-nick*))
-                      ":t8!n=foo@bar PRIVMSG #ch :,t8 en hu I will not buy this record, it is scratched"
-                      ":t8!n=foo@bar PRIVMSG #ch : ,t8 en hu I will not buy this translation; it contains leading whitespace"))
-                   (else
-                    `(
-                      ,(c (format "eval (error \"foo\\r\\nQUIT bar\")"))
-                      ":freenode-connect!freenode@freenode/bot/connect PRIVMSG upstartbot :\u0001VERSION\u0001"
-                      "foO!"
-                      "PING :localhost."
-                      ":sykopomp!n=user@host-70-45-40-165.onelinkpr.net PRIVMSG #emacs :\u0001ACTION is wondering if it's easy to save any logs from bitlbee to a different folder than all the irc logs.\u0001"
-                      ":arcfide!n=arcfide@VPNBG165-7.umsl.edu PRIVMSG #scheme :\u0001ACTION sighs. \u0001"
-
-                      ":action!n=No@unaffiliated/clue PRIVMSG #ch :\u0001ACTION does an action!\u0001"
-                      ":invite!n=No@unaffiliated/clue INVITE upstartbot :##mircscripts"
-                      ":join!n=Aaron@b415.adsl.ecomtel.com.au JOIN :#scheme"
-                      ":join!n=Aaron@b415.adsl.ecomtel.com.au JOIN #scheme" ; both flavors have been seen in the wild
-                      ":duncanm!n=duncanm@b415.adsl.ecomtel.com.au JOIN :#scheme"
-                      ":kick!n=chandler@opendarwin/developer/chandler KICK #scheme lumon :http://www.penny-arcade.com/comic/2003/11/07/"
-                      ":kick2!n=asc@pdpc/supporter/active/kensanata KICK #emacs jordanb :you too"
-                      ":mode!ChanServ@services. MODE #emacs +o alephnull "
-                      ":nick!n=Aaron@b415.adsl.ecomtel.com.au NICK :AshyIsMe"
-                      ":nick2!n=Aaron@b415.adsl.ecomtel.com.au NICK :AshyIsMe"
-                      ":notice!NickServ@services. NOTICE rudybot :This nickname is registered. Please choose a different nickname, or identify via \u0002/msg NickServ identify <password>\u0002."
-                      ":notice2!i=christel@freenode/staff/exherbo.christel NOTICE $* :[Global Notice] Aaaaand we make contact! A small step for manki..oh wai-! Sorry about the delay there and thank you for your patience. Services are now back up!"
-                      ":part!n=Akaleb@bl6-112-187.dsl.telepac.pt PART #emacs :\"Changed major mode\""
-                      ":quit!n=adam@yax.org.uk PRIVMSG #ch :This is my last utterance before quitting."
-                      ":quit!n=adam@yax.org.uk QUIT :Client Quit"
-                      ":topic!n=javachat@cpe-74-71-143-65.twcny.res.rr.com TOPIC #emacs :-=[ www.WHAK.com ]=- Make Free/Fun Graphics Online At http://www.ImageGenerator.org =)"
-
-                      ,(c "version")
-                      ,(c "SOURCE")
-                      ,(c "quote")
-                      ,(format ":t8!n=foo@bar PRIVMSG #ch :~a: t8 en it kits, cats, sacks, wives: how many were going to St Ives?" (unbox *my-nick*))
-                      ":t8!n=foo@bar PRIVMSG #ch :,t8 en hu I will not buy this record, it is scratched"
-                      ":t8!n=foo@bar PRIVMSG #ch : ,t8 en hu I will not buy this translation; it contains leading whitespace"
-
-                      ,(format ":t8!n=foo@bar PRIVMSG #ch :~a: t8 snord horde" (unbox *my-nick*))
-
-                      ,(format ":jordanb!n@n PRIVMSG #c :~a: quote" (unbox *my-nick*))
-                      ,(format ":jordanb!n@n PRIVMSG #c :Let's say something memorable")
-                      ,(format ":n!n@n PRIVMSG #emacs :,...")
-                      ,(format ":n!n@n PRIVMSG #not-emacs :,...")
-                      ,(format ":n!n@n PRIVMSG #c :~a:~a" (unbox *my-nick*) "lookboynospaces")
-                      ,(format ":n!n@n PRIVMSG #c :~a:" (unbox *my-nick*) )
-                      ,@(for/list ([action (in-list (list "action" "invite" "join" "kick" "kick2" "mode" "nick" "nick2" "notice" "notice2" "part" "quit" "topic"))])
-                          (c (format "seen ~a" action)))
-
-                      ":niven.freenode.net 001 rudybot :Welcome to the freenode IRC Network rudybot"
-                      ,(format
-                        ":NickServ!NickServ@services. NOTICE ~a :If this is your nickname, type /msg NickServ \0002IDENTIFY\0002 <password>"
-                        (unbox *my-nick*))
-
-                      ,@(apply
-                         append
-                         (for/list ([expr (in-list '((+ 2 1)
-                                                     (begin (display (+ 2 1)) (newline))
-                                                     (let loop ()
-                                                       (printf "Yaa!!")
-                                                       (loop))
-                                                     (require srfi/1)
-                                                     (make-list 100000)
-                                                     (apply values (make-list 100000))))])
-                           (list
-                            (c (format "eval ~s" expr))
-                            (p (format "eval ~s" expr)))))
-
-                      ,@(map c (list "quote" "uptime"))
-                      ,@(map p (list "This is a private utterance, and I certainly hope you don't divulge it!!"))
-                      ,(c "seen n")
-                      ;; This should work, if you set BOTMASTER in the
-                      ;; environment before running this test.
-                      ,(c "system ls /")
-
-                      ;; This should yield an empty string.
-                      ,(c "eval (getenv \"PATH\")")
-
-                      ;; This should simply not blow up.
-                      ,(p "eval (number->string #d10000000000000000000000000000000000000000000000000000000000 16)")
-                      ))))
+                  (list
+                   (c "eval (begin (display \"I think I've found a bug in rudybot\") 9)  ")
+                   (c "eval (flush-output)")
+                   (c "eval (void)")
+                   ))
                  (close-output-port op)))
               ip)
             op)))
