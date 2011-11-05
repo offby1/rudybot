@@ -48,7 +48,7 @@
         (format "No sign of ~a" n)
         (string-join
          (map (lambda (info)
-                (format "~a was seen ~ain/on ~a ~a ago~a"
+                (format "~a was seen ~ain ~a ~a ago~a"
                         (sighting-who   info)
                         (aif it (sighting-action? info) (string-append it " ") "")
                         (sighting-where info)
@@ -790,6 +790,11 @@
     (if (regexp-match #px"^http(s)?://" str)
       str
       ((strip-just-one #px"^\\w+?: *") str)))
+  ;; trouble: trimming the leading nick may have discarded the word on
+  ;; which incubot triggered, making the result totally
+  ;; non-sequiturious.  Perhaps this trimming should be moved into the
+  ;; incubot code, where it can be done more intelligently.
+
   (and incubot-witticism
        (lambda ()
          (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism))))))
