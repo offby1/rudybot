@@ -1,16 +1,8 @@
-2011-10-10T19:40:53Z Doing for samth: doc ("sync")
-2011-10-10T19:40:59Z Doing for rapacity: eval ("(require" "racket/place)")
-2011-10-10T19:41:14Z Doing for rapacity: eval ("(define-values" "(a" "b)" "(place-channel))")
-2011-10-10T19:41:43Z Doing for rapacity: eval ("(place-channel-put" "b" "(list" "1" "2" "3" "4))")
---
-2011-10-10T19:44:34Z Doing for rapacity: eval ("(for" "([i" "(in-range" "999999999)])" "(place-channel-put" "b" "(list" "1" "2" "3" "4)))")
-2011-10-10T21:47:48Z (re)loading module from irc-process-line.rkt
-2011-10-10T21:47:49Z Main starting: 39b750d
-2011-10-10T21:47:50Z incubot-server:Reading log from parsed-log...
-2011-10-10T21:47:50Z Bot version 39b750d starting
+2011-11-03T16:36:10Z tonyg privately said eval (require ffi/cvector) to me
+2011-11-03T16:36:10Z Doing for tonyg: eval ("(require" "ffi/cvector)")
+2011-11-03T16:36:10Z => PRIVMSG tonyg :Done.
+2011-11-03T16:36:14Z <= ((prefix #"tonyg!~tonyg@173-203-78-111.static.cloud-ips.com") (command #"PRIVMSG") (params (param #"rudybot") (param #"eval (define c (make-cvector _int 1000000000))")))
+2011-11-03T16:36:14Z tonyg privately said eval (define c (make-cvector _int 1000000000)) to me
+2011-11-03T16:36:14Z Doing for tonyg: eval ("(define" "c" "(make-cvector" "_int" "1000000000))")
+Racket virtual machine has run out of memory; aborting
 
-...
-
-Killed
-
-I assume "Killed" means that the racket process used up more memory than is available, but am not sure.
