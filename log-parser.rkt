@@ -11,13 +11,13 @@ exec racket --require "$0" --main -- ${1+"$@"}
  (only-in db
           query-exec
           query-rows
+          query-value
           sqlite3-connect
           )
+ (only-in "incubot.rkt" string->words)
+ "utterance.rkt"
  (planet schematics/schemeunit:3)
  (planet schematics/schemeunit:3/text-ui) )
-
-(provide (struct-out utterance))
-(struct utterance (timestamp speaker target text) #:prefab)
 
 (define (log-file-string->utterance s)
   (define (ensure-string x)
@@ -59,7 +59,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
   (apply fprintf (current-error-port) fmt args))
 
 ;; Our own little ORM
-(define (create-db)
+(define (create-db!)
   (let ([connection
          (sqlite3-connect
           #:database "/tmp/parsed-log.db"
@@ -79,8 +79,16 @@ exec racket --require "$0" --main -- ${1+"$@"}
         log(timestamp TEXT, speaker TEXT, target TEXT, text TEXT,
             PRIMARY KEY (timestamp, speaker, target)
             ON CONFLICT FAIL)")
+
+    (query-exec
+     connection
+     "CREATE TABLE IF NOT EXISTS
+        log_word_map(word TEXT, log_id INTEGER,
+            PRIMARY KEY (word, log_id)
+            ON CONFLICT FAIL)")
     connection))
-(define (insert db u)
+
+(define (log-utterance! db u)
   (query-exec
    db
    "insert into log values (?, ?, ?, ?)"
@@ -88,6 +96,15 @@ exec racket --require "$0" --main -- ${1+"$@"}
    (utterance-speaker   u)
    (utterance-target    u)
    (utterance-text      u)))
+
+(define (get-last-row-id db)
+  (query-value db "SELECT last_insert_rowid()"))
+
+(define (log-word! db w log-id)
+  (query-exec
+   db
+   "insert into log_word_map values (?, ?)"
+   w log-id))
 
 (define (begin-transaction db)
   (query-exec db "BEGIN TRANSACTION"))
@@ -115,7 +132,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
     (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names)]
    [else
     (let ([input-file-name (build-path (this-expression-source-directory) (car input-file-names))]
-          [db (create-db)])
+          [db (create-db!)])
       (call-with-input-file
           input-file-name
         (lambda (ip)
@@ -124,7 +141,13 @@ exec racket --require "$0" --main -- ${1+"$@"}
           (begin-transaction db)
           (for ([line (in-lines ip)])
             (cond
-             ((log-file-string->utterance line) => (lambda (ut) (insert db ut))))
+             ((log-file-string->utterance line)
+              =>
+              (lambda (ut)
+                (log-utterance! db ut)
+                (let ([log-id (get-last-row-id db)])
+                  (for ([w (string->words (utterance-text ut))])
+                    (log-word! db w log-id))))))
 
             (when (zero? (remainder (current-line ip) 2000))
               (end-transaction db)
