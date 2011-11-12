@@ -22,7 +22,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (require
  scheme/set
  scheme/include
- (only-in "log-parser.rkt" utterance-text )
+ "utterance.rkt"
  (only-in "vars.rkt" *incubot-logger*))
 
 (include "incubot-tests.rkt")
@@ -156,6 +156,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
                  (strip #px"[^'[:alpha:]]+"))
                 ws))))
 
+(provide string->words)
 (define/contract (string->words s)
   (string? . -> . set?)
   (wordlist->wordset (regexp-split #rx" " (string-downcase s))))
