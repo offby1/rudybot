@@ -9,10 +9,12 @@ exec racket --require "$0" --main -- ${1+"$@"}
 (require
  (only-in mzlib/etc this-expression-source-directory)
  (only-in db
+          commit-transaction
           query-exec
           query-rows
           query-value
           sqlite3-connect
+          start-transaction
           )
  (only-in "incubot.rkt" string->words)
  "utterance.rkt"
@@ -71,21 +73,20 @@ exec racket --require "$0" --main -- ${1+"$@"}
     ;; same target, at the same time.  So ON CONFLICT discards all but
     ;; the newest.  Hopefully this won't happen too often.
 
-    ;; I imagine that FAIL, REPLACE, and IGNORE would all work equally
-    ;; well here.
+    ;; I imagine that REPLACE and IGNORE would work equally well here.
     (query-exec
      connection
      "CREATE TABLE IF NOT EXISTS
         log(timestamp TEXT, speaker TEXT, target TEXT, text TEXT,
             PRIMARY KEY (timestamp, speaker, target)
-            ON CONFLICT FAIL)")
+            ON CONFLICT IGNORE)")
 
     (query-exec
      connection
      "CREATE TABLE IF NOT EXISTS
         log_word_map(word TEXT, log_id INTEGER,
             PRIMARY KEY (word, log_id)
-            ON CONFLICT FAIL)")
+            ON CONFLICT IGNORE)")
     connection))
 
 (define (log-utterance! db u)
@@ -106,11 +107,6 @@ exec racket --require "$0" --main -- ${1+"$@"}
    "insert into log_word_map values (?, ?)"
    w log-id))
 
-(define (begin-transaction db)
-  (query-exec db "BEGIN TRANSACTION"))
-
-(define (end-transaction db)
-  (query-exec db "COMMIT"))
 
 (define (current-line ip)
   (call-with-values
@@ -138,7 +134,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
         (lambda (ip)
           (port-count-lines! ip)
 
-          (begin-transaction db)
+          (start-transaction db)
           (for ([line (in-lines ip)])
             (cond
              ((log-file-string->utterance line)
@@ -150,10 +146,10 @@ exec racket --require "$0" --main -- ${1+"$@"}
                     (log-word! db w log-id))))))
 
             (when (zero? (remainder (current-line ip) 2000))
-              (end-transaction db)
-              (begin-transaction db)
+              (commit-transaction db)
+              (start-transaction db)
               (fprintf (current-error-port)
                        "Line ~a~%"
                        (current-line ip))))
-          (end-transaction db)))
+          (commit-transaction db)))
       (pe "done~%"))]))
