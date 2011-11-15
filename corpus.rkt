@@ -177,6 +177,7 @@ Q
   (define (offensive? s)
     (regexp-match #px"\\bnigger\\b" s))
 
+  (add-sentence-to-corpus s c)
   c)
 
 (provide word-popularity)
