@@ -1,6 +1,5 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 exec racket --require "$0" --main -- ${1+"$@"}
 |#
 
@@ -151,5 +150,8 @@ exec racket --require "$0" --main -- ${1+"$@"}
               (fprintf (current-error-port)
                        "Line ~a~%"
                        (current-line ip))))
-          (commit-transaction db)))
+          (commit-transaction db)
+          (fprintf (current-error-port)
+                   "Line ~a~%"
+                   (current-line ip))))
       (pe "done~%"))]))
