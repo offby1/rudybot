@@ -13,8 +13,10 @@ exec racket --require "$0" --main -- ${1+"$@"}
           sqlite3-connect
           start-transaction
           )
- (only-in "incubot.rkt" string->words)
- (only-in "corpus.rkt" add-utterance-to-corpus)
+ (only-in "corpus.rkt"
+          add-utterance-to-corpus
+          corpus-db
+          make-corpus-from-sequence)
  "utterance.rkt"
  rackunit
  rackunit/text-ui )
@@ -57,36 +59,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
 
 (define (pe fmt . args)
   (apply fprintf (current-error-port) fmt args))
-
-;; Our own little ORM
-(define (create-db!)
-  (let ([connection
-         (sqlite3-connect
-          #:database "/tmp/parsed-log.db"
-          #:mode 'create)])
 
-    ;; The primary key is to prevent duplicates when we're
-    ;; bulk-loading the table.  But it's imperfect, since there may
-    ;; occasionally be two utterances from the same speaker, to the
-    ;; same target, at the same time.  So ON CONFLICT discards all but
-    ;; the newest.  Hopefully this won't happen too often.
-
-    ;; I imagine that REPLACE and IGNORE would work equally well here.
-    (query-exec
-     connection
-     "CREATE TABLE IF NOT EXISTS
-        log(timestamp TEXT, speaker TEXT, target TEXT, text TEXT,
-            PRIMARY KEY (timestamp, speaker, target)
-            ON CONFLICT IGNORE)")
-
-    (query-exec
-     connection
-     "CREATE TABLE IF NOT EXISTS
-        log_word_map(word TEXT, log_id INTEGER,
-            PRIMARY KEY (word, log_id)
-            ON CONFLICT IGNORE)")
-    connection))
-
 (define (current-line ip)
   (call-with-values
       (thunk (port-next-location ip))
@@ -107,26 +80,26 @@ exec racket --require "$0" --main -- ${1+"$@"}
     (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names)]
    [else
     (let ([input-file-name (build-path (this-expression-source-directory) (car input-file-names))]
-          [db (create-db!)])
+          [corpus (make-corpus-from-sequence '())])
       (call-with-input-file
           input-file-name
         (lambda (ip)
           (port-count-lines! ip)
 
-          (start-transaction db)
+          (start-transaction (corpus-db corpus) )
           (for ([line (in-lines ip)])
             (cond
              ((log-file-string->utterance line)
               =>
-              add-utterance-to-corpus))
+              (curryr add-utterance-to-corpus corpus)))
 
             (when (zero? (remainder (current-line ip) 2000))
-              (commit-transaction db)
-              (start-transaction db)
+              (commit-transaction (corpus-db corpus))
+              (start-transaction (corpus-db corpus))
               (fprintf (current-error-port)
                        "Line ~a~%"
                        (current-line ip))))
-          (commit-transaction db)
+          (commit-transaction (corpus-db corpus) )
           (fprintf (current-error-port)
                    "Line ~a~%"
                    (current-line ip))))
