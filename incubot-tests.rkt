@@ -19,7 +19,7 @@
 
 (provide make-test-corpus)
 (define (make-test-corpus)
-  (public-make-corpus
+  (make-corpus
    "waka ja waka"
    "Some thing"
    "Some thing else"))
@@ -79,7 +79,7 @@
        "Some thing else"))))
 
 (define-test-suite lets-tests
-  (let ([corpus (public-make-corpus
+  (let ([corpus (make-corpus
                  "Let's start with a capital letter"
                  "let's ignore case"
                  "LET'S SHOUT")])
@@ -92,10 +92,10 @@
 
 (define-test-suite censorship-tests
   (let* ([c (make-test-corpus)]
-         [original-size (set-count (corpus-strings c))])
+         [original-size (corpus-size c)])
     (set! c (add-to-corpus "This is an inoffensive sentence." c))
     (set! c (add-to-corpus "By dint of containing the nasty word 'nigger', this is an offensive sentence." c))
-    (check-equal? (- (set-count (corpus-strings c)) original-size)
+    (check-equal? (- (corpus-size c) original-size)
                   1)))
 
 (define-test-suite all-tests
@@ -109,10 +109,7 @@
 
 (define (main . args)
   (*incubot-logger* (lambda args (apply fprintf (current-error-port) args) (newline (current-error-port))))
-  (let ([status (run-tests
-                 censorship-tests
-                 ;;all-tests
-                 'verbose)])
+  (let ([status (run-tests all-tests 'verbose)])
     (when (positive? status)
       (exit 1))
 
