@@ -17,8 +17,8 @@ exec racket --require "$0" --main -- ${1+"$@"}
           )
  (only-in "incubot.rkt" string->words)
  "utterance.rkt"
- (planet schematics/schemeunit:3)
- (planet schematics/schemeunit:3/text-ui) )
+ rackunit
+ rackunit/text-ui )
 
 (define (log-file-string->utterance s)
   (define (ensure-string x)
