@@ -128,15 +128,11 @@ Q
     (query-exec
      (corpus-db c)
      "CREATE TABLE IF NOT EXISTS
-        log(timestamp TEXT, speaker TEXT, target TEXT, text TEXT,
-            PRIMARY KEY (timestamp, speaker, target)
-            ON CONFLICT IGNORE)")
+        log(timestamp TEXT, speaker TEXT, target TEXT, text TEXT)")
     (query-exec
      (corpus-db c)
      "CREATE TABLE IF NOT EXISTS
-        log_word_map(word TEXT, log_id INTEGER,
-            PRIMARY KEY (word, log_id)
-            ON CONFLICT IGNORE)")
+        log_word_map(word TEXT, log_id INTEGER)")
 
     (db:start-transaction (corpus-db c))
 
