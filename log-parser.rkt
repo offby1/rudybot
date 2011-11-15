@@ -10,8 +10,6 @@ exec racket --require "$0" --main -- ${1+"$@"}
  (only-in db
           commit-transaction
           query-exec
-          query-rows
-          query-value
           sqlite3-connect
           start-transaction
           )
