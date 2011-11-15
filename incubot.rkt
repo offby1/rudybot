@@ -42,29 +42,6 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
            ((*incubot-logger*) "incubot chose ~s" rare)
            (random-choose-string-containing-word rare c)))]))
 
-(define (setof pred)
-  (lambda (thing)
-    (and (set? thing)
-         (for/and ([item (in-set thing)])
-                  (pred item)))))
-
-(define/contract (wordlist->wordset ws)
-  ((listof string?) . -> . (setof string?))
-  (define (strip rx) (curryr (curry regexp-replace* rx) ""))
-  (apply
-   set
-   (filter (compose positive? string-length)
-           (map (compose
-                 (strip #px"^'+")
-                 (strip #px"'+$")
-                 (strip #px"[^'[:alpha:]]+"))
-                ws))))
-
-(provide string->words)
-(define/contract (string->words s)
-  (string? . -> . set?)
-  (wordlist->wordset (regexp-split #rx" " (string-downcase s))))
-
 (define/contract (rarest ws c)
   (-> set? corpus? (or/c string? #f))
   (let-values ([(_ tied-for-rarest)

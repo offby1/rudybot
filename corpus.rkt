@@ -1,7 +1,27 @@
 #lang racket
 (require
- db
- "utterance.rkt")
+ "utterance.rkt"
+ (prefix-in db: db)
+ racket/trace
+ )
+
+(define (pe fmt . args)
+  (apply fprintf (current-error-port) fmt args))
+
+(define (query-rows connection stmt . args)
+  (let ([result (apply db:query-rows connection stmt args)])
+    (pe "~a ~a => ~a~%" stmt args result)
+    result))
+
+(define (query-value connection stmt . args)
+  (let ([result (apply db:query-value connection stmt args)])
+    (pe "~a ~a => ~a~%" stmt args result)
+    result))
+
+(define (query-exec connection stmt . args)
+  (let ([result (apply db:query-exec connection stmt args)])
+    (pe "~a ~a => ~a~%" stmt args result)
+    result))
 
 (provide (except-out (struct-out corpus) corpus))
 (struct corpus (db) #:transparent)
@@ -19,7 +39,7 @@
 (provide in-corpus?)
 (define/contract (in-corpus? w c)
   (string? corpus? . -> . boolean?)
-  (query-rows "SELECT word FROM log_word_map WHERE word = ? LIMIT 1" w))
+  (not (null? (query-rows (corpus-db c) "SELECT word FROM log_word_map WHERE word = ? LIMIT 1" w))))
 
 (provide corpus-size)
 (define/contract (corpus-size c)
@@ -44,13 +64,74 @@
 (provide (rename-out [public-make-corpus make-corpus]))
 (define/contract (public-make-corpus . sentences)
   (->* () () #:rest (listof string?) corpus?)
-  (make-corpus-from-sequence  (in-list sentences)))
+  (make-corpus-from-sequence sentences))
 
-(define (make-corpus-from-sequence seq [limit #f])
-  (corpus
-   (sqlite3-connect
-    #:database "/tmp/parsed-log.db"
-    #:mode 'create)))
+(define (get-last-row-id db)
+  (query-value db "SELECT last_insert_rowid()"))
+
+
+(define (log-utterance! db u)
+  (query-exec
+   db
+   "insert into log values (?, ?, ?, ?)"
+   (utterance-timestamp u)
+   (utterance-speaker   u)
+   (utterance-target    u)
+   (utterance-text      u)))
+(trace log-utterance!)
+
+(define (log-sentence! db s)
+  (query-exec
+   db
+   "insert into log values (?, ?, ?, ?)"
+   0
+   "bogus speaker"
+   "bogus target"
+   s))
+(trace log-sentence!)
+
+(define/contract (log-word! db w log-id)
+  (db:connection? string? integer? . -> . any)
+  (query-exec
+   db
+   "insert into log_word_map values (?, ?)"
+   w log-id))
+(trace log-word!)
+
+(provide add-utterance-to-corpus)
+(define (add-utterance-to-corpus ut c)
+  (log-utterance! (corpus-db c) ut)
+  (let ([log-id (get-last-row-id (corpus-db c))])
+    (for ([w (string->words (utterance-text ut))])
+      (log-word! (corpus-db c) w log-id))))
+
+(define (make-corpus-from-sequence sentences [limit #f])
+  (let ([conn (db:sqlite3-connect
+               #:database 'memory
+               #:mode 'create)])
+    (query-exec
+     conn
+     "CREATE TABLE IF NOT EXISTS
+        log(timestamp TEXT, speaker TEXT, target TEXT, text TEXT,
+            PRIMARY KEY (timestamp, speaker, target)
+            ON CONFLICT IGNORE)")
+    (query-exec
+     conn
+     "CREATE TABLE IF NOT EXISTS
+        log_word_map(word TEXT, log_id INTEGER,
+            PRIMARY KEY (word, log_id)
+            ON CONFLICT IGNORE)")
+
+    (for ([s sentences])
+      (cond
+       ((string? s)
+        (log-sentence! conn s))
+       ((utterance? s)
+        (log-utterance! conn s)))
+      (for ([w (string->words s)])
+        (log-word! conn w (get-last-row-id conn))))
+
+    (corpus conn)))
 
 (provide make-corpus-from-sexps)
 ;; TODO -- somehow arrange that, if we get a fatal signal, we finish
@@ -86,4 +167,29 @@
 (provide word-popularity)
 (define/contract (word-popularity w c)
   (string? corpus? . -> . natural-number/c)
-  0)
+  (query-value (corpus-db c) "SELECT COUNT(log_id) FROM log_word_map WHERE word = ?" w))
+
+(provide string->words)
+(define/contract (string->words s)
+  (string? . -> . set?)
+  (wordlist->wordset (regexp-split #rx" " (string-downcase s))))
+(trace string->words)
+
+(define (setof pred)
+  (lambda (thing)
+    (and (set? thing)
+         (for/and ([item (in-set thing)])
+                  (pred item)))))
+
+(provide wordlist->wordset)
+(define/contract (wordlist->wordset ws)
+  ((listof string?) . -> . (setof string?))
+  (define (strip rx) (curryr (curry regexp-replace* rx) ""))
+  (apply
+   set
+   (filter (compose positive? string-length)
+           (map (compose
+                 (strip #px"^'+")
+                 (strip #px"'+$")
+                 (strip #px"[^'[:alpha:]]+"))
+                ws))))
