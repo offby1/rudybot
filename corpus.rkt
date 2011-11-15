@@ -57,18 +57,32 @@
 
 (provide random-choose-string-containing-word)
 (define/contract (random-choose-string-containing-word rare c)
-  (string? corpus? . -> . string?)
-  "frotz")
-
+  (string? corpus? . -> . (or/c string? #f))
+  (let
+      ([candidates
+        (query-rows
+         (corpus-db c)
+         #<<Q
+SELECT text
+FROM log
+JOIN log_word_map
+ON log.rowid = log_word_map.log_id
+WHERE log_word_map.word = ?
+Q
+         rare)])
+    (and (not (null? candidates))
+         (vector-ref (car candidates) 0))))
+(trace random-choose-string-containing-word)
 
 (provide (rename-out [public-make-corpus make-corpus]))
 (define/contract (public-make-corpus . sentences)
   (->* () () #:rest (listof string?) corpus?)
   (make-corpus-from-sequence sentences))
 
-(define (get-last-row-id db)
-  (query-value db "SELECT last_insert_rowid()"))
-
+(define (id-of-newest-log db)
+  (pe "log: ~a~% "(query-rows db "SELECT rowid, log.* from log"))
+  (query-value db "SELECT MAX(rowid) FROM log"))
+(trace id-of-newest-log)
 
 (define (log-utterance! db u)
   (query-exec
@@ -81,13 +95,12 @@
 (trace log-utterance!)
 
 (define (log-sentence! db s)
-  (query-exec
+  (log-utterance!
    db
-   "insert into log values (?, ?, ?, ?)"
-   0
-   "bogus speaker"
-   "bogus target"
-   s))
+   (utterance 0
+              "bogus speaker"
+              "bogus target"
+              s)))
 (trace log-sentence!)
 
 (define/contract (log-word! db w log-id)
@@ -98,40 +111,46 @@
    w log-id))
 (trace log-word!)
 
-(provide add-utterance-to-corpus)
-(define (add-utterance-to-corpus ut c)
-  (log-utterance! (corpus-db c) ut)
-  (let ([log-id (get-last-row-id (corpus-db c))])
-    (for ([w (string->words (utterance-text ut))])
+(provide add-sentence-to-corpus)
+(define (add-sentence-to-corpus s c)
+  (log-sentence! (corpus-db c) s)
+  (let ([log-id (id-of-newest-log (corpus-db c))])
+    (for ([w (string->words s)])
       (log-word! (corpus-db c) w log-id))))
+(trace add-sentence-to-corpus)
 
 (define (make-corpus-from-sequence sentences [limit #f])
   (let ([conn (db:sqlite3-connect
                #:database 'memory
                #:mode 'create)])
+    (define c (corpus conn))
+
     (query-exec
-     conn
+     (corpus-db c)
      "CREATE TABLE IF NOT EXISTS
         log(timestamp TEXT, speaker TEXT, target TEXT, text TEXT,
             PRIMARY KEY (timestamp, speaker, target)
             ON CONFLICT IGNORE)")
     (query-exec
-     conn
+     (corpus-db c)
      "CREATE TABLE IF NOT EXISTS
         log_word_map(word TEXT, log_id INTEGER,
             PRIMARY KEY (word, log_id)
             ON CONFLICT IGNORE)")
 
+    (db:start-transaction (corpus-db c))
+
     (for ([s sentences])
       (cond
        ((string? s)
-        (log-sentence! conn s))
+        (add-sentence-to-corpus s c))
        ((utterance? s)
-        (log-utterance! conn s)))
-      (for ([w (string->words s)])
-        (log-word! conn w (get-last-row-id conn))))
+        (add-sentence-to-corpus (corpus-db c) (utterance-text s)))))
+    (db:commit-transaction (corpus-db c))
 
-    (corpus conn)))
+    (pe "log: ~a~% "(query-rows (corpus-db c) "SELECT * from log"))
+    (pe "log_word_map: ~a~% "(query-rows (corpus-db c) "SELECT * from log_word_map"))
+    c))
 
 (provide make-corpus-from-sexps)
 ;; TODO -- somehow arrange that, if we get a fatal signal, we finish
@@ -168,12 +187,12 @@
 (define/contract (word-popularity w c)
   (string? corpus? . -> . natural-number/c)
   (query-value (corpus-db c) "SELECT COUNT(log_id) FROM log_word_map WHERE word = ?" w))
+(trace word-popularity)
 
 (provide string->words)
 (define/contract (string->words s)
   (string? . -> . set?)
   (wordlist->wordset (regexp-split #rx" " (string-downcase s))))
-(trace string->words)
 
 (define (setof pred)
   (lambda (thing)

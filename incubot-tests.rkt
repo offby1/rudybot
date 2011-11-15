@@ -73,9 +73,7 @@
                            (not (equal? output-1 output-2))))
 
       (check-equal?
-       (incubot-sentence
-        "What else do you want?"
-        (make-test-corpus))
+       (incubot-sentence "What else do you want?" (make-test-corpus))
        "Some thing else"))))
 
 (define-test-suite lets-tests
