@@ -93,14 +93,6 @@ Q
    (utterance-target    u)
    (utterance-text      u)))
 
-(define (log-sentence! db s)
-  (log-utterance!
-   db
-   (utterance 0
-              "bogus speaker"
-              "bogus target"
-              s)))
-
 (define/contract (log-word! db w log-id)
   (db:connection? string? integer? . -> . any)
   (query-exec
@@ -108,16 +100,27 @@ Q
    "insert into log_word_map values (?, ?)"
    w log-id))
 
-(provide add-sentence-to-corpus)
-(define (add-sentence-to-corpus s c)
-  (log-sentence! (corpus-db c) s)
+(provide add-utterance-to-corpus)
+(define (add-utterance-to-corpus u c)
+  (log-utterance! (corpus-db c) u)
   (let ([log-id (id-of-newest-log (corpus-db c))])
-    (for ([w (string->words s)])
+    (for ([w (string->words (utterance-text u))])
       (log-word! (corpus-db c) w log-id))))
 
+(provide add-sentence-to-corpus)
+(define (add-sentence-to-corpus s c)
+  (add-utterance-to-corpus
+   (utterance
+    0
+    "bogus speaker"
+    "bogus target"
+    s)
+   c))
+
+(provide make-corpus-from-sequence)
 (define (make-corpus-from-sequence sentences [limit #f])
   (let ([conn (db:sqlite3-connect
-               #:database 'memory
+               #:database "/tmp/corpus.db"
                #:mode 'create)])
     (define c (corpus conn))
 
