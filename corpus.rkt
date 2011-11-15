@@ -5,8 +5,10 @@
  racket/trace
  )
 
+(define verbose? (make-parameter #f))
 (define (pe fmt . args)
-  (apply fprintf (current-error-port) fmt args))
+  (when (verbose?)
+    (apply fprintf (current-error-port) fmt args)))
 
 (define (query-rows connection stmt . args)
   (let ([result (apply db:query-rows connection stmt args)])
@@ -72,7 +74,6 @@ Q
          rare)])
     (and (not (null? candidates))
          (vector-ref (car candidates) 0))))
-(trace random-choose-string-containing-word)
 
 (provide (rename-out [public-make-corpus make-corpus]))
 (define/contract (public-make-corpus . sentences)
@@ -82,7 +83,6 @@ Q
 (define (id-of-newest-log db)
   (pe "log: ~a~% "(query-rows db "SELECT rowid, log.* from log"))
   (query-value db "SELECT MAX(rowid) FROM log"))
-(trace id-of-newest-log)
 
 (define (log-utterance! db u)
   (query-exec
@@ -92,7 +92,6 @@ Q
    (utterance-speaker   u)
    (utterance-target    u)
    (utterance-text      u)))
-(trace log-utterance!)
 
 (define (log-sentence! db s)
   (log-utterance!
@@ -101,7 +100,6 @@ Q
               "bogus speaker"
               "bogus target"
               s)))
-(trace log-sentence!)
 
 (define/contract (log-word! db w log-id)
   (db:connection? string? integer? . -> . any)
@@ -109,7 +107,6 @@ Q
    db
    "insert into log_word_map values (?, ?)"
    w log-id))
-(trace log-word!)
 
 (provide add-sentence-to-corpus)
 (define (add-sentence-to-corpus s c)
@@ -117,7 +114,6 @@ Q
   (let ([log-id (id-of-newest-log (corpus-db c))])
     (for ([w (string->words s)])
       (log-word! (corpus-db c) w log-id))))
-(trace add-sentence-to-corpus)
 
 (define (make-corpus-from-sequence sentences [limit #f])
   (let ([conn (db:sqlite3-connect
@@ -184,7 +180,6 @@ Q
 (define/contract (word-popularity w c)
   (string? corpus? . -> . natural-number/c)
   (query-value (corpus-db c) "SELECT COUNT(log_id) FROM log_word_map WHERE word = ?" w))
-(trace word-popularity)
 
 (provide string->words)
 (define/contract (string->words s)
