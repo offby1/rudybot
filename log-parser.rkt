@@ -16,6 +16,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
           start-transaction
           )
  (only-in "incubot.rkt" string->words)
+ (only-in "corpus.rkt" add-utterance-to-corpus)
  "utterance.rkt"
  rackunit
  rackunit/text-ui )
@@ -87,25 +88,6 @@ exec racket --require "$0" --main -- ${1+"$@"}
             PRIMARY KEY (word, log_id)
             ON CONFLICT IGNORE)")
     connection))
-
-(define (log-utterance! db u)
-  (query-exec
-   db
-   "insert into log values (?, ?, ?, ?)"
-   (utterance-timestamp u)
-   (utterance-speaker   u)
-   (utterance-target    u)
-   (utterance-text      u)))
-
-(define (get-last-row-id db)
-  (query-value db "SELECT last_insert_rowid()"))
-
-(define (log-word! db w log-id)
-  (query-exec
-   db
-   "insert into log_word_map values (?, ?)"
-   w log-id))
-
 
 (define (current-line ip)
   (call-with-values
@@ -138,11 +120,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
             (cond
              ((log-file-string->utterance line)
               =>
-              (lambda (ut)
-                (log-utterance! db ut)
-                (let ([log-id (get-last-row-id db)])
-                  (for ([w (string->words (utterance-text ut))])
-                    (log-word! db w log-id))))))
+              add-utterance-to-corpus))
 
             (when (zero? (remainder (current-line ip) 2000))
               (commit-transaction db)
