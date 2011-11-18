@@ -117,10 +117,15 @@ Q
     s)
    c))
 
+(define *db-file-name* "/tmp/corpus.db")
+
 (provide make-corpus-from-sequence)
 (define (make-corpus-from-sequence sentences [limit #f])
+  (with-handlers ([ exn:fail:filesystem? (thunk void)])
+    (delete-file *db-file-name*)
+    (fprintf (current-error-port) "Nuked ~s~%" *db-file-name*))
   (let ([conn (db:sqlite3-connect
-               #:database "/tmp/corpus.db"
+               #:database *db-file-name*
                #:mode 'create)])
     (define c (corpus conn))
 
