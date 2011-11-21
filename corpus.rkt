@@ -121,7 +121,7 @@ Q
 
 (provide make-corpus-from-sequence)
 (define (make-corpus-from-sequence sentences [limit #f])
-  (with-handlers ([ exn:fail:filesystem? (thunk void)])
+  (with-handlers ([exn:fail:filesystem? (lambda (e) void)])
     (delete-file *db-file-name*)
     (fprintf (current-error-port) "Nuked ~s~%" *db-file-name*))
   (let ([conn (db:sqlite3-connect
