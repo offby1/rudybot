@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec racket --require "$0" --main -- ${1+"$@"}
+exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang racket
@@ -79,8 +79,11 @@ exec racket --require "$0" --main -- ${1+"$@"}
    [(< 1 (length input-file-names))
     (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names)]
    [else
-    (let ([input-file-name (build-path (this-expression-source-directory) (car input-file-names))]
+    (let ([input-file-name (car input-file-names)]
           [corpus (make-corpus-from-sequence '())])
+      (when (not (absolute-path? input-file-name))
+        (set! input-file-name
+              (build-path (this-expression-source-directory) input-file-name)))
       (call-with-input-file
           input-file-name
         (lambda (ip)
