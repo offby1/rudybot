@@ -1,3 +1,7 @@
+* Should I investigate DynamoDB?
+  http://aws.typepad.com/aws/2012/01/amazon-dynamodb-internet-scale-data-storage-the-nosql-way.html
+  Might be a simpler API.
+
 * Do I map individual sightings to individual sdb items?
 
   Or do I group all the sightings of a given nick (there are typically
