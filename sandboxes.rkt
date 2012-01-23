@@ -12,11 +12,12 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 
 (struct sandbox (evaluator last-used-time) #:transparent #:mutable)
 (provide (rename-out [public-make-sandbox make-sandbox]))
-(define (public-make-sandbox [lang '(begin (require racket))])
+(define (public-make-sandbox #:lang [lang '(begin (require racket))]
+                             #:timeout-seconds [timeout-seconds 10])
   (sandbox
    (parameterize ([sandbox-output       'string]
                   [sandbox-error-output 'string]
-                  [sandbox-eval-limits '(10 50)]
+                  [sandbox-eval-limits (list timeout-seconds 50)]
                   [sandbox-path-permissions '([exists "/"])])
      (call-with-limits 10 #f
        (lambda ()
@@ -34,10 +35,13 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 
 ;; returns the sandbox, force/new? can be #t to force a new sandbox,
 ;; or a box which will be set to #t if it was just created
-(define (get-sandbox-by-name ht name [lang '(begin (require scheme))] [force/new? #f])
+(define (get-sandbox-by-name ht name
+                             #:lang [lang '(begin (require scheme))]
+                             #:timeout-seconds [timeout-seconds 10]
+                             #:force/new? [force/new? #f])
   (define sb (hash-ref ht name #f))
   (define (make)
-    (let ([sb (public-make-sandbox lang)])
+    (let ([sb (public-make-sandbox #:lang lang #:timeout-seconds timeout-seconds)])
       (when (box? force/new?) (set-box! force/new? #t))
       (add-grabber name sb)
       (hash-set! ht name sb)
@@ -160,7 +164,8 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
        exn:fail?
        (lambda ()
          (sandbox-eval
-          (get-sandbox-by-name *sandboxes-by-nick*"sleepy")
+          (get-sandbox-by-name *sandboxes-by-nick* "sleepy"
+                               #:timeout-seconds 1)
           "(sleep 20)")))
 
       (test-exn
@@ -233,6 +238,4 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
          )
 
 (define (main . args)
-  (printf "Main running ...~%")
-
   (exit (run-tests sandboxes-tests)))
