@@ -70,6 +70,7 @@ fi
                       ":t8!n=foo@bar PRIVMSG #ch : ,t8 en hu I will not buy this translation; it contains leading whitespace"))
                    (else
                     `(
+                      ,(c "(dict-update '((a . 9) (b . 2) (a . 1)) 'a add1 0)")
                       ,(c (format "eval (error \"foo\\r\\nQUIT bar\")"))
                       ":freenode-connect!freenode@freenode/bot/connect PRIVMSG upstartbot :\u0001VERSION\u0001"
                       "foO!"

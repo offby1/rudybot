@@ -12,11 +12,12 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 
 (struct sandbox (evaluator last-used-time) #:transparent #:mutable)
 (provide (rename-out [public-make-sandbox make-sandbox]))
-(define (public-make-sandbox [lang '(begin (require scheme))])
+(define (public-make-sandbox [lang '(begin (require racket))])
   (sandbox
    (parameterize ([sandbox-output       'string]
                   [sandbox-error-output 'string]
-                  [sandbox-eval-limits '(10 50)])
+                  [sandbox-eval-limits '(10 50)]
+                  [sandbox-path-permissions '([exists "/"])])
      (call-with-limits 10 #f
        (lambda ()
          (let ([port (and (string? lang)
@@ -129,6 +130,9 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
   (let ([*sandboxes-by-nick* (make-hash)])
     (test-suite
      "sandboxes"
+
+     (let ([s (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
+       (check-equal? (sandbox-eval s "(dict-update '((a . 9) (b . 2) (a . 1)) 'a add1 0)") '((a . 10) (b . 2) (a . 1))))
 
      (test-case
       "simple get"
