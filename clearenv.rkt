@@ -9,7 +9,15 @@ exec  racket --require "$0" --main -- ${1+"$@"}
          ffi/unsafe)
 
 ;; Doesn't work on OS X, alas
-(define clearenv (get-ffi-obj 'clearenv #f (_fun -> _void)))
+(define clearenv
+  (with-handlers ([exn? (lambda (e)
+                          (fprintf (current-error-port)
+                                   "~s: can't get an FFI object for clearenv; using dummy function instead~%" e)
+                          (thunk
+                           (fprintf (current-error-port)
+                                    "Warning!  Not clearning environment~%")))
+                        ])
+  (get-ffi-obj 'clearenv #f (_fun -> _void))))
 
 (define hmm-tests
 
