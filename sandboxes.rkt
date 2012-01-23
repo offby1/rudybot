@@ -157,7 +157,7 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
        (lambda ()
          (sandbox-eval
           (get-sandbox-by-name *sandboxes-by-nick*"sleepy")
-          "(sleep 10)")))
+          "(sleep 20)")))
 
       (test-exn
        "gacks on incomplete input"
