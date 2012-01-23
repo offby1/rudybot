@@ -19,7 +19,6 @@
                                            #:exists 'append))))
 
 (for ([op (in-list (*log-ports*))])
-  (fprintf (current-error-port) "Whopping port ~a~%" op)
   (with-handlers ([exn:fail? values])
     (file-stream-buffer-mode op 'line)))
 
