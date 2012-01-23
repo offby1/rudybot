@@ -8,16 +8,27 @@ exec  racket --require "$0" --main -- ${1+"$@"}
          (planet schematics/schemeunit:3/text-ui)
          ffi/unsafe)
 
-;; Doesn't work on OS X, alas
+;; The 'clearenv' function doesn't exist on some systems (notably Mac
+;; OS X), so we use this instead.
+(define (clobber-environment-by-hand)
+  (let ([environment (get-ffi-obj 'environ #f _pointer)])
+    (let loop ([offset 0])
+      (let ([one-pair (ptr-ref environment _bytes offset)])
+        (when one-pair
+          (match-let
+              ([(list k v) (regexp-split #rx"=" one-pair)])
+            ;; TODO -- I can imagine all kinds of horror if an
+            ;; environment variable's name isn't a UTF-8 encoded
+            ;; string.
+            (putenv (bytes->string/utf-8 k) ""))
+          (loop (add1 offset)))))))
+
 (define clearenv
-  (with-handlers ([exn? (lambda (e)
-                          (fprintf (current-error-port)
-                                   "~s: can't get an FFI object for clearenv; using dummy function instead~%" e)
-                          (thunk
-                           (fprintf (current-error-port)
-                                    "Warning!  Not clearning environment~%")))
-                        ])
-  (get-ffi-obj 'clearenv #f (_fun -> _void))))
+  (get-ffi-obj 'clearenv #f (_fun -> _void)
+               (thunk
+                (fprintf (current-error-port)
+                         "Can't get an FFI object for clearenv; setting existing values to the empty string instead~%")
+                clobber-environment-by-hand)))
 
 (define hmm-tests
 
@@ -26,7 +37,8 @@ exec  racket --require "$0" --main -- ${1+"$@"}
    (test-case
     "dunno"
     (clearenv)
-    (check-false (getenv "HOME")))
+    (check-true (or (not (getenv "HOME"))
+                    (equal? "" (getenv "HOME")))))
    ))
 (define (main . args)
   (exit (run-tests hmm-tests 'verbose)))
