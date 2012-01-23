@@ -9,26 +9,15 @@ exec  racket --require "$0" --main -- ${1+"$@"}
          ffi/unsafe)
 
 ;; The 'clearenv' function doesn't exist on some systems (notably Mac
-;; OS X), so we use this instead.
-(define (clobber-environment-by-hand)
-  (let ([environment (get-ffi-obj 'environ #f _pointer)])
-    (let loop ([offset 0])
-      (let ([one-pair (ptr-ref environment _bytes offset)])
+;; OS X), so we use 'unsetenv' in a loop instead.
+(define (clearenv)
+  (let ([unsetenv (get-ffi-obj 'unsetenv #f (_fun _bytes -> _int))])
+    (let loop ()
+      (let ([one-pair (ptr-ref (get-ffi-obj 'environ #f _pointer) _bytes)])
         (when one-pair
-          (match-let
-              ([(list k v) (regexp-split #rx"=" one-pair)])
-            ;; TODO -- I can imagine all kinds of horror if an
-            ;; environment variable's name isn't a UTF-8 encoded
-            ;; string.
-            (putenv (bytes->string/utf-8 k) ""))
-          (loop (add1 offset)))))))
-
-(define clearenv
-  (get-ffi-obj 'clearenv #f (_fun -> _void)
-               (thunk
-                (fprintf (current-error-port)
-                         "Can't get an FFI object for clearenv; setting existing values to the empty string instead~%")
-                clobber-environment-by-hand)))
+          (match-let ([(list k v) (regexp-split #rx"=" one-pair)])
+            (unsetenv k))
+          (loop))))))
 
 (define hmm-tests
 
@@ -37,9 +26,9 @@ exec  racket --require "$0" --main -- ${1+"$@"}
    (test-case
     "dunno"
     (clearenv)
-    (check-true (or (not (getenv "HOME"))
-                    (equal? "" (getenv "HOME")))))
-   ))
+    (for ([v '( "HOME" "PATH" "EDITOR")])
+      (check-false (getenv v))))))
+
 (define (main . args)
   (exit (run-tests hmm-tests 'verbose)))
 (provide clearenv main)
