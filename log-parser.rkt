@@ -67,43 +67,31 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (provide main)
 (define (main . args)
-  (define input-file-names
-    (command-line
-     #:program "log-parser"
-     #:args input-file-names
-     input-file-names))
-  (cond
-   [(null? input-file-names)
-    (displayln "You didn't specify any input files; running unit tests instead of parsing" (current-error-port))
-    (exit (if (positive?  (run-tests tests)) 1 0))]
-   [(< 1 (length input-file-names))
-    (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names)]
-   [else
-    (let ([input-file-name (car input-file-names)]
-          [corpus (make-corpus-from-sequence '())])
-      (when (not (absolute-path? input-file-name))
-        (set! input-file-name
-              (build-path (this-expression-source-directory) input-file-name)))
-      (call-with-input-file
-          input-file-name
-        (lambda (ip)
-          (port-count-lines! ip)
+  (define-values (ip op)
+    (make-pipe))
+  (define dummy-writer
+    (thread
+     (thunk
+      (let loop ()
+        (displayln "2010-08-14T11:05:50Z <= \":bpalmer!~user@unaffiliated/bpalmer PRIVMSG ##cinema :T: S was good ; but would have been much better with the original ending.\"" op)
+        (loop)))))
+  (define corpus (make-corpus-from-sequence '()))
+  (port-count-lines! ip)
 
-          (start-transaction (corpus-db corpus) )
-          (for ([line (in-lines ip)])
-            (cond
-             ((log-file-string->utterance line)
-              =>
-              (curryr add-utterance-to-corpus corpus)))
+  (start-transaction (corpus-db corpus) )
+  (for ([line (in-lines ip)])
+    (cond
+     ((log-file-string->utterance line)
+      =>
+      (curryr add-utterance-to-corpus corpus)))
 
-            (when (zero? (remainder (current-line ip) 2000))
-              (commit-transaction (corpus-db corpus))
-              (start-transaction (corpus-db corpus))
-              (fprintf (current-error-port)
-                       "Line ~a~%"
-                       (current-line ip))))
-          (commit-transaction (corpus-db corpus) )
-          (fprintf (current-error-port)
-                   "Line ~a~%"
-                   (current-line ip))))
-      (pe "done~%"))]))
+    (when (zero? (remainder (current-line ip) 2000))
+      (commit-transaction (corpus-db corpus))
+      (start-transaction (corpus-db corpus))
+      (fprintf (current-error-port)
+               "Line ~a~%"
+               (current-line ip))))
+  (commit-transaction (corpus-db corpus) )
+  (fprintf (current-error-port)
+           "Line ~a~%"
+           (current-line ip)))
