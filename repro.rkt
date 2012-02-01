@@ -29,9 +29,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (query-exec
  db
  "CREATE TABLE IF NOT EXISTS
-        log_word_map(word TEXT, log_id INTEGER,
-            PRIMARY KEY (word, log_id)
-            ON CONFLICT FAIL)")
+        log_word_map(word TEXT, log_id INTEGER)")
 
 (query-exec db "BEGIN TRANSACTION")
 
