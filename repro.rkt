@@ -20,10 +20,10 @@
 
 (query-exec db "BEGIN TRANSACTION")
 
-(for ([x (in-range 20000)])
+(for ([x (in-range 200000)])
   (query-exec
    db
    "insert into log_word_map values (?, ?)"
-   (number->string x) 99))
+   (number->string x) x))
 
 (query-exec db "COMMIT")
