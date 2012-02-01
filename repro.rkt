@@ -1,4 +1,8 @@
-;; rm -rfv /tmp/bug* ; racket ./repro.rkt
+#! /bin/sh
+#| Hey Emacs, this is -*-scheme-*- code!
+PLTSTDERR=debug ; export PLTSTDERR
+exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
+|#
 
 #lang racket
 
@@ -8,8 +12,19 @@
           query-value
           sqlite3-connect))
 
+(define *db-file-name*  "/tmp/buggissimo")
+
+(with-handlers ([exn:fail:filesystem?
+                 (lambda (e)
+                   (fprintf (current-error-port) "No ~s present; no problem.~%" *db-file-name*))])
+  (delete-file *db-file-name*)
+  (fprintf (current-error-port) "Nuked ~s~%" *db-file-name*))
+
+
 (define db
-  (sqlite3-connect #:database "/tmp/buggissimo" #:mode 'create))
+  (sqlite3-connect
+   #:database *db-file-name*
+   #:mode 'create))
 
 (query-exec
  db
@@ -20,7 +35,7 @@
 
 (query-exec db "BEGIN TRANSACTION")
 
-(for ([x (in-range 200000)])
+(for ([x (in-naturals)])
   (query-exec
    db
    "insert into log_word_map values (?, ?)"
