@@ -39,6 +39,10 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (query-exec
    db
    "insert into log_word_map values (?, ?)"
-   (number->string x) x))
+   (number->string x) x)
+
+  (when (zero? (remainder x 10000))
+    (query-exec db "COMMIT")
+    (query-exec db "BEGIN TRANSACTION")))
 
 (query-exec db "COMMIT")
