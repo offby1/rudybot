@@ -35,6 +35,12 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (->* () () #:rest (listof string?) corpus?)
   (make-corpus-from-sequence  (in-list sentences)))
 
+(provide log)
+(define (log fmt . args)
+  (apply (or (*incubot-logger*)
+             (curry fprintf (current-error-port)))
+         (string-append "incubot-server:" fmt) args))
+
 (define (random-favoring-smaller-numbers k)
   (let (
         ;; 0 <= r < 1, but smaller numbers are more likely
@@ -66,10 +72,13 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (incubot-sentence (string->words s) c)]
    [(list (? set? ws) (? corpus? c))
     (let ([rare (rarest ws c)])
-      ((*incubot-logger*) "incubot corpus has ~a entries" (set-count (corpus-strings c)))
+      (log "incubot corpus has ~a entries" (set-count (corpus-strings c)))
       (and rare
-           ((*incubot-logger*) "incubot chose ~s" rare)
-           (random-choose (strings-containing-word rare c))))]))
+           (log "incubot chose ~s" rare)
+           (random-choose (strings-containing-word rare c))))]
+   [bogon
+    (log "incubot-sentence invoked with bogus arglist: ~s" bogon)
+    #f]))
 
 (define/contract (in-corpus? s c)
   (string? corpus? . -> . boolean?)
@@ -122,7 +131,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (if (offensive? s)
       (begin0
           c
-        ((*incubot-logger*) "Not adding offensive string to corpus"))
+        (log "Not adding offensive string to corpus"))
       (corpus
        (set-add (corpus-strings c) s)
        (for/fold ([h (corpus-strings-by-word c)])
