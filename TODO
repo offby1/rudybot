@@ -68,3 +68,17 @@ ERC>
 <jcowan> Having IRC-based messaging is very nice
 <jcowan> I like phenny-style:  "rudybot: ask/tell <user> <message>", where the user is case insensitive
          and ignores underscores.
+
+This is also github issue 12: https://github.com/offby1/rudybot/issues/12
+
+** Ideas
+- Prevent DOS.  Limit the total number of queued messages to something
+  reasonable, as well as their size.  New messages push out older
+  undelivered ones from the queue.
+- The queues live in a dictionary keyed by nick, or better yet, some
+  sort of canonicalized nick.  (canonicalize-nick in userinfo.rkt is
+  probably the right thing)
+- Every time rudybot sees a JOIN (or perhaps some other indication of
+  someone signing on) he'll check the dict to see if there are any
+  queued messages for that person
+- Messages should include who sent 'em, and when

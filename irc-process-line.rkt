@@ -702,10 +702,6 @@
          ...))
 (defminionverbs chant advice memo)
 
-(defverb (later "tell" nick something ...) "leave a message for someone"
-  (pm (*response-target*) "minion: memo for ~a: ~a told me to tell you: ~a"
-      nick (*for-whom*) (string-join something)))
-
 ;; ----------------------------------------------------------------------------
 ;; Master tools
 
