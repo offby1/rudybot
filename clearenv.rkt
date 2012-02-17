@@ -15,7 +15,7 @@ exec  racket --require "$0" --main -- ${1+"$@"}
     (let loop ()
       (let ([one-pair (ptr-ref (get-ffi-obj 'environ #f _pointer) _bytes)])
         (when one-pair
-          (match-let ([(list k v) (regexp-split #rx"=" one-pair)])
+          (match-let ([(list k v ...) (regexp-split #rx"=" one-pair)])
             (unsetenv k))
           (loop))))))
 
