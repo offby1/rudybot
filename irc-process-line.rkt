@@ -456,7 +456,9 @@
                  [(r5rs) '(special r5rs)]
                  [else lang])]
          [force/new? (or force? (box #f))]
-         [sb (get-sandbox-by-name *sandboxes* for-whom lang force/new?)])
+         [sb (get-sandbox-by-name *sandboxes* for-whom
+                                  #:lang lang
+                                  #:force/new? force/new?)])
     (when (or force? (unbox force/new?))
       (if lang-to-report
         (reply "your ~s sandbox is ready" lang-to-report)
