@@ -27,11 +27,9 @@
 
 (define-test-suite rarest-tests
   (let ([c (make-test-corpus)])
-    (check-equal? (rarest (set "some" "else") c) "else")
-    (check-equal? (rarest (set "some") c) "some")
-    (check-false (rarest (set "ummagumma") c))))
-
-
+    (check-equal? (rarest (set "some" "else") c) (set "else"))
+    (check-equal? (rarest (set "some") c) (set "some"))
+    (check-equal? (rarest (set "ummagumma") c) (set "ummagumma"))))
 
 (define-test-suite popularity-tests
   (check-equal? (word-popularity "frotz" (make-test-corpus)) 0)
@@ -56,7 +54,7 @@
 (define-test-suite incubot-sentence-tests
   (let ([corpus (make-test-corpus)])
     (define (legitimate-response? thing)
-      (or (not thing)
+      (or (string? thing)
           (in-corpus? thing corpus)))
     (let* ([input-1 "For Phillip Morris ... from Western Union"]
            [output-1 (incubot-sentence input-1 corpus)]

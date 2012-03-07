@@ -22,6 +22,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (require
  scheme/set
  scheme/include
+ unstable/debug
  (only-in "log-parser.rkt" utterance-text )
  (only-in "vars.rkt" *incubot-logger*))
 
@@ -59,9 +60,13 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
      sorted
      (random-favoring-smaller-numbers (length seq)))))
 
-(define/contract (strings-containing-word w c)
-  (-> string? corpus? (listof string?))
-  (dict-ref (corpus-strings-by-word c) w))
+(define/contract (strings-containing-word w c default)
+  (-> string? corpus? (set/c string?) (listof string?))
+  (dict-ref (corpus-strings-by-word c) w (set-map default values)))
+
+(define (longest seq)
+  (foldl (lambda (acc item) (if (> (string-length item) (string-length acc)) item acc))
+         "" seq))
 
 (provide  incubot-sentence)
 (define incubot-sentence
@@ -71,11 +76,10 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    [(list (? string? s) (? corpus? c))
     (incubot-sentence (string->words s) c)]
    [(list (? set? ws) (? corpus? c))
-    (let ([rare (rarest ws c)])
+    (let ([rare-words (rarest ws c)])
       (log "incubot corpus has ~a entries" (set-count (corpus-strings c)))
-      (and rare
-           (log "incubot chose ~s" rare)
-           (random-choose (strings-containing-word rare c))))]
+      (log "incubot chose ~s" rare-words)
+      (random-choose (strings-containing-word (longest (set-map rare-words values)) c rare-words)))]
    [bogon
     (log "incubot-sentence invoked with bogus arglist: ~s" bogon)
     #f]))
@@ -165,15 +169,13 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (length (dict-ref (corpus-strings-by-word c) w '())))
 
 (define/contract (rarest ws c)
-  (-> set? corpus? (or/c string? #f))
+  (-> set? corpus? (set/c string?))
   (let-values ([(_ tied-for-rarest)
                 (for/fold ([smallest-ranking +inf.0]
                            [rarest-words-so-far (set)])
                     ([word (in-set ws)])
                     (let ([p (word-popularity word c)])
-                      (if (and (positive? p)
-                               (<= p smallest-ranking))
+                      (if (<= p smallest-ranking)
                           (values p (set-add rarest-words-so-far word))
                           (values smallest-ranking rarest-words-so-far))))])
-    (and (positive? (set-count tied-for-rarest))
-         (random-choose (set-map tied-for-rarest values)))))
+    tied-for-rarest))
