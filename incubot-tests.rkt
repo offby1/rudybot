@@ -110,8 +110,7 @@
 (define (main . args)
   (*incubot-logger* (lambda args (apply fprintf (current-error-port) args) (newline (current-error-port))))
   (let ([status (run-tests
-                 censorship-tests
-                 ;;all-tests
+                 all-tests
                  'verbose)])
     (when (positive? status)
       (exit 1))
