@@ -13,14 +13,12 @@ FOO=bar=baz exec  racket --require "$0" --main -- ${1+"$@"}
 (define (clearenv)
   (let ([unsetenv (get-ffi-obj 'unsetenv #f (_fun _bytes -> _int))])
     (let loop ()
-      (let ([one-pair (ptr-ref (get-ffi-obj 'environ #f _pointer) _bytes)])
-        (when one-pair
-          (match-let ([(list _ k v )
-                       ;; We don't get confused by values that contain
-                       ;; an '='!
-                       (regexp-match #rx"^(.*?)=(.*)$" one-pair)])
-            (unsetenv k))
-          (loop))))))
+      (match
+          (ptr-ref (get-ffi-obj 'environ #f _pointer) _bytes)
+        [(regexp #rx"^(.*?)=(.*)$" (list _ k v))
+         (unsetenv k)
+         (loop)]
+        [#f (void)]))))
 
 (define hmm-tests
 
@@ -29,8 +27,8 @@ FOO=bar=baz exec  racket --require "$0" --main -- ${1+"$@"}
    (test-case
     "dunno"
     (clearenv)
-    (for ([v '("FOO" "HOME" "PATH" "EDITOR")])
-      (check-false (getenv v))))))
+    (for ([v '("FOO" "HOME" "PATH" "EDITOR" "SNICKERDOODLE")])
+      (check-false (getenv v) v)))))
 
 (define (main . args)
   (exit (run-tests hmm-tests 'verbose)))
