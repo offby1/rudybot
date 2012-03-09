@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec  racket --require "$0" --main -- ${1+"$@"}
+FOO=bar=baz exec  racket --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang racket
@@ -15,7 +15,10 @@ exec  racket --require "$0" --main -- ${1+"$@"}
     (let loop ()
       (let ([one-pair (ptr-ref (get-ffi-obj 'environ #f _pointer) _bytes)])
         (when one-pair
-          (match-let ([(list k v ...) (regexp-split #rx"=" one-pair)])
+          (match-let ([(list _ k v )
+                       ;; We don't get confused by values that contain
+                       ;; an '='!
+                       (regexp-match #rx"(.*?)=(.*)" one-pair)])
             (unsetenv k))
           (loop))))))
 
@@ -26,7 +29,7 @@ exec  racket --require "$0" --main -- ${1+"$@"}
    (test-case
     "dunno"
     (clearenv)
-    (for ([v '( "HOME" "PATH" "EDITOR")])
+    (for ([v '("FOO" "HOME" "PATH" "EDITOR")])
       (check-false (getenv v))))))
 
 (define (main . args)
