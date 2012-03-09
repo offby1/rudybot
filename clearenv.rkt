@@ -18,7 +18,7 @@ FOO=bar=baz exec  racket --require "$0" --main -- ${1+"$@"}
           (match-let ([(list _ k v )
                        ;; We don't get confused by values that contain
                        ;; an '='!
-                       (regexp-match #rx"(.*?)=(.*)" one-pair)])
+                       (regexp-match #rx"^(.*?)=(.*)$" one-pair)])
             (unsetenv k))
           (loop))))))
 
