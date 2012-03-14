@@ -24,8 +24,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                   [*irc-server-port* 6667]
                   [*userinfo-database-directory-name* "userinfo.db"]
                   [*incubot-logger* log]
-                  [*incubot-server* (make-incubot-server "parsed-log")]
-                  [*nickserv-password* (get-preference '|rudybot-freenode-nickserv-password|)])
+                  [*incubot-server* (make-incubot-server "parsed-log")])
 
     (if (*nickserv-password*)
         (connect-and-run real-server)
