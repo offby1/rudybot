@@ -6,24 +6,16 @@
  unstable/debug
  )
 
-(define verbose? (make-parameter #f))
-(define (pe fmt . args)
-  (when (verbose?)
-    (apply fprintf (current-error-port) fmt args)))
-
 (define (query-rows connection stmt . args)
   (let ([result (apply db:query-rows connection stmt args)])
-    (pe "~a ~a => ~a~%" stmt args result)
     result))
 
 (define (query-value connection stmt . args)
   (let ([result (apply db:query-value connection stmt args)])
-    (pe "~a ~a => ~a~%" stmt args result)
     result))
 
 (define (query-exec connection stmt . args)
   (let ([result (apply db:query-exec connection stmt args)])
-    (pe "~a ~a => ~a~%" stmt args result)
     result))
 
 (provide (except-out (struct-out corpus) corpus))
@@ -82,7 +74,6 @@ Q
   (make-corpus-from-sequence sentences))
 
 (define (id-of-newest-log db)
-  (pe "log: ~a~% "(query-rows db "SELECT rowid, log.* from log"))
   (query-value db "SELECT MAX(rowid) FROM log"))
 
 (define (log-utterance! db u)
@@ -153,8 +144,6 @@ Q
         (add-sentence-to-corpus (corpus-db c) (utterance-text s)))))
     (db:commit-transaction (corpus-db c))
 
-    (pe "log: ~a~% "(query-rows (corpus-db c) "SELECT * from log"))
-    (pe "log_word_map: ~a~% "(query-rows (corpus-db c) "SELECT * from log_word_map"))
     c))
 
 (provide make-corpus-from-sexps)
