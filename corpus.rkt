@@ -73,6 +73,8 @@ WHERE log_word_map.word = ?
 Q
          rare)])
     (and (not (null? candidates))
+         ;; BUGBUG -- rather than (car candidates), pick one at
+         ;; random.
          (vector-ref (car candidates) 0))))
 
 (provide (rename-out [public-make-corpus make-corpus]))
