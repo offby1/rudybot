@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require "utils.rkt")
+(require racket/file
+         "utils.rkt")
 (provide (all-defined-out))
 
 ;; This value depends on the server; this seems to work for freenode
@@ -22,7 +23,7 @@
                                             "#scheme"
                                             ) #rx",")))
 (define *nickserv-password*
-  (make-parameter (from-env "BOTPASSWD" #f)))
+  (make-parameter (from-env "BOTPASSWD" (get-preference '|rudybot-freenode-nickserv-password|))))
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
 (define *irc-server-hostname* (make-parameter "localhost"))
 (define *irc-server-port* (make-parameter "6667"))
