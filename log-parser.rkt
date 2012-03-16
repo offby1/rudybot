@@ -42,7 +42,8 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
               (list 'params
                     (list 'param target)
                     (list 'param text)))
-        (apply utterance (map ensure-string (list timestamp nick target text)))])
+        (apply utterance (map ensure-string (list timestamp nick target text)))]
+       [_ #f])
      ]
     [_ #f]))
 
