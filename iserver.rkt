@@ -2,8 +2,13 @@
 
 (require
  (except-in "incubot.rkt" main)
+ (only-in "corpus.rkt"
+   add-to-corpus
+   corpus?
+   make-corpus
+   )
  (only-in "vars.rkt" *incubot-logger*)
- (only-in "log-parser.rkt" utterance-text))
+ (only-in "utterance.rkt" utterance-text))
 
 (provide make-incubot-server)
 (define make-incubot-server
