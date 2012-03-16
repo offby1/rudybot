@@ -92,6 +92,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
           (start-transaction (corpus-db corpus) )
           (for ([line (in-lines ip)])
+            ;; TODO -- ignore exceptions here, since I once saw
+            ;; add-utterance-to-corpus die because the DB was locked
+            ;; (I had a rudybot running at the time)
             (cond
              ((log-file-string->utterance line)
               =>

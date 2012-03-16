@@ -82,6 +82,8 @@
                      c)
                     ((put)
                      (thread-send client-thread #t)
+                     ;; TODO -- perhaps ignore exceptions while adding
+                     ;; to corpus
                      (add-to-corpus string c))
                     (else
                      (error "Unknown verb ~s" verb)))))]

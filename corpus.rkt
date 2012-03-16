@@ -100,6 +100,7 @@ Q
     (for ([w (string->words (utterance-text u))])
       (log-word! (corpus-db c) w log-id))))
 
+;; TODO -- why does this exist?
 (provide add-sentence-to-corpus)
 (define (add-sentence-to-corpus s c)
   (add-utterance-to-corpus
