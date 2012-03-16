@@ -3,6 +3,7 @@
  "utterance.rkt"
  (prefix-in db: db)
  racket/trace
+ unstable/debug
  )
 
 (define verbose? (make-parameter #f))
@@ -51,7 +52,7 @@
 ;; favor longer utterances over shorter ones.
 (provide random-choose)
 (define/contract (random-choose seq)
-  (-> list? any/c)
+  (-> (listof string?) any/c)
   (let ([sorted (sort seq > #:key string-length)])
     (list-ref
      sorted
@@ -73,9 +74,7 @@ WHERE log_word_map.word = ?
 Q
          rare)])
     (and (not (null? candidates))
-         ;; BUGBUG -- rather than (car candidates), pick one at
-         ;; random.
-         (vector-ref (car candidates) 0))))
+          (random-choose (map (curryr vector-ref 0) candidates)))))
 
 (provide (rename-out [public-make-corpus make-corpus]))
 (define/contract (public-make-corpus . sentences)
@@ -104,6 +103,7 @@ Q
 
 (provide add-utterance-to-corpus)
 (define (add-utterance-to-corpus u c)
+  (dprintf "~a~%" u)
   (log-utterance! (corpus-db c) u)
   (let ([log-id (id-of-newest-log (corpus-db c))])
     (for ([w (string->words (utterance-text u))])
@@ -122,10 +122,13 @@ Q
 (define *db-file-name* "/tmp/corpus.db")
 
 (provide make-corpus-from-sequence)
-(define (make-corpus-from-sequence sentences [limit #f])
-  (with-handlers ([exn:fail:filesystem? (lambda (e) void)])
-    (delete-file *db-file-name*)
-    (fprintf (current-error-port) "Nuked ~s~%" *db-file-name*))
+(define (make-corpus-from-sequence sentences
+                                   #:limit [limit #f]
+                                   #:nuke-existing? [nuke-existing? #f])
+  (when nuke-existing?
+    (with-handlers ([exn:fail:filesystem? (lambda (e) void)])
+      (delete-file *db-file-name*)
+      (fprintf (current-error-port) "Nuked ~s~%" *db-file-name*)))
   (let ([conn (db:sqlite3-connect
                #:database *db-file-name*
                #:mode 'create)])
