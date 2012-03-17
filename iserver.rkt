@@ -32,8 +32,6 @@
                    c)
                   ((put-string)
                    (thread-send client-thread #t)
-                   ;; TODO -- perhaps ignore exceptions while adding
-                   ;; to corpus
                    (add-string-to-corpus string c))
                   (else
                    (error "Unknown verb ~s" verb)))))]
