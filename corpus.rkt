@@ -121,7 +121,8 @@ Q
       (fprintf (current-error-port) "Nuked ~s~%" (*db-file-name*))))
   (let ([conn (db:sqlite3-connect
                #:database (*db-file-name*)
-               #:mode 'create)])
+               #:mode 'create
+               #:busy-retry-limit 20)])
     (define c (corpus conn))
 
     (dprintf "Connected to database ~a; will create tables if necessary~%" (*db-file-name*))
