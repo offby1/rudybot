@@ -1,6 +1,5 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-#$Id$
 exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
@@ -43,9 +42,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (incubot-sentence (string->words s) c)]
    [(list (? set? ws) (? corpus? c))
     (let ([rare (rarest ws c)])
-      ((*incubot-logger*) "incubot corpus has ~a distinct words" (corpus-word-count c))
       (and rare
-           (log "incubot chose ~s" rare)
            (random-choose-string-containing-word rare c)))]
    [bogon
     (log "incubot-sentence invoked with bogus arglist: ~s" bogon)
@@ -53,14 +50,16 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define/contract (rarest ws c)
   (-> set? corpus? (or/c string? #f))
-  (let-values ([(_ tied-for-rarest)
-                (for/fold ([smallest-ranking +inf.0]
-                           [rarest-words-so-far (set)])
-                    ([word (in-set ws)])
-                    (let ([p (word-popularity word c)])
-                      (if (and (positive? p)
-                               (<= p smallest-ranking))
-                          (values p (set-add rarest-words-so-far word))
-                          (values smallest-ranking rarest-words-so-far))))])
-    (and (positive? (set-count tied-for-rarest))
-         (random-choose (set-map tied-for-rarest values)))))
+  (let ([ranked (sort (set-map ws (lambda (w) (cons w (word-popularity w c))))
+                      < #:key cdr #:cache-keys? #t)])
+    (log "~a" ranked)
+    (let ([filtered (filter (lambda (p)
+                              (positive? (cdr p)))
+                            ranked)])
+      (if (null? filtered)
+          #f
+          (let ([chosen-pair (car filtered)])
+            (log "incubot chose ~s, which appears ~a times"
+                 (car chosen-pair)
+                 (cdr chosen-pair))
+            (car chosen-pair))))))

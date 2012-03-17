@@ -816,10 +816,7 @@
               [(roughly-evaluable? for-whom (text-from-word words))
                (loop (cons "eval" words) 'eval)]
               [(get-incubot-witticism words)
-               => (lambda (p)
-                    (log "Spewing wisdom for ~a re ~a"
-                         for-whom (text-from-word words))
-                    (p))]
+               => (lambda (p) (p))]
               [else (log "Not doing for ~a: ~a" for-whom (text-from-word words))
                     (reply "eh?  Try \"~a: help\"." (unbox *my-nick*))])
         (note-we-did-something-for! for-whom)))))
