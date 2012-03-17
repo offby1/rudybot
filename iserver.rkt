@@ -34,7 +34,9 @@
                    (thread-send client-thread #t)
                    (add-string-to-corpus string c))
                   (else
-                   (error "Unknown verb ~s" verb)))))]
+                   (log "Unknown verb ~s" verb)
+                   (thread-send client-thread #f)
+                   c))))]
             [(list client-thread ...)
              (log  "Got unexpected message ~s" message)
              (thread-send client-thread #f)
