@@ -5,18 +5,6 @@
  unstable/debug
  )
 
-(define (query-rows connection stmt . args)
-  (let ([result (apply db:query-rows connection stmt args)])
-    result))
-
-(define (query-value connection stmt . args)
-  (let ([result (apply db:query-value connection stmt args)])
-    result))
-
-(define (query-exec connection stmt . args)
-  (let ([result (apply db:query-exec connection stmt args)])
-    result))
-
 (provide (except-out (struct-out corpus) corpus))
 (struct corpus (db) #:transparent)
 
@@ -33,11 +21,11 @@
 (provide in-corpus?)
 (define/contract (in-corpus? w c)
   (string? corpus? . -> . boolean?)
-  (not (null? (query-rows (corpus-db c) "SELECT word FROM log_word_map WHERE word = ? LIMIT 1" w))))
+  (not (null? (db:query-rows (corpus-db c) "SELECT word FROM log_word_map WHERE word = ? LIMIT 1" w))))
 
 (provide corpus-sentence-count)
-(define/debug (corpus-sentence-count c)
-  (let ([v (query-value
+(define (corpus-sentence-count c)
+  (let ([v (db:query-value
             (corpus-db c)
             "SELECT MAX(rowid) FROM log")])
     (if (db:sql-null? v)
@@ -47,7 +35,7 @@
 (provide corpus-word-count)
 (define/contract (corpus-word-count c)
   (corpus? . -> . natural-number/c)
-  (query-value (corpus-db c) "SELECT COUNT(DISTINCT word) FROM log_word_map" ))
+  (db:query-value (corpus-db c) "SELECT COUNT(DISTINCT word) FROM log_word_map" ))
 
 ;; favor longer sentences over shorter ones.
 (provide random-choose)
@@ -74,7 +62,7 @@
   (string? corpus? . -> . (or/c string? #f))
   (let
       ([candidates
-        (query-rows
+        (db:query-rows
          (corpus-db c)
          #<<Q
 SELECT text
@@ -88,17 +76,17 @@ Q
           (random-choose (map (curryr vector-ref 0) candidates)))))
 
 (define (id-of-newest-log db)
-  (query-value db "SELECT MAX(rowid) FROM log"))
+  (db:query-value db "SELECT MAX(rowid) FROM log"))
 
 (define (log-sentence! db s)
-  (query-exec
+  (db:query-exec
    db
    "insert into log values (?)"
    s))
 
 (define/contract (log-word! db w log-id)
   (db:connection? string? integer? . -> . any)
-  (query-exec
+  (db:query-exec
    db
    "insert into log_word_map values (?, ?)"
    w log-id))
@@ -137,11 +125,11 @@ Q
     (define c (corpus conn))
 
     (dprintf "Connected to database ~a; will create tables if necessary~%" (*db-file-name*))
-    (query-exec
+    (db:query-exec
      (corpus-db c)
      "CREATE TABLE IF NOT EXISTS
         log(text TEXT)")
-    (query-exec
+    (db:query-exec
      (corpus-db c)
      "CREATE TABLE IF NOT EXISTS
         log_word_map(word TEXT, log_id INTEGER)")
@@ -175,7 +163,7 @@ Q
 (provide word-popularity)
 (define/contract (word-popularity w c)
   (string? corpus? . -> . natural-number/c)
-  (query-value (corpus-db c) "SELECT COUNT(log_id) FROM log_word_map WHERE word = ?" w))
+  (db:query-value (corpus-db c) "SELECT COUNT(log_id) FROM log_word_map WHERE word = ?" w))
 
 (provide string->words)
 (define/contract (string->words s)
