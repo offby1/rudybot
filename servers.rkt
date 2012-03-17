@@ -14,7 +14,7 @@ fi
          "git-version.rkt"
          (except-in "quotes.rkt" main)
          (except-in "clearenv.rkt" main)
-         (only-in "incubot.rkt" make-test-corpus)
+         (only-in "corpus.rkt" make-corpus)
          (only-in "iserver.rkt" make-incubot-server)
          scheme/port)
 
@@ -242,7 +242,7 @@ fi
   (parameterize* ([*bot-gives-up-after-this-many-silent-seconds* 1/4]
                   [*log-ports* (list (current-error-port))]
                   [*incubot-logger* log]
-                  [*incubot-server* (make-incubot-server (make-test-corpus))])
+                  [*incubot-server* (make-incubot-server (make-corpus '()))])
     (connect-and-run
      (make-preloaded-server (open-output-nowhere))
      #:retry-on-hangup? #f)))

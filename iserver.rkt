@@ -17,7 +17,7 @@
     ;; corresponding work.
     (thread
      (thunk
-      (let loop ([c (make-corpus)])
+      (let loop ([c (make-corpus '())])
         (let ([message (thread-receive)])
           (match message
             [(list client-thread verb string)
