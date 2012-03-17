@@ -16,10 +16,12 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
  (only-in "corpus.rkt"
           add-sentence-to-corpus
           corpus-db
+          corpus-sentence-count
           make-corpus)
  "utterance.rkt"
  rackunit
- rackunit/text-ui )
+ rackunit/text-ui
+ unstable/debug)
 
 (define (add-utterance-to-corpus u c)
   (add-sentence-to-corpus (utterance-text u) c))
@@ -84,7 +86,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (error 'backfill "I want at most one input file name; instead you gave me ~s" input-file-names)]
    [else
     (let ([input-file-name (car input-file-names)]
-          [corpus (make-corpus '() #:nuke-existing? #t)])
+          [corpus (make-corpus '() )])
       (when (not (absolute-path? input-file-name))
         (set! input-file-name
               (build-path (this-expression-source-directory) input-file-name)))
@@ -93,10 +95,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
         (lambda (ip)
           (port-count-lines! ip)
 
-          ;; TODO -- count the number of entries in the "log" table,
-          ;; and skip that many calls to "add-utterance-to-corpus".
-          ;; That way, if this backfill gets interrupted, it should be
-          ;; painless to resume where we left off.
+          (define inserts-to-omit (corpus-sentence-count corpus))
 
           (start-transaction (corpus-db corpus) )
           (for ([line (in-lines ip)])
@@ -106,7 +105,16 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
             (cond
              ((log-file-string->utterance line)
               =>
-              (curryr add-utterance-to-corpus corpus)))
+              (lambda (u)
+                (if (positive? inserts-to-omit)
+                    (begin
+                      (when (zero? (remainder inserts-to-omit 2000))
+                        (fprintf
+                         (current-error-port)
+                         "~a inserts remaining to skip~%"
+                         inserts-to-omit))
+                      (set! inserts-to-omit (sub1 inserts-to-omit)))
+                    (add-utterance-to-corpus u corpus)))))
 
             (when (zero? (remainder (current-line ip) 2000))
               (commit-transaction (corpus-db corpus))

@@ -35,6 +35,15 @@
   (string? corpus? . -> . boolean?)
   (not (null? (query-rows (corpus-db c) "SELECT word FROM log_word_map WHERE word = ? LIMIT 1" w))))
 
+(provide corpus-sentence-count)
+(define/debug (corpus-sentence-count c)
+  (let ([v (query-value
+            (corpus-db c)
+            "SELECT MAX(rowid) FROM log")])
+    (if (db:sql-null? v)
+        0
+        v)))
+
 (provide corpus-word-count)
 (define/contract (corpus-word-count c)
   (corpus? . -> . natural-number/c)
