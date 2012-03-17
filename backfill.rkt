@@ -93,6 +93,11 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
         (lambda (ip)
           (port-count-lines! ip)
 
+          ;; TODO -- count the number of entries in the "log" table,
+          ;; and skip that many calls to "add-utterance-to-corpus".
+          ;; That way, if this backfill gets interrupted, it should be
+          ;; painless to resume where we left off.
+
           (start-transaction (corpus-db corpus) )
           (for ([line (in-lines ip)])
             ;; TODO -- ignore exceptions here, since I once saw
