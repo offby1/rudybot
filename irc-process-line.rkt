@@ -165,7 +165,7 @@
              (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
              inner-words ...
              (regexp #px"(.*)\u0001$" (list _ trailing )))
-       ((*incubot-server*) 'put (string-join (append inner-words (list trailing)) " "))
+       ((*incubot-server*) 'put-string (string-join (append inner-words (list trailing)) " "))
        (espy target
              (format "doing ~a: ~a" extended-data-word
                      (string-join
@@ -248,13 +248,13 @@
                             (and #f
                                  (not (regexp-match #rx"^offby1" nick))
                                  (equal? target "#emacs" ))))
-                  ((*incubot-server*) 'put (string-join (cons first-word rest) " "))))]
+                  ((*incubot-server*) 'put-string (string-join (cons first-word rest) " "))))]
            [",..."
             (when (equal? target "#emacs")
               (pm target "Woof."))]
 
            [_
-            ((*incubot-server*) 'put (string-join (cons first-word rest) " "))
+            ((*incubot-server*) 'put-string (string-join (cons first-word rest) " "))
             ])])]
 
       [(list "QUIT" (colon first-word) rest ...)

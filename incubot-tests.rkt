@@ -37,7 +37,7 @@
   (check-equal? (word-popularity "some"  (make-test-corpus-from-sentences)) 2)
   (check-equal? (word-popularity "thing" (make-test-corpus-from-sentences)) 2)
 
-  (let ([bigger (add-to-corpus "Pound cake" (make-test-corpus-from-sentences))])
+  (let ([bigger (add-string-to-corpus "Pound cake" (make-test-corpus-from-sentences))])
     (check-equal? (word-popularity "frotz" bigger) 0)
     (check-equal? (word-popularity "else"  bigger) 1)
     (check-equal? (word-popularity "some"  bigger) 2)
@@ -74,7 +74,7 @@
                    "let's ignore case"
                    "LET'S SHOUT"))])
     (define (try input)
-      (check-not-false (incubot-sentence input corpus)))
+      (check-not-false (incubot-sentence input corpus) input))
     (try "let's")
     (try "Let's")
     (try "LET'S")
@@ -82,10 +82,10 @@
 
 (define-test-suite censorship-tests
   (let* ([c (make-test-corpus-from-sentences)]
-         [original-size (corpus-size c)])
-    (set! c (add-to-corpus "This is an inoffensive sentence." c))
-    (set! c (add-to-corpus "By dint of containing the nasty word 'nigger', this is an offensive sentence." c))
-    (check-equal? (- (corpus-size c) original-size)
+         [original-size (corpus-word-count c)])
+    (set! c (add-string-to-corpus "This is an inoffensive sentence." c))
+    (set! c (add-string-to-corpus "By dint of containing the nasty word 'nigger', this is an offensive sentence." c))
+    (check-equal? (- (corpus-word-count c) original-size)
                   1)))
 
 (define-test-suite all-tests

@@ -43,7 +43,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (incubot-sentence (string->words s) c)]
    [(list (? set? ws) (? corpus? c))
     (let ([rare (rarest ws c)])
-      ((*incubot-logger*) "incubot corpus has ~a entries" (corpus-size c))
+      ((*incubot-logger*) "incubot corpus has ~a distinct words" (corpus-word-count c))
       (and rare
            (log "incubot chose ~s" rare)
            (random-choose-string-containing-word rare c)))]

@@ -3,7 +3,7 @@
 (require
  (except-in "incubot.rkt" main)
  (only-in "corpus.rkt"
-   add-to-corpus
+   add-string-to-corpus
    corpus?
    make-corpus
    )
@@ -43,7 +43,7 @@
                 (lambda (inp)
                   (let/ec return
                     (for ([(utterance i) (in-indexed (in-port read inp))])
-                      (the-server 'put (utterance-text utterance))
+                      (the-server 'put-string (utterance-text utterance))
                       ;; We bail out early because a) reading
                       ;; everything takes forever; b) we'd run out of
                       ;; memory (on the puny EC2 instance on which
@@ -63,7 +63,7 @@
 
    [(? corpus? c)
     (define server-thread
-      ;; Reads 'get' or 'put' commands from a client, and does the
+      ;; Reads 'get' or 'put-string' commands from a client, and does the
       ;; corresponding work.
       (thread
        (thunk
@@ -80,11 +80,11 @@
                     ((get)
                      (thread-send client-thread (incubot-sentence string c))
                      c)
-                    ((put)
+                    ((put-string)
                      (thread-send client-thread #t)
                      ;; TODO -- perhaps ignore exceptions while adding
                      ;; to corpus
-                     (add-to-corpus string c))
+                     (add-string-to-corpus string c))
                     (else
                      (error "Unknown verb ~s" verb)))))]
               [(list client-thread ...)

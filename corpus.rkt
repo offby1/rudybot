@@ -36,8 +36,8 @@
   (string? corpus? . -> . boolean?)
   (not (null? (query-rows (corpus-db c) "SELECT word FROM log_word_map WHERE word = ? LIMIT 1" w))))
 
-(provide corpus-size)
-(define/contract (corpus-size c)
+(provide corpus-word-count)
+(define/contract (corpus-word-count c)
   (corpus? . -> . natural-number/c)
   (query-value (corpus-db c) "SELECT COUNT(DISTINCT word) FROM log_word_map" ))
 
@@ -87,7 +87,6 @@ Q
    "insert into log_word_map values (?, ?)"
    w log-id))
 
-(provide add-utterance-to-corpus)
 (define (add-utterance-to-corpus u c)
   (dprintf "~a~%" u)
   (log-utterance! (corpus-db c) u)
@@ -98,19 +97,22 @@ Q
 (define *db-file-name* (make-parameter "/tmp/corpus.db"))
 
 (provide make-test-corpus-from-sentences)
-(define (make-test-corpus-from-sentences [sentences '()])
+(define (make-test-corpus-from-sentences [sentences '("waka ja waka"
+                                                      "Some thing"
+                                                      "Some thing else")])
   (define (sentence->test-utterance s)
     (utterance "bogus timestamp" "bogus speaker" "bogus target" s))
   (parameterize ([*db-file-name* "/tmp/test-corpus.db"])
     (make-corpus-from-utterances
-     (map sentence->test-utterance '("waka ja waka"
-                                     "Some thing"
-                                     "Some thing else")))))
+     (map sentence->test-utterance sentences)
+     #:nuke-existing? #t)))
 
 (provide (rename-out [make-corpus-from-utterances make-corpus]))
-(define (make-corpus-from-utterances utz
-                                   #:limit [limit #f]
-                                   #:nuke-existing? [nuke-existing? #f])
+(define/contract (make-corpus-from-utterances utz
+                                              #:limit [limit #f]
+                                              #:nuke-existing? [nuke-existing? #f])
+  ( ->* ((listof utterance?)) (#:limit boolean? #:nuke-existing? boolean?) corpus?)
+
   (when nuke-existing?
     (with-handlers ([exn:fail:filesystem? (lambda (e) void)])
       (delete-file (*db-file-name*))
@@ -120,6 +122,7 @@ Q
                #:mode 'create)])
     (define c (corpus conn))
 
+    (dprintf "Connected to database ~a; will create tables if necessary~%" (*db-file-name*))
     (query-exec
      (corpus-db c)
      "CREATE TABLE IF NOT EXISTS
@@ -159,8 +162,8 @@ Q
     (lambda (ip)
       (make-corpus-from-utterances (in-lines ip)))))
 
-(provide add-to-corpus)
-(define/contract (add-to-corpus s c)
+(provide add-string-to-corpus)
+(define/contract (add-string-to-corpus s c)
   (string? corpus? . -> . corpus?)
 
   (define (offensive? s)
