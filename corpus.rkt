@@ -38,6 +38,15 @@
   (corpus? . -> . natural-number/c)
   (db:query-value (corpus-db c) "SELECT COUNT(DISTINCT word) FROM log_word_map" ))
 
+(provide corpus-rank-by-popularity)
+(define/contract (corpus-rank-by-popularity c wordset)
+  (corpus? (set/c string?) . -> . (listof (vector/c string? natural-number/c)))
+  (apply db:query-rows
+   (corpus-db c)
+   (format "SELECT word, COUNT(word) AS c FROM log_word_map WHERE WORD IN (~a) GROUP BY word ORDER BY c ASC"
+           (string-join (build-list (set-count wordset) (const "?")) ","))
+   (set-map wordset values)))
+
 ;; favor longer sentences over shorter ones.
 (provide random-choose)
 (define/contract (random-choose seq)

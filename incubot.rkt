@@ -41,7 +41,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    [(list (? string? s) (? corpus? c))
     (incubot-sentence (string->words s) c)]
    [(list (? set? ws) (? corpus? c))
-    (let ([rare (rarest ws c)])
+    (let ([rare (time (rarest ws c))])
       (and rare
            (random-choose-string-containing-word rare c)))]
    [bogon
@@ -50,16 +50,10 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define/contract (rarest ws c)
   (-> set? corpus? (or/c string? #f))
-  (let ([ranked (sort (set-map ws (lambda (w) (cons w (word-popularity w c))))
-                      < #:key cdr #:cache-keys? #t)])
+  (let ([ranked (corpus-rank-by-popularity c ws)])
     (log "~a" ranked)
-    (let ([filtered (filter (lambda (p)
-                              (positive? (cdr p)))
-                            ranked)])
-      (if (null? filtered)
-          #f
-          (let ([chosen-pair (car filtered)])
-            (log "incubot chose ~s, which appears ~a times"
-                 (car chosen-pair)
-                 (cdr chosen-pair))
-            (car chosen-pair))))))
+    (let ([chosen-pair (car ranked)])
+      (log "incubot chose ~s, which appears ~a times"
+           (vector-ref chosen-pair 0)
+           (vector-ref chosen-pair 1))
+      (vector-ref chosen-pair 0))))
