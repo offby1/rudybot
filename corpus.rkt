@@ -3,6 +3,7 @@
  (prefix-in db: db)
  racket/trace
  unstable/debug
+ (only-in "utils.rkt" safely)
  )
 
 (provide (except-out (struct-out corpus) corpus))
@@ -78,32 +79,18 @@ Q
 (define (id-of-newest-log db)
   (db:query-value db "SELECT MAX(rowid) FROM log"))
 
-;; In theory, we can have sqlite retry a bunch of times if the db is
-;; locked.  In practice, it doesn't seem to work, so ... we just
-;; ignore the exception :-|
-
-;; TODO -- only ignore the "sqlite3-db-is-locked" exception.
-(define-syntax-rule (safely body ...)
-  (with-handlers ([exn?
-                   (lambda (e)
-                     (fprintf (current-error-port) "~a; ignoring~%" e))
-                   ])
-    body ...))
-
 (define (log-sentence! db s)
-  (safely
-   (db:query-exec
-    db
-    "insert into log values (?)"
-    s)))
+  (db:query-exec
+   db
+   "insert into log values (?)"
+   s))
 
 (define/contract (log-word! db w log-id)
   (db:connection? string? integer? . -> . any)
-  (safely
-   (db:query-exec
-    db
-    "insert into log_word_map values (?, ?)"
-    w log-id)))
+  (db:query-exec
+   db
+   "insert into log_word_map values (?, ?)"
+   w log-id))
 
 (provide add-sentence-to-corpus)
 (define (add-sentence-to-corpus s c)
@@ -153,7 +140,8 @@ Q
 
     (for ([s sentences])
       (add-sentence-to-corpus s c))
-    (db:commit-transaction (corpus-db c))
+    (safely
+     (db:commit-transaction (corpus-db c)))
 
     c))
 

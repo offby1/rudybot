@@ -18,6 +18,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
           corpus-db
           corpus-sentence-count
           make-corpus)
+ (only-in "utils.rkt" safely)
  "utterance.rkt"
  rackunit
  rackunit/text-ui
@@ -114,12 +115,12 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                     (add-utterance-to-corpus u corpus)))))
 
             (when (zero? (remainder (current-line ip) 2000))
-              (commit-transaction (corpus-db corpus))
+              (safely (commit-transaction (corpus-db corpus)))
               (start-transaction (corpus-db corpus))
               (fprintf (current-error-port)
                        "Line ~a~%"
                        (current-line ip))))
-          (commit-transaction (corpus-db corpus) )
+          (safely (commit-transaction (corpus-db corpus) ))
           (fprintf (current-error-port)
                    "Line ~a~%"
                    (current-line ip))))

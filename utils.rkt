@@ -61,3 +61,16 @@
      (begin (defautoloads (lib var)) ...)]
     [(_ [lib var ...] ...)
      (begin (defautoloads (lib var ...)) ...)]))
+
+;; In theory, we can have sqlite retry a bunch of times if the db is
+;; locked.  In practice, it doesn't seem to work, so ... we just
+;; ignore the exception :-|
+
+;; TODO -- only ignore the "sqlite3-db-is-locked" exception.
+(provide safely)
+(define-syntax-rule (safely body ...)
+  (with-handlers ([exn?
+                   (lambda (e)
+                     (fprintf (current-error-port) "~a; ignoring~%" e))
+                   ])
+    body ...))
