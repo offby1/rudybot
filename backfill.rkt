@@ -62,7 +62,19 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                                "offby1"
                                "##cinema"
                                "rudybot: uptime")))
-  )
+  (let ()
+    (define tricky
+      #<<TRICKY
+2010-02-27T17:43:52Z <= ":jcowan!~jcowan@cpe-98-14-172-204.nyc.res.rr.com PRIVMSG #scheme :I see.  \"Degenerate\" is the word.  Or even \"skanky\"."
+TRICKY
+      )
+    (check-equal? (log-file-string->utterance tricky)
+                  #s(utterance "2010-02-27T17:43:52Z"
+                               "jcowan"
+                               "#scheme"
+                               "I see.  \"Degenerate\" is the word.  Or even \"skanky\"."))
+    ))
+
 
 (define (pe fmt . args)
   (apply fprintf (current-error-port) fmt args))
