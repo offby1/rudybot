@@ -69,7 +69,7 @@
 ;; TODO -- only ignore the "sqlite3-db-is-locked" exception.
 (provide safely)
 (define-syntax-rule (safely body ...)
-  (with-handlers ([exn?
+  (with-handlers ([exn:fail?
                    (lambda (e)
                      (fprintf (current-error-port) "~a; ignoring~%" e))
                    ])
