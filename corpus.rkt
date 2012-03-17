@@ -117,13 +117,17 @@ Q
   (parameterize ([*db-file-name* "/tmp/test-corpus.db"])
     (make-corpus-from-sentences
      sentences
-     #:nuke-existing? #t)))
+     #:nuke-existing? #t
+     #:create-tables? #t)))
 
 (provide (rename-out [make-corpus-from-sentences make-corpus]))
 (define/contract (make-corpus-from-sentences sentences
                                               #:limit [limit #f]
+                                              #:create-tables? [create-tables? #f]
                                               #:nuke-existing? [nuke-existing? #f])
-  ( ->* ((listof string?)) (#:limit boolean? #:nuke-existing? boolean?) corpus?)
+  ( ->* ((listof string?))
+        (#:limit boolean? #:nuke-existing? boolean? #:create-tables? boolean?)
+        corpus?)
 
   (when nuke-existing?
     (with-handlers ([exn:fail:filesystem? (lambda (e) void)])
@@ -135,15 +139,18 @@ Q
                #:busy-retry-limit 20)])
     (define c (corpus conn))
 
-    (dprintf "Connected to database ~a; will create tables if necessary~%" (*db-file-name*))
-    (db:query-exec
-     (corpus-db c)
-     "CREATE TABLE IF NOT EXISTS
-        log(text TEXT)")
-    (db:query-exec
-     (corpus-db c)
-     "CREATE TABLE IF NOT EXISTS
-        log_word_map(word TEXT, log_id INTEGER)")
+    (dprintf "Connected to database ~a; ~a create tables~%"
+             (*db-file-name*)
+             (if create-tables? "will" "will not"))
+
+    (when create-tables?
+      (for ([command
+             '(
+               "CREATE TABLE IF NOT EXISTS log(text TEXT)"
+               "CREATE TABLE IF NOT EXISTS log_word_map(word TEXT, log_id INTEGER)"
+               "CREATE INDEX IF NOT EXISTS idx1 ON log_word_map(word)"
+               )])
+        (db:query-exec (corpus-db c) command)))
 
     (db:start-transaction (corpus-db c))
 
@@ -167,9 +174,8 @@ Q
   (define (offensive? s)
     (regexp-match #px"\\bnigger\\b" s))
 
-  (if (offensive? s)
-      (log "Not adding offensive string to corpus")
-      (add-sentence-to-corpus s c))
+  (when (not (offensive? s))
+    (add-sentence-to-corpus s c))
   c)
 
 (provide word-popularity)

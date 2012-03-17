@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
+PLTSTDERR=debug exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 ;; Some code to reply in an alarmingly-human-like way.  Idea, but not
@@ -52,8 +52,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (-> set? corpus? (or/c string? #f))
   (let ([ranked (corpus-rank-by-popularity c ws)])
     (log "~a" ranked)
-    (let ([chosen-pair (car ranked)])
-      (log "incubot chose ~s, which appears ~a times"
-           (vector-ref chosen-pair 0)
-           (vector-ref chosen-pair 1))
-      (vector-ref chosen-pair 0))))
+    (and (not (null? ranked) )
+         (let ([chosen-pair (car ranked)])
+           (log "incubot chose ~s, which appears ~a times"
+                (vector-ref chosen-pair 0)
+                (vector-ref chosen-pair 1))
+           (vector-ref chosen-pair 0)))))

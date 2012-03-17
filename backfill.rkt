@@ -87,7 +87,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (error 'backfill "I want at most one input file name; instead you gave me ~s" input-file-names)]
    [else
     (let ([input-file-name (car input-file-names)]
-          [corpus (make-corpus '() )])
+          [corpus (make-corpus '() #:create-tables? #t)])
       (when (not (absolute-path? input-file-name))
         (set! input-file-name
               (build-path (this-expression-source-directory) input-file-name)))
