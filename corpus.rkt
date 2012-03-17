@@ -89,17 +89,19 @@ Q
   (db:query-value db "SELECT MAX(rowid) FROM log"))
 
 (define (log-sentence! db s)
-  (db:query-exec
-   db
-   "insert into log values (?)"
-   s))
+  (safely
+   (db:query-exec
+    db
+    "insert into log values (?)"
+    s)))
 
 (define/contract (log-word! db w log-id)
   (db:connection? string? integer? . -> . any)
-  (db:query-exec
-   db
-   "insert into log_word_map values (?, ?)"
-   w log-id))
+  (safely
+   (db:query-exec
+    db
+    "insert into log_word_map values (?, ?)"
+    w log-id)))
 
 (provide add-sentence-to-corpus)
 (define (add-sentence-to-corpus s c)
