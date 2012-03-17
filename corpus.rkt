@@ -83,6 +83,7 @@ Q
    "insert into log_word_map values (?, ?)"
    w log-id))
 
+(provide add-sentence-to-corpus)
 (define (add-sentence-to-corpus s c)
   (dprintf "~a~%" s)
   (log-sentence! (corpus-db c) s)

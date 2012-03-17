@@ -14,12 +14,15 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
           start-transaction
           )
  (only-in "corpus.rkt"
-          add-utterance-to-corpus
+          add-sentence-to-corpus
           corpus-db
-          make-corpus-from-utterances)
+          make-corpus)
  "utterance.rkt"
  rackunit
  rackunit/text-ui )
+
+(define (add-utterance-to-corpus u c)
+  (add-sentence-to-corpus (utterance-text u) c))
 
 (define (log-file-string->utterance s)
   (define (ensure-string x)
@@ -70,7 +73,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (define (main . args)
   (define input-file-names
     (command-line
-     #:program "log-parser"
+     #:program "backfill"
      #:args input-file-names
      input-file-names))
   (cond
@@ -78,10 +81,10 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (displayln "You didn't specify any input files; running unit tests instead of parsing" (current-error-port))
     (exit (if (positive?  (run-tests tests)) 1 0))]
    [(< 1 (length input-file-names))
-    (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names)]
+    (error 'backfill "I want at most one input file name; instead you gave me ~s" input-file-names)]
    [else
     (let ([input-file-name (car input-file-names)]
-          [corpus (make-corpus-from-utterances '() #:nuke-existing? #t)])
+          [corpus (make-corpus '() #:nuke-existing? #t)])
       (when (not (absolute-path? input-file-name))
         (set! input-file-name
               (build-path (this-expression-source-directory) input-file-name)))
