@@ -793,7 +793,7 @@
   ;; non-sequiturious.  Perhaps this trimming should be moved into the
   ;; incubot code, where it can be done more intelligently.
 
-  (and incubot-witticism
+  (and (string? incubot-witticism)
        (lambda ()
          (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism))))))
 
