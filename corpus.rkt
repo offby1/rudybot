@@ -85,7 +85,6 @@ Q
 
 (provide add-sentence-to-corpus)
 (define (add-sentence-to-corpus s c)
-  (dprintf "~a~%" s)
   (log-sentence! (corpus-db c) s)
   (let ([log-id (id-of-newest-log (corpus-db c))])
     (for ([w (string->words s)])
