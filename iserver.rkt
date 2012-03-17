@@ -24,7 +24,7 @@
              (loop
               (with-handlers ([exn? (lambda (e)
                                       (log "Drat: ~a" e)
-                                      (thread-send client-thread e)
+                                      (thread-send client-thread #f)
                                       (loop c))])
                 (case verb
                   ((get)
