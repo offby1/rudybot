@@ -96,6 +96,20 @@
   popularity-tests
   )
 
+;; TODO -- somehow arrange that, if we get a fatal signal, we finish
+;; writing out the current sexp, so that the output file remains
+;; well-formed.
+(define (make-corpus-from-sexps inp [limit #f])
+  (make-corpus
+   (in-port
+    (lambda (ip)
+      (let ([datum (read ip)])
+        ;; this sure seems kludgy.  I wonder if there's a better way
+        (if (eof-object? datum)
+            datum
+            (utterance-text datum))))
+    inp)
+   limit))
 
 (define (main . args)
   (*incubot-logger* (lambda args (apply fprintf (current-error-port) args) (newline (current-error-port))))
