@@ -1,6 +1,5 @@
 #lang racket
 (require
- "utterance.rkt"
  (prefix-in db: db)
  racket/trace
  unstable/debug
@@ -41,7 +40,7 @@
   (corpus? . -> . natural-number/c)
   (query-value (corpus-db c) "SELECT COUNT(DISTINCT word) FROM log_word_map" ))
 
-;; favor longer utterances over shorter ones.
+;; favor longer sentences over shorter ones.
 (provide random-choose)
 (define/contract (random-choose seq)
   (-> (listof string?) any/c)
@@ -71,14 +70,11 @@ Q
 (define (id-of-newest-log db)
   (query-value db "SELECT MAX(rowid) FROM log"))
 
-(define (log-utterance! db u)
+(define (log-sentence! db s)
   (query-exec
    db
-   "insert into log values (?, ?, ?, ?)"
-   (utterance-timestamp u)
-   (utterance-speaker   u)
-   (utterance-target    u)
-   (utterance-text      u)))
+   "insert into log values (?)"
+   s))
 
 (define/contract (log-word! db w log-id)
   (db:connection? string? integer? . -> . any)
@@ -87,11 +83,11 @@ Q
    "insert into log_word_map values (?, ?)"
    w log-id))
 
-(define (add-utterance-to-corpus u c)
-  (dprintf "~a~%" u)
-  (log-utterance! (corpus-db c) u)
+(define (add-sentence-to-corpus s c)
+  (dprintf "~a~%" s)
+  (log-sentence! (corpus-db c) s)
   (let ([log-id (id-of-newest-log (corpus-db c))])
-    (for ([w (string->words (utterance-text u))])
+    (for ([w (string->words s)])
       (log-word! (corpus-db c) w log-id))))
 
 (define *db-file-name* (make-parameter "/tmp/corpus.db"))
@@ -100,18 +96,16 @@ Q
 (define (make-test-corpus-from-sentences [sentences '("waka ja waka"
                                                       "Some thing"
                                                       "Some thing else")])
-  (define (sentence->test-utterance s)
-    (utterance "bogus timestamp" "bogus speaker" "bogus target" s))
   (parameterize ([*db-file-name* "/tmp/test-corpus.db"])
-    (make-corpus-from-utterances
-     (map sentence->test-utterance sentences)
+    (make-corpus-from-sentences
+     sentences
      #:nuke-existing? #t)))
 
-(provide (rename-out [make-corpus-from-utterances make-corpus]))
-(define/contract (make-corpus-from-utterances utz
+(provide (rename-out [make-corpus-from-sentences make-corpus]))
+(define/contract (make-corpus-from-sentences sentences
                                               #:limit [limit #f]
                                               #:nuke-existing? [nuke-existing? #f])
-  ( ->* ((listof utterance?)) (#:limit boolean? #:nuke-existing? boolean?) corpus?)
+  ( ->* ((listof string?)) (#:limit boolean? #:nuke-existing? boolean?) corpus?)
 
   (when nuke-existing?
     (with-handlers ([exn:fail:filesystem? (lambda (e) void)])
@@ -126,7 +120,7 @@ Q
     (query-exec
      (corpus-db c)
      "CREATE TABLE IF NOT EXISTS
-        log(timestamp TEXT, speaker TEXT, target TEXT, text TEXT)")
+        log(text TEXT)")
     (query-exec
      (corpus-db c)
      "CREATE TABLE IF NOT EXISTS
@@ -134,8 +128,8 @@ Q
 
     (db:start-transaction (corpus-db c))
 
-    (for ([u utz])
-      (add-utterance-to-corpus u c))
+    (for ([s sentences])
+      (add-sentence-to-corpus s c))
     (db:commit-transaction (corpus-db c))
 
     c))
@@ -145,7 +139,7 @@ Q
 ;; writing out the current sexp, so that the output file remains
 ;; well-formed.
 (define (make-corpus-from-sexps inp [limit #f])
-  (make-corpus-from-utterances
+  (make-corpus-from-sentences
    (in-port
     (lambda (ip)
       (let ([datum (read ip)])
@@ -160,7 +154,7 @@ Q
 (define (make-corpus-from-file ifn)
   (call-with-input-file ifn
     (lambda (ip)
-      (make-corpus-from-utterances (in-lines ip)))))
+      (make-corpus-from-sentences (in-lines ip)))))
 
 (provide add-string-to-corpus)
 (define/contract (add-string-to-corpus s c)
@@ -171,7 +165,7 @@ Q
 
   (if (offensive? s)
       (log "Not adding offensive string to corpus")
-      (add-utterance-to-corpus s c))
+      (add-sentence-to-corpus s c))
   c)
 
 (provide word-popularity)
