@@ -16,7 +16,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
  (only-in "corpus.rkt"
           add-utterance-to-corpus
           corpus-db
-          make-corpus-from-sequence)
+          make-corpus-from-utterances)
  "utterance.rkt"
  rackunit
  rackunit/text-ui )
@@ -81,7 +81,7 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (error 'log-parser "I want at most one input file name; instead you gave me ~s" input-file-names)]
    [else
     (let ([input-file-name (car input-file-names)]
-          [corpus (make-corpus-from-sequence '() #:nuke-existing? #t)])
+          [corpus (make-corpus-from-utterances '() #:nuke-existing? #t)])
       (when (not (absolute-path? input-file-name))
         (set! input-file-name
               (build-path (this-expression-source-directory) input-file-name)))

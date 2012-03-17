@@ -17,16 +17,8 @@
   ;; apostrophes can really trip you up the most
   )
 
-(provide make-test-corpus)
-(define (make-test-corpus)
-  (make-corpus
-   "waka ja waka"
-   "Some thing"
-   "Some thing else"))
-
-
 (define-test-suite rarest-tests
-  (let ([c (make-test-corpus)])
+  (let ([c (make-test-corpus-from-sentences)])
     (check-equal? (rarest (set "some" "else") c) "else")
     (check-equal? (rarest (set "some") c) "some")
     (check-false (rarest (set "ummagumma") c))))
@@ -34,18 +26,18 @@
 
 
 (define-test-suite popularity-tests
-  (check-equal? (word-popularity "frotz" (make-test-corpus)) 0)
-  (check-equal? (word-popularity "else"  (make-test-corpus)) 1)
+  (check-equal? (word-popularity "frotz" (make-test-corpus-from-sentences)) 0)
+  (check-equal? (word-popularity "else"  (make-test-corpus-from-sentences)) 1)
 
   ;; Note that if a word appears twice or more in a given sentence, we
   ;; only count it once.  No particular reason, except that this seems
   ;; like it will be easy.
-  (check-equal? (word-popularity "waka"  (make-test-corpus)) 1)
+  (check-equal? (word-popularity "waka"  (make-test-corpus-from-sentences)) 1)
 
-  (check-equal? (word-popularity "some"  (make-test-corpus)) 2)
-  (check-equal? (word-popularity "thing" (make-test-corpus)) 2)
+  (check-equal? (word-popularity "some"  (make-test-corpus-from-sentences)) 2)
+  (check-equal? (word-popularity "thing" (make-test-corpus-from-sentences)) 2)
 
-  (let ([bigger (add-to-corpus "Pound cake" (make-test-corpus))])
+  (let ([bigger (add-to-corpus "Pound cake" (make-test-corpus-from-sentences))])
     (check-equal? (word-popularity "frotz" bigger) 0)
     (check-equal? (word-popularity "else"  bigger) 1)
     (check-equal? (word-popularity "some"  bigger) 2)
@@ -54,7 +46,7 @@
     (check-equal? (word-popularity "cake"  bigger) 1)))
 
 (define-test-suite incubot-sentence-tests
-  (let ([corpus (make-test-corpus)])
+  (let ([corpus (make-test-corpus-from-sentences)])
     (define (legitimate-response? thing)
       (or (not thing)
           (in-corpus? thing corpus)))
@@ -73,14 +65,14 @@
                            (not (equal? output-1 output-2))))
 
       (check-equal?
-       (incubot-sentence "What else do you want?" (make-test-corpus))
+       (incubot-sentence "What else do you want?" (make-test-corpus-from-sentences))
        "Some thing else"))))
 
 (define-test-suite lets-tests
-  (let ([corpus (make-corpus
-                 "Let's start with a capital letter"
-                 "let's ignore case"
-                 "LET'S SHOUT")])
+  (let ([corpus (make-test-corpus-from-sentences
+                 '("Let's start with a capital letter"
+                   "let's ignore case"
+                   "LET'S SHOUT"))])
     (define (try input)
       (check-not-false (incubot-sentence input corpus)))
     (try "let's")
@@ -89,7 +81,7 @@
     (check-false (incubot-sentence "Snorgulation" corpus))))
 
 (define-test-suite censorship-tests
-  (let* ([c (make-test-corpus)]
+  (let* ([c (make-test-corpus-from-sentences)]
          [original-size (corpus-size c)])
     (set! c (add-to-corpus "This is an inoffensive sentence." c))
     (set! c (add-to-corpus "By dint of containing the nasty word 'nigger', this is an offensive sentence." c))

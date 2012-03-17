@@ -68,11 +68,6 @@ Q
     (and (not (null? candidates))
           (random-choose (map (curryr vector-ref 0) candidates)))))
 
-(provide (rename-out [public-make-corpus make-corpus]))
-(define/contract (public-make-corpus . sentences)
-  (->* () () #:rest (listof string?) corpus?)
-  (make-corpus-from-sequence sentences))
-
 (define (id-of-newest-log db)
   (query-value db "SELECT MAX(rowid) FROM log"))
 
@@ -100,29 +95,28 @@ Q
     (for ([w (string->words (utterance-text u))])
       (log-word! (corpus-db c) w log-id))))
 
-;; TODO -- why does this exist?
-(provide add-sentence-to-corpus)
-(define (add-sentence-to-corpus s c)
-  (add-utterance-to-corpus
-   (utterance
-    0
-    "bogus speaker"
-    "bogus target"
-    s)
-   c))
+(define *db-file-name* (make-parameter "/tmp/corpus.db"))
 
-(define *db-file-name* "/tmp/corpus.db")
+(provide make-test-corpus-from-sentences)
+(define (make-test-corpus-from-sentences [sentences '()])
+  (define (sentence->test-utterance s)
+    (utterance "bogus timestamp" "bogus speaker" "bogus target" s))
+  (parameterize ([*db-file-name* "/tmp/test-corpus.db"])
+    (make-corpus-from-utterances
+     (map sentence->test-utterance '("waka ja waka"
+                                     "Some thing"
+                                     "Some thing else")))))
 
-(provide make-corpus-from-sequence)
-(define (make-corpus-from-sequence sentences
+(provide (rename-out [make-corpus-from-utterances make-corpus]))
+(define (make-corpus-from-utterances utz
                                    #:limit [limit #f]
                                    #:nuke-existing? [nuke-existing? #f])
   (when nuke-existing?
     (with-handlers ([exn:fail:filesystem? (lambda (e) void)])
-      (delete-file *db-file-name*)
-      (fprintf (current-error-port) "Nuked ~s~%" *db-file-name*)))
+      (delete-file (*db-file-name*))
+      (fprintf (current-error-port) "Nuked ~s~%" (*db-file-name*))))
   (let ([conn (db:sqlite3-connect
-               #:database *db-file-name*
+               #:database (*db-file-name*)
                #:mode 'create)])
     (define c (corpus conn))
 
@@ -137,12 +131,8 @@ Q
 
     (db:start-transaction (corpus-db c))
 
-    (for ([s sentences])
-      (cond
-       ((string? s)
-        (add-sentence-to-corpus s c))
-       ((utterance? s)
-        (add-sentence-to-corpus (corpus-db c) (utterance-text s)))))
+    (for ([u utz])
+      (add-utterance-to-corpus u c))
     (db:commit-transaction (corpus-db c))
 
     c))
@@ -152,7 +142,7 @@ Q
 ;; writing out the current sexp, so that the output file remains
 ;; well-formed.
 (define (make-corpus-from-sexps inp [limit #f])
-  (make-corpus-from-sequence
+  (make-corpus-from-utterances
    (in-port
     (lambda (ip)
       (let ([datum (read ip)])
@@ -167,7 +157,7 @@ Q
 (define (make-corpus-from-file ifn)
   (call-with-input-file ifn
     (lambda (ip)
-      (make-corpus-from-sequence (in-lines ip)))))
+      (make-corpus-from-utterances (in-lines ip)))))
 
 (provide add-to-corpus)
 (define/contract (add-to-corpus s c)
@@ -176,7 +166,9 @@ Q
   (define (offensive? s)
     (regexp-match #px"\\bnigger\\b" s))
 
-  (add-sentence-to-corpus s c)
+  (if (offensive? s)
+      (log "Not adding offensive string to corpus")
+      (add-utterance-to-corpus s c))
   c)
 
 (provide word-popularity)
