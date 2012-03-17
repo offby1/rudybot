@@ -49,6 +49,17 @@
      sorted
      (random-favoring-smaller-numbers (length seq)))))
 
+;; TODO -- this feels inefficient, since we are sucking (in theory) an
+;; unlimited number of rows from the db, and then discarding all but
+;; one.  See if it's worth doing this differently.
+
+;; At the least, we might split this into two pieces: one piece
+;; retrieves a row from log_word_map at random, then the second piece
+;; retrieves the corresponding row from log.  At least that way we're
+;; not pulling out a pile of long sentences, but rather a pile of
+;; word-ID pairs, which are presumably smaller.  Of course that way we
+;; wouldn't be able to make our selection based on the sentence's
+;; length.
 (provide random-choose-string-containing-word)
 (define/contract (random-choose-string-containing-word rare c)
   (string? corpus? . -> . (or/c string? #f))
