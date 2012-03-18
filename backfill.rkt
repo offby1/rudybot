@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
+PLTSTDERR=debug exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang racket
@@ -131,12 +131,13 @@ TRICKY
                       (set! inserts-to-omit (sub1 inserts-to-omit)))
                     (add-utterance-to-corpus u corpus)))))
 
-            (when (zero? (remainder (current-line ip) 2000))
+            (when (zero? (remainder (current-line ip) 10000))
               (safely (commit-transaction (corpus-db corpus)))
               (start-transaction (corpus-db corpus))
               (fprintf (current-error-port)
-                       "Line ~a~%"
-                       (current-line ip))))
+                       "Line ~a (~a megabytes in use) ~%"
+                       (current-line ip)
+                       (inexact->exact (round (/ (current-memory-use) 1024 1024.))))))
           (safely (commit-transaction (corpus-db corpus) ))
           (fprintf (current-error-port)
                    "Line ~a~%"
