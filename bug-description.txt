@@ -1,0 +1,14 @@
+I think "query-value" is, somehow, leaking memory.  To demonstrate (on
+my Ubuntu 11.10 ("Oneiric Ocelot") system, anyway)
+
+        $ ./leaky.rkt & top
+
+Note the memory usage of racket increases by a couple of megabytes per
+second, apparently without bound.
+
+"leaky.rkt" displays the value returned by (current-memory-use), and
+that number doesn't ever get particularly large; this suggests the
+problem is somewhere in FFI-land.
+
+Now edit corpus.rkt, by changing the defintion of *leak?* from #t to
+#f, and run it again; this time it doesn't leak.
