@@ -1,5 +1,6 @@
-I think "query-value" is, somehow, leaking memory.  To demonstrate (on
-my Ubuntu 11.10 ("Oneiric Ocelot") system, anyway)
+This is Racket 5.2.1 on Ubuntu 11.10 ("Oneiric Ocelot").
+
+I think "query-value" is, somehow, leaking memory.  To demonstrate:
 
         $ ./leaky.rkt & top
 
