@@ -36,13 +36,18 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
       (bytes->string/utf-8 x)]))
   (match s
     ;; old style: the guts are an unparsed scheme string
-    [(regexp #px"^([[:print:]]+) <= \":([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)\"$"
-          (list _ timestamp   nick    id      host            target   text))
-     (utterance timestamp nick target text)]
+    [(regexp #px"^([[:print:]]+) <= (\".*\")$"
+             (list _ timestamp unparsed))
+     (match (with-input-from-string unparsed read)
+       [(regexp #px":([^!]*)!([^@]*)@([^ ]*) PRIVMSG ([^:]+) :(.*)"
+                (list _ nick id host target text))
+        (utterance timestamp nick target text)]
+       [_ #f])
+     ]
 
     ;; new style: the guts are an s-expression
     [(regexp #px"^([[:print:]]+) <= +(\\(.*\\))" (list _ timestamp raw-string))
-     (match (read (open-input-string raw-string))
+     (match (with-input-from-string raw-string read)
        [(list (list 'prefix (regexp #rx"(.*)!(.*)@(.*)" (list _ nick _ _)))
               (list 'command #"PRIVMSG")
               (list 'params
