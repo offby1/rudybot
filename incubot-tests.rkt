@@ -82,10 +82,10 @@
 
 (define-test-suite censorship-tests
   (let* ([c (make-test-corpus-from-sentences)]
-         [original-size (corpus-word-count c)])
+         [original-size (expensive-corpus-word-count-use-only-in-tests c)])
     (set! c (add-string-to-corpus "This is an inoffensive sentence." c))
     (set! c (add-string-to-corpus "By dint of containing the nasty word 'nigger', this is an offensive sentence." c))
-    (check-equal? (- (corpus-word-count c) original-size)
+    (check-equal? (- (expensive-corpus-word-count-use-only-in-tests c) original-size)
                   1)))
 
 (define-test-suite all-tests

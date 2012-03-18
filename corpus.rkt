@@ -34,8 +34,8 @@
         0
         v)))
 
-(provide corpus-word-count)
-(define/contract (corpus-word-count c)
+(provide expensive-corpus-word-count-use-only-in-tests)
+(define/contract (expensive-corpus-word-count-use-only-in-tests c)
   (corpus? . -> . natural-number/c)
   (db:query-value (corpus-db c) "SELECT COUNT(DISTINCT word) FROM log_word_map" ))
 
