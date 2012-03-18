@@ -3,6 +3,7 @@
  (prefix-in db: db)
  racket/trace
  unstable/debug
+ (only-in mzlib/etc this-expression-source-directory)
  (only-in "utils.rkt" safely)
  )
 
@@ -110,7 +111,10 @@ Q
     (for ([w (string->words s)])
       (log-word! (corpus-db c) w log-id))))
 
-(define *db-file-name* (make-parameter "/tmp/corpus.db"))
+(define *db-file-name*
+  (make-parameter
+   (build-path (this-expression-source-directory)
+               "corpus.db")))
 
 (provide make-test-corpus-from-sentences)
 (define (make-test-corpus-from-sentences [sentences '("waka ja waka"
