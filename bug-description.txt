@@ -8,8 +8,7 @@ Note the memory usage of racket increases by a couple of megabytes per
 second, apparently without bound.
 
 "leaky.rkt" displays the value returned by (current-memory-use), and
-that number doesn't ever get particularly large; this suggests the
-problem is somewhere in FFI-land.
+that number is also growing.  Not sure what this means.
 
 Now edit corpus.rkt, by changing the defintion of *leak?* from #t to
 #f, and run it again; this time it doesn't leak.
