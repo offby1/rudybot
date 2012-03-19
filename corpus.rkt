@@ -44,6 +44,10 @@
   (corpus? (set/c string?) . -> . (listof (vector/c string? natural-number/c)))
   (apply db:query-rows
    (corpus-db c)
+   ;; TODO -- this is fairly stupid.  Our caller doesn't want _all_
+   ;; the words; they merely want the least popular word.  So throwing
+   ;; in a "limit 1" might speed it up some (Lord knows it could use
+   ;; it -- it's typically four seconds 'in production')
    (format "SELECT word, COUNT(word) AS c FROM log_word_map WHERE WORD IN (~a) GROUP BY word ORDER BY c ASC"
            (string-join (build-list (set-count wordset) (const "?")) ","))
    (set-map wordset values)))
