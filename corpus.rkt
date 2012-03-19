@@ -112,7 +112,7 @@ Q
 (define (add-sentence-to-corpus s c)
   (log-sentence! (corpus-db c) s)
   (let ([log-id (id-of-newest-log (corpus-db c))])
-    (for ([w (string->words s)])
+    (for ([w (string->lowercased-words s)])
       (log-word! (corpus-db c) w log-id))))
 
 (define *db-file-name*
@@ -193,8 +193,8 @@ Q
   (string? corpus? . -> . natural-number/c)
   (db:query-value (corpus-db c) "SELECT COUNT(log_id) FROM log_word_map WHERE word = ?" w))
 
-(provide string->words)
-(define/contract (string->words s)
+(provide string->lowercased-words)
+(define/contract (string->lowercased-words s)
   (string? . -> . set?)
   (wordlist->wordset (regexp-split #rx" " (string-downcase s))))
 

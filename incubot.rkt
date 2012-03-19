@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-PLTSTDERR=debug exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
+exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 ;; Some code to reply in an alarmingly-human-like way.  Idea, but not
@@ -39,7 +39,7 @@ PLTSTDERR=debug exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    [(list (? list? s) (? corpus? c))
     (incubot-sentence (wordlist->wordset s) c)]
    [(list (? string? s) (? corpus? c))
-    (incubot-sentence (string->words s) c)]
+    (incubot-sentence (string->lowercased-words s) c)]
    [(list (? set? ws) (? corpus? c))
     (let ([rare (time (rarest ws c))])
       (and rare

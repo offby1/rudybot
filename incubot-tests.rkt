@@ -7,12 +7,12 @@
   (and (set-empty? (set-subtract actual expected))
        (set-empty? (set-subtract expected actual))))
 
-(define-test-suite string->words-tests
-  (check-sets-equal? (string->words "...") (set))
-  (check-sets-equal? (string->words "Hey you!!") (set "hey" "you"))
-  (check-sets-equal? (string->words "HEY YOU!!") (set "hey" "you"))
-  (check-sets-equal? (string->words "YO MOMMA") (set "yo" "momma"))
-  (check-sets-equal? (string->words "Don't get tripped up by 'apostrophes'")
+(define-test-suite string->lowercased-words-tests
+  (check-sets-equal? (string->lowercased-words "...") (set))
+  (check-sets-equal? (string->lowercased-words "Hey you!!") (set "hey" "you"))
+  (check-sets-equal? (string->lowercased-words "HEY YOU!!") (set "hey" "you"))
+  (check-sets-equal? (string->lowercased-words "YO MOMMA") (set "yo" "momma"))
+  (check-sets-equal? (string->lowercased-words "Don't get tripped up by 'apostrophes'")
                      (set "don't" "get" "tripped" "up" "by" "apostrophes"))
   ;; apostrophes can really trip you up the most
   )
@@ -89,7 +89,7 @@
                   1)))
 
 (define-test-suite all-tests
-  string->words-tests
+  string->lowercased-words-tests
   rarest-tests
   incubot-sentence-tests
   lets-tests
