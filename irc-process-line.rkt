@@ -181,7 +181,7 @@
        (when (equal? "VERSION" request-word)
          (pm #:notice? #t
              nick
-             "\u0001VERSION ~a (offby1@blarg.net):v4.~a:PLT scheme version ~a on ~a\0001"
+             "\u0001VERSION ~a (eric.hanchrow@gmail.com):v4.~a:Racket scheme version ~a on ~a\0001"
              (unbox *my-nick*)
              (git-version)
              (version)
