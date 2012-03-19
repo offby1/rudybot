@@ -11,9 +11,16 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
          (except-in "clearenv.rkt" main)
          (only-in "servers.rkt" real-server)
          (only-in "userinfo.rkt" *userinfo-database-directory-name*)
-         (only-in "iserver.rkt" make-incubot-server))
+         (only-in "iserver.rkt" make-incubot-server)
+
+         version/utils)
 
 (define (main . args)
+  (let ([required-version "5.2.900.1"])
+    (when (not (>= (version->integer (version))
+                   (version->integer required-version)))
+      (error 'freenode-main "You need at least version ~a of racket, to avoid a memory leak in sqlite" required-version)))
+
   (clearenv)
   (command-line
    #:program "rudybot"
