@@ -165,7 +165,7 @@
              (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
              inner-words ...
              (regexp #px"(.*)\u0001$" (list _ trailing )))
-       ((*incubot-server*) 'put (string-join (append inner-words (list trailing)) " "))
+       ((*incubot-server*) 'put-string (string-join (append inner-words (list trailing)) " "))
        (espy target
              (format "doing ~a: ~a" extended-data-word
                      (string-join
@@ -181,7 +181,7 @@
        (when (equal? "VERSION" request-word)
          (pm #:notice? #t
              nick
-             "\u0001VERSION ~a (offby1@blarg.net):v4.~a:PLT scheme version ~a on ~a\0001"
+             "\u0001VERSION ~a (eric.hanchrow@gmail.com):v4.~a:Racket scheme version ~a on ~a\0001"
              (unbox *my-nick*)
              (git-version)
              (version)
@@ -221,7 +221,7 @@
          ;; look for long URLs to tiny-ify, but only if we're The
          ;; Original Rudybot, so avoid annoying duplicates from multiple
          ;; bots
-         (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
+         #;(when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
            (for ([word (in-list (cons first-word rest))])
              (match word
                [(regexp url-regexp (list url _ _))
@@ -244,17 +244,14 @@
               (if (and (not (null? words))
                        (equal? addressee (unbox *my-nick*)))
                   (parameterize ([*full-id* full-id])
-                    (do-cmd target nick words #:rate_limit?
-                            (and #f
-                                 (not (regexp-match #rx"^offby1" nick))
-                                 (equal? target "#emacs" ))))
-                  ((*incubot-server*) 'put (string-join (cons first-word rest) " "))))]
-           [",..."
+                    (do-cmd target nick words #:rate_limit? #f))
+                  ((*incubot-server*) 'put-string (string-join (cons first-word rest) " "))))]
+           #;[",..."
             (when (equal? target "#emacs")
               (pm target "Woof."))]
 
            [_
-            ((*incubot-server*) 'put (string-join (cons first-word rest) " "))
+            ((*incubot-server*) 'put-string (string-join (cons first-word rest) " "))
             ])])]
 
       [(list "QUIT" (colon first-word) rest ...)
@@ -793,7 +790,7 @@
   ;; non-sequiturious.  Perhaps this trimming should be moved into the
   ;; incubot code, where it can be done more intelligently.
 
-  (and incubot-witticism
+  (and (string? incubot-witticism)
        (lambda ()
          (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism))))))
 
@@ -816,10 +813,7 @@
               [(roughly-evaluable? for-whom (text-from-word words))
                (loop (cons "eval" words) 'eval)]
               [(get-incubot-witticism words)
-               => (lambda (p)
-                    (log "Spewing wisdom for ~a re ~a"
-                         for-whom (text-from-word words))
-                    (p))]
+               => (lambda (p) (p))]
               [else (log "Not doing for ~a: ~a" for-whom (text-from-word words))
                     (reply "eh?  Try \"~a: help\"." (unbox *my-nick*))])
         (note-we-did-something-for! for-whom)))))

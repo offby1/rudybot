@@ -33,9 +33,6 @@ exec racket --require "$0" --main -- ${1+"$@"}
      [else
       (loop   (cons `(param . ,(regexp-match #px"[^\u0000\r\n ]+" inp)) result))])))
 
-(check-equal? (parse-params (open-input-string ":"))
-              '())
-
 (define (parse-crlf inp )
   (regexp-match #px"\r\n" inp))
 
@@ -60,31 +57,28 @@ exec racket --require "$0" --main -- ${1+"$@"}
                  [params . ,(parse-params message)])
              (parse-crlf message)))))]))
 
-(check-equal?
- (parse-message
-  ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot:   uptime")
- '((prefix #"offby1!n=user@pdpc/supporter/monthlybyte/offby1")
-   (command #"PRIVMSG")
+(define-test-suite all-tests
+  (check-equal? (parse-params (open-input-string ":"))
+                '())
+  (check-equal?
+   (parse-message
+    ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot:   uptime")
+   '((prefix #"offby1!n=user@pdpc/supporter/monthlybyte/offby1")
+     (command #"PRIVMSG")
 
-   ;; Ahh! It honors multiple consecutive spaces!  The old way didn't.
-   (params (param #"##cinema") (param #"rudybot:   uptime"))))
+     ;; Ahh! It honors multiple consecutive spaces!  The old way didn't.
+     (params (param #"##cinema") (param #"rudybot:   uptime"))))
 
-(check-equal?
- (parse-message
-  ":nick!knack@frotz 123 #channel :some stuff")
- '((prefix #"nick!knack@frotz")
-   (command #"123")
-   (params (param #"#channel")
-           (param #"some stuff"))))
+  (check-equal?
+   (parse-message
+    ":nick!knack@frotz 123 #channel :some stuff")
+   '((prefix #"nick!knack@frotz")
+     (command #"123")
+     (params (param #"#channel")
+             (param #"some stuff")))))
 
 (provide main)
 (define (main)
-  (if #t
-      (call-with-input-file
-          "incoming"
-        (lambda (ip)
-          (for ([message (in-port read ip)])
-            (write (parse-message message))
-            (newline))))
-
-      (parse-message  ":anthony.freenode.net 004 rudybot anthony.freenode.net ircd-seven-1.0.1 DOQRSZaghilopswz CFILMPQbcefgijklmnopqrstvz bkloveqjfI")))
+  (let ([status (run-tests all-tests 'verbose)])
+    (when (positive? status)
+      (exit 1))))
