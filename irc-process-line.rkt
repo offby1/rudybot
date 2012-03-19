@@ -254,6 +254,8 @@
               (pm target "Woof."))]
 
            [_
+            ;; BUGBUG -- if (*current-words*) begins with \1ACTION,
+            ;; strip that (and the trailing \1) off.
             ((*incubot-server*) 'put-string (string-join (cons first-word rest) " "))
             ])])]
 
