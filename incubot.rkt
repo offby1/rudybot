@@ -41,7 +41,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    [(list (? string? s) (? corpus? c))
     (incubot-sentence (string->lowercased-words s) c)]
    [(list (? set? ws) (? corpus? c))
-    (let ([rare (time (rarest ws c))])
+    (let ([rare (rarest ws c)])
       (and rare
            (random-choose-string-containing-word rare c)))]
    [bogon
