@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-PLTSTDERR=debug exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
+exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang racket
@@ -131,7 +131,7 @@ TRICKY
                       (set! inserts-to-omit (sub1 inserts-to-omit)))
                     (add-utterance-to-corpus u corpus)))))
 
-            (when (zero? (remainder (current-line ip) 10000))
+            (when (zero? (remainder (current-line ip) 100000))
               (safely (commit-transaction (corpus-db corpus)))
               (start-transaction (corpus-db corpus))
               (fprintf (current-error-port)
