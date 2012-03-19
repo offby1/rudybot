@@ -38,7 +38,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (match-lambda*
    [(list (? list? s) (? corpus? c))
     (incubot-sentence (wordlist->wordset s) c)]
-   [(list (? string? s) (? corpus? c))
+   ;; only tests use this
+   [
+    (list (? string? s) (? corpus? c))
     (incubot-sentence (string->lowercased-words s) c)]
    [(list (? set? ws) (? corpus? c))
     (let ([rare (rarest ws c)])
