@@ -221,7 +221,7 @@
          ;; look for long URLs to tiny-ify, but only if we're The
          ;; Original Rudybot, so avoid annoying duplicates from multiple
          ;; bots
-         (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
+         #;(when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
            (for ([word (in-list (cons first-word rest))])
              (match word
                [(regexp url-regexp (list url _ _))
@@ -244,12 +244,9 @@
               (if (and (not (null? words))
                        (equal? addressee (unbox *my-nick*)))
                   (parameterize ([*full-id* full-id])
-                    (do-cmd target nick words #:rate_limit?
-                            (and #f
-                                 (not (regexp-match #rx"^offby1" nick))
-                                 (equal? target "#emacs" ))))
+                    (do-cmd target nick words #:rate_limit? #f))
                   ((*incubot-server*) 'put-string (string-join (cons first-word rest) " "))))]
-           [",..."
+           #;[",..."
             (when (equal? target "#emacs")
               (pm target "Woof."))]
 
