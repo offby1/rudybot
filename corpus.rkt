@@ -1,4 +1,4 @@
-#lang racket
+#lang at-exp racket
 (require
  (prefix-in db: db)
  racket/trace
@@ -79,13 +79,13 @@
       ([candidates
         (db:query-rows
          (corpus-db c)
-         #<<Q
-SELECT text
-FROM log
-JOIN log_word_map
-ON log.rowid = log_word_map.log_id
-WHERE log_word_map.word = ?
-Q
+         @string-append{
+                        SELECT text
+                        FROM log
+                        JOIN log_word_map
+                        ON log.rowid = log_word_map.log_id
+                        WHERE log_word_map.word = ?
+                        }
          rare)])
     (and (not (null? candidates))
           (random-choose (map (curryr vector-ref 0) candidates)))))
