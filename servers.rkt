@@ -242,7 +242,7 @@ fi
   (parameterize* ([*bot-gives-up-after-this-many-silent-seconds* 1/4]
                   [*log-ports* (list (current-error-port))]
                   [*incubot-logger* log]
-                  [*incubot-server* (make-incubot-server (make-corpus '()))])
+                  [*incubot-server* (make-incubot-server)])
     (connect-and-run
      (make-preloaded-server (open-output-nowhere))
      #:retry-on-hangup? #f)))
