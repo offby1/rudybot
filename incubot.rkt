@@ -33,17 +33,26 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
              (curry fprintf (current-error-port)))
          (string-append "incubot-server:" fmt) args))
 
+(define (omit-needless ws)
+  ;; I got this list by querying a reasonbly-current copy of the
+  ;; corpus like so:
+
+  ;; select distinct(word), count(word) c from log_word_map group
+  ;; by word having c> 20000 order by c desc limit 20;
+  (define noise (set "a" "and" "be" "but" "emacs" "for" "have" "i" "if" "in" "is" "it" "not" "of" "on" "that" "the" "to" "with" "you"))
+  (set-subtract ws noise))
+
 (provide  incubot-sentence)
 (define incubot-sentence
   (match-lambda*
    [(list (? list? s) (? corpus? c))
-    (incubot-sentence (wordlist->wordset s) c)]
+    (incubot-sentence  (wordlist->wordset s) c)]
    ;; only tests use this
    [
     (list (? string? s) (? corpus? c))
     (incubot-sentence (string->lowercased-words s) c)]
    [(list (? set? ws) (? corpus? c))
-    (let ([rare (rarest ws c)])
+    (let ([rare (rarest (omit-needless ws) c)])
       (and rare
            (random-choose-string-containing-word rare c)))]
    [bogon

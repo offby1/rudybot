@@ -16,8 +16,7 @@
          (except-in "re.rkt" main)
          (except-in "tinyurl.rkt" main)
          (planet schematics/macro/macro)
-         (planet neil/numspell/numspell)
-         )
+         (planet neil/numspell/numspell))
 
 (define (is-master?)
   (let ([mm (unbox *my-master*)] [id (*full-id*)])
@@ -784,12 +783,16 @@
 (define (get-incubot-witticism words)
   (define incubot-witticism ((*incubot-server*) 'get words))
   (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
+
+  ;; Ideally we'd prevent ACTION from getting into the corpus in the
+  ;; first place.
   (define (trim-ACTION str)
     (regexp-replace #rx"\1ACTION (.*)\1" str "\\1"))
+
   (define (trim-leading-nick str)
     (if (regexp-match #px"^http(s)?://" str)
-      str
-      ((strip-just-one #px"^\\w+?: *") str)))
+        str
+        ((strip-just-one #px"^\\w+?: *") str)))
   ;; trouble: trimming the leading nick may have discarded the word on
   ;; which incubot triggered, making the result totally
   ;; non-sequiturious.  Perhaps this trimming should be moved into the
