@@ -45,8 +45,8 @@
   (apply db:query-rows
    (corpus-db c)
    ;; TODO -- this is fairly stupid.  Our caller doesn't want _all_
-   ;; the words; they merely want the least popular word.  So throwing
-   ;; in a "limit 1" might speed it up some (Lord knows it could use
+           ;; the words; they merely want the least popular word.  So throwing
+           ;; in a "limit 1" might speed it up some (Lord knows it could use
    ;; it -- it's typically four seconds 'in production')
    (format "SELECT word, COUNT(word) AS c FROM log_word_map WHERE WORD IN (~a) GROUP BY word ORDER BY c ASC"
            (string-join (build-list (set-count wordset) (const "?")) ","))
@@ -61,9 +61,9 @@
      sorted
      (random-favoring-smaller-numbers (length seq)))))
 
-;; TODO -- this feels inefficient, since we are sucking (in theory) an
-;; unlimited number of rows from the db, and then discarding all but
-;; one.  See if it's worth doing this differently.
+;; TODO -- this feels inefficient, since we are sucking 100 rows from
+;; the db, and then discarding all but one.  See if it's worth doing
+;; this differently.
 
 ;; At the least, we might split this into two pieces: one piece
 ;; retrieves a row from log_word_map at random, then the second piece
@@ -85,10 +85,11 @@
                         JOIN log_word_map
                         ON log.rowid = log_word_map.log_id
                         WHERE log_word_map.word = ?
+                        LIMIT 100
                         }
          rare)])
-    (and (not (null? candidates))
-          (random-choose (map (curryr vector-ref 0) candidates)))))
+  (and (not (null? candidates))
+       (random-choose (map (curryr vector-ref 0) candidates)))))
 
 (define (id-of-newest-log db)
   (db:query-value db "SELECT MAX(rowid) FROM log"))
