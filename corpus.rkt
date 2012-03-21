@@ -34,11 +34,6 @@
         0
         v)))
 
-(provide expensive-corpus-word-count-use-only-in-tests)
-(define/contract (expensive-corpus-word-count-use-only-in-tests c)
-  (corpus? . -> . natural-number/c)
-  (db:query-value (corpus-db c) "SELECT COUNT(DISTINCT word) FROM log_word_map" ))
-
 (provide corpus-rank-by-popularity)
 (define/contract (corpus-rank-by-popularity c wordset)
   (corpus? (set/c string?) . -> . (listof (vector/c string? natural-number/c)))
@@ -188,11 +183,6 @@
   (when (not (offensive? s))
     (add-sentence-to-corpus s c))
   c)
-
-(provide word-popularity)
-(define/contract (word-popularity w c)
-  (string? corpus? . -> . natural-number/c)
-  (db:query-value (corpus-db c) "SELECT COUNT(log_id) FROM log_word_map WHERE word = ?" w))
 
 (provide string->lowercased-words)
 (define/contract (string->lowercased-words s)

@@ -1,7 +1,9 @@
 ;; Not a complete file, as you can see; meant to be included into
 ;; incubot.rkt.
-(require (planet schematics/schemeunit:3:4)
-         (planet schematics/schemeunit:3/text-ui))
+(require
+ (prefix-in db: db)
+ (planet schematics/schemeunit:3:4)
+ (planet schematics/schemeunit:3/text-ui))
 
 (define-binary-check (check-sets-equal? actual expected)
   (and (set-empty? (set-subtract actual expected))
@@ -23,7 +25,11 @@
     (check-equal? (rarest (set "some") c) "some")
     (check-false (rarest (set "ummagumma") c))))
 
+(define (word-popularity w c)
+  (db:query-value (corpus-db c) "SELECT COUNT(log_id) FROM log_word_map WHERE word = ?" w))
 
+(define (corpus-word-count c)
+  (db:query-value (corpus-db c) "SELECT COUNT(DISTINCT word) FROM log_word_map" ))
 
 (define-test-suite popularity-tests
   (check-equal? (word-popularity "frotz" (make-test-corpus-from-sentences)) 0)
@@ -82,10 +88,10 @@
 
 (define-test-suite censorship-tests
   (let* ([c (make-test-corpus-from-sentences)]
-         [original-size (expensive-corpus-word-count-use-only-in-tests c)])
+         [original-size (corpus-word-count c)])
     (set! c (add-string-to-corpus "This is an inoffensive sentence." c))
     (set! c (add-string-to-corpus "By dint of containing the nasty word 'nigger', this is an offensive sentence." c))
-    (check-equal? (- (expensive-corpus-word-count-use-only-in-tests c) original-size)
+    (check-equal? (- (corpus-word-count c) original-size)
                   1)))
 
 (define-test-suite all-tests
