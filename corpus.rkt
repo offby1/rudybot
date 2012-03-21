@@ -1,7 +1,6 @@
 #lang at-exp racket
 (require
  (prefix-in db: db)
- racket/trace
  unstable/debug
  (only-in mzlib/etc this-expression-source-directory)
  (only-in "utils.rkt" safely)
@@ -38,14 +37,11 @@
 (define/contract (corpus-rank-by-popularity c wordset)
   (corpus? (set/c string?) . -> . (listof (vector/c string? natural-number/c)))
   (apply db:query-rows
-   (corpus-db c)
-   ;; TODO -- this is fairly stupid.  Our caller doesn't want _all_
-           ;; the words; they merely want the least popular word.  So throwing
-           ;; in a "limit 1" might speed it up some (Lord knows it could use
-   ;; it -- it's typically four seconds 'in production')
-   (format "SELECT word, COUNT(word) AS c FROM log_word_map WHERE WORD IN (~a) GROUP BY word ORDER BY c ASC"
-           (string-join (build-list (set-count wordset) (const "?")) ","))
-   (set-map wordset values)))
+         (corpus-db c)
+         (format
+          "SELECT word, occurrences FROM word_popularity WHERE WORD IN (~a) ORDER BY occurrences ASC;"
+          (string-join (build-list (set-count wordset) (const "?")) ","))
+         (set-map wordset values)))
 
 ;; favor longer sentences over shorter ones.
 (provide random-choose)
@@ -99,10 +95,21 @@
 (define/contract (log-word! db w log-id)
   (db:connection? string? integer? . -> . any)
   (safely
-   (db:query-exec
+   (db:call-with-transaction
     db
-    "insert into log_word_map values (?, ?)"
-    w log-id)))
+    (thunk
+     (db:query-exec
+      db
+      "INSERT INTO log_word_map VALUES (?, ?)"
+      w log-id)
+     (db:query-exec
+      db
+      "insert or ignore into word_popularity  values (?, 0) "
+      w)
+     (db:query-exec
+      db
+      "UPDATE word_popularity SET occurrences = occurrences + 1 WHERE word = ?"
+      w)))))
 
 (provide add-sentence-to-corpus)
 (define (add-sentence-to-corpus s c)
@@ -155,6 +162,16 @@
                "CREATE TABLE IF NOT EXISTS log(text TEXT)"
                "CREATE TABLE IF NOT EXISTS log_word_map(word TEXT, log_id INTEGER)"
                "CREATE INDEX IF NOT EXISTS idx1 ON log_word_map(word)"
+
+               "CREATE TABLE IF NOT EXISTS word_popularity (word TEXT PRIMARY KEY, occurrences INTEGER)"
+
+               ;; to backfill word_popularity:
+
+               ;; INSERT INTO word_popularity(word, occurrences)
+               ;;      SELECT word, count(word)
+               ;;          AS c
+               ;;        FROM log_word_map
+               ;;    GROUP BY word ;
                )])
         (db:query-exec (corpus-db c) command)))
 
