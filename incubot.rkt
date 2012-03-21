@@ -30,7 +30,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (provide log)
 (define (log fmt . args)
   (apply (or (*incubot-logger*)
-             (curry fprintf (current-error-port)))
+             (lambda (fmt . args)
+               (apply fprintf (current-error-port) fmt args)
+               (newline (current-error-port))))
          (string-append "incubot-server:" fmt) args))
 
 (define (omit-needless words)
