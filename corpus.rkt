@@ -169,7 +169,6 @@
 
                ;; INSERT INTO word_popularity(word, occurrences)
                ;;      SELECT word, count(word)
-               ;;          AS c
                ;;        FROM log_word_map
                ;;    GROUP BY word ;
                )])
