@@ -1,5 +1,16 @@
 # -*-org-*-
 
+* A 'censor' command
+
+defverb #:master (censor objectionable_words) ...
+
+would eliminate rows in the incubot db that contain those words.
+
+delete from log_word_map where rowid in ( select log_word_map.log_id from log_word_map where word in 
+        (objectionable_words) );
+delete from log_word_map where word in (objectionable_words) ;
+delete from word_popularity where word in (objectionable_words) ;
+
 * Roll the log file over
 that is, don't let it grow without bound, but instead, once it gets to
 a certain size, rename it and start a new file.
