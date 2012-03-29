@@ -785,7 +785,7 @@
 ;; Incubot-like
 
 (define (get-incubot-witticism words)
-  (define incubot-witticism ((*incubot-server*) 'get words))
+  (define incubot-witticism ((*incubot-server*) 'get (map string-downcase words)))
   (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
 
   ;; Ideally we'd prevent ACTION from getting into the corpus in the
