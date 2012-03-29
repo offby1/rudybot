@@ -124,146 +124,150 @@
   (define (espy target action words)
     (note-sighting (make-sighting nick target (current-seconds) action words)))
   (if (equal? nick (unbox *my-nick*))
-    (match (*current-words*)
-      [(list "NICK" (colon new-nick))
-       (log "I seem to be called ~s now" new-nick)
-       (set-box! *my-nick* new-nick)]
-      [_ (log "I seem to have said ~s" (*current-words*))])
-    (match (*current-words*)
-      [(list "KICK" target victim mumblage ...)
-       (espy target (format "kicking ~a" victim) mumblage)]
-      [(list "MODE" target mode-data ...)
-       (espy target (format "changing the mode to '~a'" mode-data) '())]
-      [(list "INVITE" lucky-recipient (colon party) further ...)
-       (espy host (format "inviting ~a to ~a" lucky-recipient party)
-             further)]
-      [(list "NICK" (colon first-word) rest ...)
-       (espy host (format "changing their nick to ~a" first-word) '())]
-      [(list "TOPIC" target (colon first-word) rest ...)
-       (espy target
-             (format "changing the channel's topic to '~a'"
-                     (string-join (cons first-word rest))) '())]
-      [(list "JOIN" (or target (colon target)))
-       ;; Alas, this pretty much never triggers, since duncanm keeps his client
-       ;; session around for ever
-       (when (regexp-match #rx"^duncanm" nick)
-         (pm target "la la la"))
-       (when (regexp-match #rx"^klutometis" nick)
-         (pm target "\1ACTION bows deeply before his master, inventor of incubot\1"))
-       (espy target
-             "joining"
-             '())]
-      [(list "NICK" (colon new-nick))
-       ;; TODO -- call espy with the old nick, or the new one, or both?
-       (log "~a wants to be known as ~a" nick new-nick)]
-      [(list "PART" target (colon first-word) rest ...)
-       (espy target
-             "leaving the channel"
-             (cons first-word rest))]
-      [(list "PRIVMSG"
-             target
-             (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
-             inner-words ...
-             (regexp #px"(.*)\u0001$" (list _ trailing )))
-       ((*incubot-server*) 'put-string (string-join (append inner-words (list trailing)) " "))
-       (espy target
-             (format "doing ~a: ~a" extended-data-word
-                     (string-join
-                      (append inner-words (list trailing))))
-             '())]
-      ;; Hard to see how this will ever match, given that the above clause
-      ;; would seem to match VERSION
-      [(list "PRIVMSG"
-             target
-             (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
-             rest ...)
-       (log "request: ~s" request-word)
-       (when (equal? "VERSION" request-word)
-         (pm #:notice? #t
-             nick
-             "\u0001VERSION ~a (eric.hanchrow@gmail.com):v4.~a:Racket scheme version ~a on ~a\0001"
-             (unbox *my-nick*)
-             (git-version)
-             (version)
-             (system-type 'os)))]
+      (match (*current-words*)
+        [(list "NICK" (colon new-nick))
+         (log "I seem to be called ~s now" new-nick)
+         (set-box! *my-nick* new-nick)]
+        [_ (log "I seem to have said ~s" (*current-words*))])
+      (match (*current-words*)
+        [(list "KICK" target victim mumblage ...)
+         (espy target (format "kicking ~a" victim) mumblage)]
+        [(list "MODE" target mode-data ...)
+         (espy target (format "changing the mode to '~a'" mode-data) '())]
+        [(list "INVITE" lucky-recipient (colon party) further ...)
+         (espy host (format "inviting ~a to ~a" lucky-recipient party)
+               further)]
+        [(list "NICK" (colon first-word) rest ...)
+         (espy host (format "changing their nick to ~a" first-word) '())]
+        [(list "TOPIC" target (colon first-word) rest ...)
+         (espy target
+               (format "changing the channel's topic to '~a'"
+                       (string-join (cons first-word rest))) '())]
+        [(list "JOIN" (or target (colon target)))
+         ;; Alas, this pretty much never triggers, since duncanm keeps his client
+         ;; session around for ever
+         (when (regexp-match #rx"^duncanm" nick)
+           (pm target "la la la"))
+         (when (regexp-match #rx"^klutometis" nick)
+           (pm target "\1ACTION bows deeply before his master, inventor of incubot\1"))
+         (espy target
+               "joining"
+               '())]
+        [(list "NICK" (colon new-nick))
+         ;; TODO -- call espy with the old nick, or the new one, or both?
+         (log "~a wants to be known as ~a" nick new-nick)]
+        [(list "PART" target (colon first-word) rest ...)
+         (espy target
+               "leaving the channel"
+               (cons first-word rest))]
+        [(list "PRIVMSG"
+               target
+               (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
+               inner-words ...
+               (regexp #px"(.*)\u0001$" (list _ trailing )))
+         ((*incubot-server*) 'put-string (string-join (append inner-words (list trailing)) " "))
+         (espy target
+               (format "doing ~a: ~a" extended-data-word
+                       (string-join
+                        (append inner-words (list trailing))))
+               '())]
+        ;; Hard to see how this will ever match, given that the above clause
+        ;; would seem to match VERSION
+        [(list "PRIVMSG"
+               target
+               (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
+               rest ...)
+         (log "request: ~s" request-word)
+         (when (equal? "VERSION" request-word)
+           (pm #:notice? #t
+               nick
+               "\u0001VERSION ~a (eric.hanchrow@gmail.com):v4.~a:Racket scheme version ~a on ~a\0001"
+               (unbox *my-nick*)
+               (git-version)
+               (version)
+               (system-type 'os)))]
 
-      [(list "PRIVMSG" target (colon first-word) rest ...)
-       ;; Unspeakable hack -- "irc-process-line" is way too dumb, and
-       ;; merely hands us whitespace-delimited tokens; it should
-       ;; really have some knowledge of what IRC lines look like, and
-       ;; split the line into semantically-meaningful units.  But
-       ;; until I get off my ass and do that properly ...
+        [(list "PRIVMSG" target (colon first-word) rest ...)
+         ;; Unspeakable hack -- "irc-process-line" is way too dumb, and
+         ;; merely hands us whitespace-delimited tokens; it should
+         ;; really have some knowledge of what IRC lines look like, and
+         ;; split the line into semantically-meaningful units.  But
+         ;; until I get off my ass and do that properly ...
 
-       ;; If first-word is just whitespace, then skip it.  This
-       ;; happens when someone types a line to their IRC client that
-       ;; begins with whitespace.
-       (when (and (not (null? rest))
-                  (regexp-match #px"^\\s*$" first-word))
-         (set! first-word (car rest))
-         (set! rest (cdr rest)))
+         ;; If first-word is just whitespace, then skip it.  This
+         ;; happens when someone types a line to their IRC client that
+         ;; begins with whitespace.
+         (when (and (not (null? rest))
+                    (regexp-match #px"^\\s*$" first-word))
+           (set! first-word (car rest))
+           (set! rest (cdr rest)))
 
-       ;; fledermaus points out that people may be surprised
-       ;; to find "private" messages -- those where "target"
-       ;; is (unbox *my-nick*) -- recorded in the sightings log.
-       (when (not (equal? target (unbox *my-nick*)))
-         (espy target #f (cons first-word rest)))
+         ;; fledermaus points out that people may be surprised
+         ;; to find "private" messages -- those where "target"
+         ;; is (unbox *my-nick*) -- recorded in the sightings log.
+         (when (not (equal? target (unbox *my-nick*)))
+           (espy target #f (cons first-word rest)))
 
-       (cond
-        [(regexp-match? #rx"[Bb]ot$" nick)
-         (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
-              nick)]
-        [(equal? target (unbox *my-nick*))
-         (log "~a privately said ~a to me"
-              nick (string-join (cons first-word rest)))
-         (parameterize ([*full-id* full-id])
-           (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))]
-        [else
-         ;; look for long URLs to tiny-ify, but only if we're The
-         ;; Original Rudybot, so avoid annoying duplicates from multiple
-         ;; bots
-         (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
-           (for ([word (in-list (cons first-word rest))])
-             (match word
-               [(regexp url-regexp (list url _ _))
-                (when (<= 75 (string-length url))
-                  (pm target "~a" (make-tiny-url url)))]
-               [_ #f])))
-         (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
-                    (regexp-match? #rx"^(?i:jordanb)" nick))
-           (log "KOMEDY GOLD: ~s" (cons first-word rest)))
-         (match first-word
-           ;; TODO -- use a regex that matches just those characters that
-           ;; are legal in nicknames, followed by _any_ non-white
-           ;; character -- that way people can use, say, a semicolon after
-           ;; our nick, rather than just the comma and colon I've
-           ;; hard-coded here.
-           [(regexp #px"^([[:alnum:]_-]+)[,:](.*)" (list _ addressee garbage))
-            (let ([words (if (positive? (string-length garbage))
-                             (cons garbage rest)
-                             rest)])
-              (if (and (not (null? words))
-                       (equal? addressee (unbox *my-nick*)))
-                  (parameterize ([*full-id* full-id])
-                    (do-cmd target nick words #:rate_limit?
-                            (and #f
-                                 (not (regexp-match #rx"^offby1" nick))
-                                 (equal? target "#emacs" ))))
-                  ((*incubot-server*) 'put-string (string-join (cons first-word rest) " "))))]
-           [",..."
-            (when (equal? target "#emacs")
-              (pm target "Woof."))]
+         (cond
+          [(regexp-match? #rx"[Bb]ot$" nick)
+           (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
+                nick)]
+          [(equal? target (unbox *my-nick*))
+           (log "~a privately said ~a to me"
+                nick (string-join (cons first-word rest)))
+           (parameterize ([*full-id* full-id])
+             (do-cmd nick nick (cons first-word rest) #:rate_limit? #f))]
+          [else
+           ;; look for long URLs to tiny-ify, but only if we're The
+           ;; Original Rudybot, so avoid annoying duplicates from multiple
+           ;; bots
+           (when (regexp-match? #rx"^rudybot" (unbox *my-nick*))
+             (for ([word (in-list (cons first-word rest))])
+               (match word
+                 [(regexp url-regexp (list url _ _))
+                  (when (<= 75 (string-length url))
+                    (pm target "~a" (make-tiny-url url)))]
+                 [_ #f])))
+           (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
+                      (regexp-match? #rx"^(?i:jordanb)" nick))
+             (log "KOMEDY GOLD: ~s" (cons first-word rest)))
+           (match first-word
+             ;; TODO -- use a regex that matches just those characters that
+             ;; are legal in nicknames, followed by _any_ non-white
+             ;; character -- that way people can use, say, a semicolon after
+             ;; our nick, rather than just the comma and colon I've
+             ;; hard-coded here.
+             [(regexp #px"^([[:alnum:]_-]+)[,:](.*)" (list _ addressee garbage))
+              (let ([words (if (positive? (string-length garbage))
+                               (cons garbage rest)
+                               rest)])
+                (if (and (not (null? words))
+                         (equal? addressee (unbox *my-nick*)))
+                    (parameterize ([*full-id* full-id])
+                      (do-cmd target nick words #:rate_limit?
+                              (and #f
+                                   (not (regexp-match #rx"^offby1" nick))
+                                   (equal? target "#emacs" ))))
+                    ((*incubot-server*) 'put-string (string-join rest " "))))]
+             [",..."
+              (when (equal? target "#emacs")
+                (pm target "Woof."))]
 
-           [_
-            ;; BUGBUG -- if (*current-words*) begins with \1ACTION,
-            ;; strip that (and the trailing \1) off.
-            ((*incubot-server*) 'put-string (string-join (cons first-word rest) " "))
-            ])])]
+             [_
+              ((*incubot-server*)
+               'put-string
+               (string-join
+                (if (string=? "ACTION" first-word)
+                    rest
+                    (cons first-word rest))
+                " "))
+              ])])]
 
-      [(list "QUIT" (colon first-word) rest ...)
-       (espy host "quitting"
-             (cons first-word rest))]
-      [_ (log "~a said ~s, which I don't understand" nick
-              (text-from-word (*current-words*)))])))
+        [(list "QUIT" (colon first-word) rest ...)
+         (espy host "quitting"
+               (cons first-word rest))]
+        [_ (log "~a said ~s, which I don't understand" nick
+                (text-from-word (*current-words*)))])))
 
 (defmatcher IRC-COMMAND (colon host)
   (match (*current-words*)
