@@ -14,9 +14,11 @@
                    [compile-enforce-module-constants #f])
       ;; only notify, it's fine to reset the file timer, since there's no point
       ;; in attempting to reload it yet again until it is edited.
-      (with-handlers ([exn? (lambda (e)
-                              (notifier "error, module not reloaded (~a)"
-                                        (exn-message e)))])
+      (with-handlers ([exn?
+                       (lambda (e)
+                         (notifier "error, module not reloaded (~a)"
+                                   (exn-message e))
+                         (notifier "~a~%" (continuation-mark-set->context (exn-continuation-marks e))))])
         (namespace-require '(only scheme module #%top-interaction))
         (load/use-compiled path)))))
 

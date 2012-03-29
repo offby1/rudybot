@@ -1,6 +1,6 @@
 #! /bin/sh
 #| Hey Emacs, this is -*-scheme-*- code!
-exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
+exec racket --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang racket
