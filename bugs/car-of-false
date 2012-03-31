@@ -15,3 +15,37 @@
 <em> rudybot: eval (date->string (seconds->date 1333210982))
 <rudybot> em: error: car: expects argument of type <pair>; given: #f
 <em> that should have worked                                                                                    [16:31]
+
+-- This might be related:
+
+[Sat Mar 31 2012]
+
+<cky> rudybot: init racket                                                                [04:57]
+<rudybot> cky: your sandbox is ready
+<cky> rudybot: version
+<rudybot> cky: 79212f5
+<cky> rudybot: (procedure? version)
+<rudybot> cky: ; Value: #t
+<cky> rudybot: eval version                                                               [04:58]
+<rudybot> cky: ; Value: #<procedure:version>
+<cky> rudybot: (require srfi/43)
+<rudybot> cky: Done.
+<cky> rudybot: eval (define (shuffle lst (n #f)) (define vec (list->vector lst)) (define size
+      (vector-length vec)) (define len (min size (or n size))) (do ((i 0 (add1 i))) ((>= i len)
+      (vector->list vec 0 len)) (vector-swap! vec i (+ i (random (- size i))))))
+<rudybot> cky: error: car: expects argument of type <pair>; given: #f
+<cky> Wow, that's busted.                                                                 [05:08]
+<cky> Apparently on the version of Racket rudybot's in, vector->list doesn't work when srfi/43
+      is loaded.                                                                          [05:09]
+<cky> (It works correctly on Racket 5.2.1.)
+<cky> rudybot: init                                                                       [05:14]
+<rudybot> cky: your sandbox is ready
+<cky> rudybot: require srfi/43
+<rudybot> cky: So srfi-4 should provide surf-for to.
+<cky> rudybot: (require srfi/43)
+<rudybot> cky: Done.
+<cky> rudybot: eval vector->list
+<rudybot> cky: error: car: expects argument of type <pair>; given: #f
+<cky> rudybot: eval (vector->list '#(1 2 3 4 5))
+<rudybot> cky: error: car: expects argument of type <pair>; given: #f
+<cky> Actually, I'll post all this on #racket instead.                                    [05:15]
