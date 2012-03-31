@@ -1,0 +1,17 @@
+[Sat Mar 31 2012]
+
+<em> rudybot: init racket
+<rudybot> em: your sandbox is ready
+<em> rudybot: eval (date->string (seconds->date 1333210982))
+<rudybot> em: error: reference to an identifier before its definition: date->string in module: 'program
+<em> eval (require date/time)
+<em> rudybot: eval (require date/time)
+<rudybot> em: error: #<undefined>:1:9: date/time: standard-module-name-resolver: collection not found: "date" in any
+          of: (#<path:/mnt/racket-5.2.900.1/collects>) in: date/time
+<em> rudybot: evalu (require racket/date)                                                                       [16:30]
+<rudybot> em: eval (require racket/date) (date->string (seconds->date (current-seconds)))
+<em> rudybot: eval (require racket/date)
+<rudybot> em: Done.
+<em> rudybot: eval (date->string (seconds->date 1333210982))
+<rudybot> em: error: car: expects argument of type <pair>; given: #f
+<em> that should have worked                                                                                    [16:31]
