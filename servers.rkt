@@ -45,6 +45,10 @@ fi
                     (display line op)
                     (display "\r\n" op))
                   (cond
+                   (#t
+                    (list
+                     (c "eval (require racket/date)")
+                     (c "eval (date->string (seconds->date 1333210982))")))
                    (#f
                     (list
                      (meh "Hey everyone!  What's happening?")
