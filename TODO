@@ -1,31 +1,5 @@
 # -*-org-*-
 
-* A 'censor' command
-
-defverb #:master (censor objectionable_words) ...
-
-would eliminate rows in the incubot db that contain those words.
-
-delete from log_word_map where rowid in ( select log_word_map.log_id from log_word_map where word in 
-        (objectionable_words) );
-delete from log_word_map where word in (objectionable_words) ;
-delete from word_popularity where word in (objectionable_words) ;
-
-Also note that this will leave ghosts in log_word_map -- references to
-the deleted rows from "log".  This will nix those:
-
-        DELETE FROM log_word_map
-              WHERE log_id IN (
-                 SELECT log_id 
-                   FROM log_word_map 
-              LEFT JOIN log 
-                     ON log.rowid = log_word_map.log_id
-          WHERE text IS NULL );
-
-Note that such a command would be insanely dangerous; if I
-accidentally typed "censor the", I'd lose most of the corpus, since
-most log entries contain the word 'the'.
-
 * Find a sensible way to run tests
 "crude-test-runner" is just that: crude.  It doesn't notice if a
 subtest fails.  Perhaps the recent (March 2012) chatter about
@@ -57,6 +31,38 @@ accumulated data; they should be on S3 or something.
 Someone suggested Dropbox; that could work!
 
 * Incubot
+** Publish the last few "logs"
+
+For example, if someone says to him "you are clever" and he responds
+"I have a clever idea", there'll be messages like "incubot chose
+'clever'" in the log output ... make those messages accessible via
+HTTP so that people can tell why he said what he said.
+
+** A 'censor' command
+defverb #:master (censor objectionable_words) ...
+
+would eliminate rows in the incubot db that contain those words.
+
+delete from log_word_map where rowid in ( select log_word_map.log_id from log_word_map where word in 
+        (objectionable_words) );
+delete from log_word_map where word in (objectionable_words) ;
+delete from word_popularity where word in (objectionable_words) ;
+
+Also note that this will leave ghosts in log_word_map -- references to
+the deleted rows from "log".  This will nix those:
+
+        DELETE FROM log_word_map
+              WHERE log_id IN (
+                 SELECT log_id 
+                   FROM log_word_map 
+              LEFT JOIN log 
+                     ON log.rowid = log_word_map.log_id
+          WHERE text IS NULL );
+
+Note that such a command would be insanely dangerous; if I
+accidentally typed "censor the", I'd lose most of the corpus, since
+most log entries contain the word 'the'.
+
 ** Omit leading nicks from utterances
 The original incubot does this.  E.g., if we find
 : ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG #scheme :rudybot: seen eli"
