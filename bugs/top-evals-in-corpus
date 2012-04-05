@@ -1,0 +1,5 @@
+sqlite> select count(text) from log where text like "top-eval%";
+573
+
+Git rid of the existing ones; and ensure that no more get put in
+there.
