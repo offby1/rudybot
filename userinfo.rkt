@@ -46,7 +46,9 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
     (or (mcdr cell)
         (let* ([infofile (canonical-nick->infopath nick)]
                [info (if (file-exists? infofile)
-                       (let ([info (call-with-input-file infofile read)])
+                       (let ([info (with-handlers
+                                       ([exn:fail:read? (lambda (e) default)])
+                                     (call-with-input-file infofile read))])
                          (if (list? info)
                            info
                            default))
