@@ -1,0 +1,12 @@
+2012-04-14T22:36:45Z => PRIVMSG #racket :mithos28: your sandbox is ready
+2012-04-14T22:36:45Z => PRIVMSG #racket :mithos28: Done.
+2012-04-14T22:37:09Z <= ((prefix #"mithos28!~eric@99-113-32-54.lightspeed.sntcca.sbcglobal.net") (command #"PRIVMSG") (params (param #"#racket") (param #"rudybot: (define (loop) (shift s (loop)))")))
+2012-04-14T22:37:09Z Doing for mithos28: eval ("(define" "(loop)" "(shift" "s" "(loop)))")
+2012-04-14T22:37:09Z => PRIVMSG #racket :mithos28: Done.
+2012-04-14T22:37:19Z <= ((prefix #"mithos28!~eric@99-113-32-54.lightspeed.sntcca.sbcglobal.net") (command #"PRIVMSG") (params (param #"#racket") (param #"rudybot: (define (go) (reset (loop)))")))
+2012-04-14T22:37:19Z Doing for mithos28: eval ("(define" "(go)" "(reset" "(loop)))")
+2012-04-14T22:37:19Z => PRIVMSG #racket :mithos28: Done.
+2012-04-14T22:37:25Z <= ((prefix #"mithos28!~eric@99-113-32-54.lightspeed.sntcca.sbcglobal.net") (command #"PRIVMSG") (params (param #"#racket") (param #"rudybot: (go)")))
+2012-04-14T22:37:25Z Doing for mithos28: eval ("(go)")
+SIGSEGV MAPERR si_code 1 fault on addr 0xf8929bc0
+Aborted (core dumped)
