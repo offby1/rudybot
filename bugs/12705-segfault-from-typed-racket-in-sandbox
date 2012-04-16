@@ -1,0 +1,7 @@
+#lang racket
+(require scheme/sandbox)
+
+(define sandbox (make-evaluator 'typed/racket))
+
+(sandbox "(define result ((inst call/cc Integer (-> Nothing)) (lambda (x) (lambda () (x 5)))))")
+(sandbox "(if (procedure? result) (result) result)")
