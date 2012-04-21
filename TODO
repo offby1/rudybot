@@ -123,3 +123,9 @@ This is also github issue 12: https://github.com/offby1/rudybot/issues/12
   someone signing on) he'll check the dict to see if there are any
   queued messages for that person
 - Messages should include who sent 'em, and when
+
+* Run as 'nobody' or some other user without permissions
+
+This hopefully won't require a code change, but it'd be good if it
+_didn't_ run as me, since if it did, it could conceivably read my
+Sekrit files.
