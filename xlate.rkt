@@ -133,7 +133,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    "Invalid Value"))
 
 ;; List of language codes, to "from" and "to":
-;; http://code.google.com/apis/ajaxlanguage/documentation/reference.html#LangNameArray
+;; https://developers.google.com/translate/v2/using_rest#language-params
 
 (define (xlate from to text)
   (let* ([stuff (snag text from to)]
