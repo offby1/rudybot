@@ -209,7 +209,7 @@
            (espy target #f (cons first-word rest)))
 
          (cond
-          [(regexp-match? #rx"[Bb]ot$" nick)
+          [(regexp-match? #rx"[Bb]ot$" (canonicalize-nick nick))
            (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
                 nick)]
           [(equal? target (unbox *my-nick*))
