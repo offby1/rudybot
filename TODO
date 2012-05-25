@@ -63,6 +63,11 @@ Note that such a command would be insanely dangerous; if I
 accidentally typed "censor the", I'd lose most of the corpus, since
 most log entries contain the word 'the'.
 
+Further, nixing stuff manually from the DB isn't perfect; it'd be good
+to then also nix it from the big-log; or (better) add some sort of
+blacklist so that if I recreate the db from the log, those nasty
+entries don't get re-added.
+
 ** Omit leading nicks from utterances
 The original incubot does this.  E.g., if we find
 : ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG #scheme :rudybot: seen eli"
