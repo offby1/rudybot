@@ -63,10 +63,11 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
      #px"&([a-z]+);"
      str
      (lambda (whole-match word)
-       (let ([replacement (hash-ref entity-integers-by-name word #f)])
-         (if replacement
-             (format "&#~a;" replacement)
-             str)))))
+       (cond
+        ((hash-ref entity-integers-by-name word #f)
+         => (curry format "&#~a;"))
+        (else
+         str)))))
   (numeric (named str)))
 
 (define-test-suite replace-tests
