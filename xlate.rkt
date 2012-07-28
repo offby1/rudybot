@@ -58,6 +58,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
      str
      (lambda (whole-match digits)
        (string (integer->char (string->number digits))))))
+
   (define (named str)
     (regexp-replace*
      #px"&([a-z]+);"
@@ -166,8 +167,8 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    "Chauve-souris: je n'ai frotté dans votre visage, mais?")
 
   (check-equal?
-   "Invalid Value"
-   (xlate "frotz" "plotz" "I doubt this will get translated properly")))
+   (xlate "frotz" "plotz" "I doubt this will get translated properly")
+   "Invalid Value"))
 
 (define-test-suite all-tests
   replace-tests
