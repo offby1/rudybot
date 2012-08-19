@@ -1,3 +1,4 @@
+
 # -*-org-*-
 
 * Find a sensible way to run tests
@@ -91,6 +92,13 @@ quote", I don't add that, since it'd be dull.
 
 And yet when log-parser creates parsed-log, it blithely adds
 everything.
+
+** Rewrite "quote"
+
+Eliminate the "quotes" database, and just have "quote" find some
+random utternace by jordanb, and echo that.  I'm not saving the
+speaker's name in the db, though; so it might not be possible to tell
+what came from him.
 
 ** Underweight recent utterances
 
