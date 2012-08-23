@@ -100,6 +100,9 @@ random utternace by jordanb, and echo that.  I'm not saving the
 speaker's name in the db, though; so it might not be possible to tell
 what came from him.
 
+A super-simple hacky way would be for "quote" to simply turn around
+and do what "let's" would do.
+
 ** Underweight recent utterances
 
 #+BEGIN_EXAMPLE
