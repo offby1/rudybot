@@ -80,6 +80,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (log "~a" ranked)
     (and (not (null? ranked) )
          (let ([chosen-pair (car ranked)])
+           ;; TODO -- instead of (or in addition to) logging, perhaps
+           ;; send a PRIVMSG to the boss (i.e., me).  Since I'm always
+           ;; curious to know what the word was ...
            (log "incubot chose ~s, which appears ~a times"
                 (vector-ref chosen-pair 0)
                 (vector-ref chosen-pair 1))
