@@ -23,4 +23,5 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
                      "select rowid, text from log"
                      #:fetch 10)])
       (for ([word (string->lowercased-words row)])
-        (displayln (cons id word))))))
+        (db:query-exec conn "insert into new_log_word_map values ($1, $2)"
+                       word id)))))
