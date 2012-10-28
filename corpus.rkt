@@ -219,7 +219,14 @@
    set
    (filter (compose positive? string-length)
            (map (compose
+
+                 ;; Nix leading single-quotes.
                  (strip #px"^'+")
+
+                 ;; Nix trailing single-quotes.
                  (strip #px"'+$")
-                 (strip #px"[^'[:alpha:]]+"))
+
+                 ;; keep only single-quotes and letters.
+                 (strip #px"[^'[:alpha:]]+")
+                 )
                 ws))))
