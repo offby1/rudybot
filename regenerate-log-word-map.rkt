@@ -18,8 +18,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
   (let ([conn (db:sqlite3-connect
                #:database "/tmp/corpus.db"
                #:mode 'read/write)])
-    (for ([row (db:in-query
-                conn
-                "select text from log"
-                #:fetch 10)])
-      (displayln row))))
+    (for ([(id row) (db:in-query
+                     conn
+                     "select rowid, text from log"
+                     #:fetch 10)])
+      (for ([word (string->lowercased-words row)])
+        (displayln (cons id word))))))
