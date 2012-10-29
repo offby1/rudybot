@@ -7,11 +7,8 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (require "corpus.rkt"
          (prefix-in db: db))
 
-;; open the db
-;; for each row in the "log" table ...
-;;   split the string into words using wordlist->wordset
-;;   for each of those words ...
-;;      create a new entry in log-word-map consisting of this word, and the rowid from "log"
+;; Before running this, prep the db by hand:
+;; CREATE TABLE new_log_word_map(word TEXT, log_id INTEGER);
 
 (provide main)
 (define (main . args)
