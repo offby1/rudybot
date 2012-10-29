@@ -808,7 +808,18 @@
 
   (and (string? incubot-witticism)
        (lambda ()
-         (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism))))))
+         (reply "~a" 
+                (trim-ACTION 
+                 ;; Houston, we got us a BUGBUG: if the witticism that
+                 ;; we got was based on the nick that we're trimming,
+                 ;; it'll be puzzling -- see bugs/nick-in-incubot-spew.
+
+                 ;; We should somehow a) figure out which word in
+                 ;; WORDS got us the witticism; b) see if that word
+                 ;; was the leading nick; c) if so, get another one.
+                 ;; And avoid infinite loops, in case this witticism
+                 ;; is the only one that happens to contain that word.
+                 (trim-leading-nick incubot-witticism))))))
 
 ;; ----------------------------------------------------------------------------
 ;; Main dispatchers
