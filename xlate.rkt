@@ -160,11 +160,11 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
   (check-equal?
    (xlate "en" "it" "forty-five separate amendments")
-   "40-cinque emendamenti separati")
+   "45 emendamenti separati")
 
   (check-equal?
    (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
-   "Chauve-souris: je n'ai frotté dans votre visage, mais?")
+   "fledermaus: je n'ai frotté dans votre visage encore?")
 
   (check-equal?
    (xlate "frotz" "plotz" "I doubt this will get translated properly")
