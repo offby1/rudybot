@@ -225,8 +225,11 @@
              (for ([word (in-list (cons first-word rest))])
                (match word
                  [(regexp url-regexp (list url _ _))
-                  (when (<= 75 (string-length url))
-                    (pm target "~a" (make-tiny-url url)))]
+                  (with-handlers ([exn? (lambda (e)
+                                          (log "Trouble with tinyurl: ~s" (exn-message e)))])
+                    (when (<= 75 (string-length url))
+                      (pm target "~a" (make-tiny-url url))))
+                  ]
                  [_ #f])))
            (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
                       (regexp-match? #rx"^(?i:jordanb)" nick))
