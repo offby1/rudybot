@@ -41,7 +41,7 @@
                (lambda (response corpus)
                  (async-channel-put client-channel response)
                  (loop corpus)))]
-            [(list client-thread ...)
+            [(list client-channel ...)
              (log  "Got unexpected message ~s" message)
              (async-channel-put client-channel #f)
              (loop c)]
