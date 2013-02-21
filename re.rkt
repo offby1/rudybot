@@ -5,9 +5,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang racket
-(require scheme/sandbox
-         (planet schematics/schemeunit:3:4)
-         (planet schematics/schemeunit:3/text-ui)
+(require racket/sandbox
+         rackunit
+         rackunit/text-ui
          (except-in "sandboxes.rkt" main)
          "vars.rkt")
 

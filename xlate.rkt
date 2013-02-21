@@ -5,9 +5,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 #lang racket
 (require net/url
-         (planet dherman/json:3:0)
-         (planet schematics/schemeunit:3)
-         (planet schematics/schemeunit:3/text-ui))
+         json
+         rackunit
+         rackunit/text-ui)
 
 (provide xlate t8 main)
 
