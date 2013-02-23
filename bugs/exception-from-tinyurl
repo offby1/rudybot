@@ -1,0 +1,18 @@
+2012-11-28T19:57:13Z <= ((prefix #"forcer!~forcer@hmbg-5f765993.pool.mediaWays.net") (command #"PRIVMSG") (params (param #"#emacs") (param #"aidalgol: Research and science is heavily misrepresented in public. See the first one on http://www.buzzfeed.com/babymantis/20-spectacularly-nerdy-science-jokes-1opu")))
+tcp-read: error reading (Connection reset by peer; errno=104)
+
+ === context ===
+/mnt/racket-5.2.900.1/collects/net/url.rkt:367:3
+
+
+^Cuser break
+
+ === context ===
+/mnt/racket-5.2.900.1/collects/mzlib/private/port.rkt:102:4: loop
+/mnt/racket-5.2.900.1/collects/racket/port.rkt:28:0: port->string
+/mnt/rudybot/tinyurl.rkt:32:0: make-tiny-url
+/mnt/rudybot/irc-process-line.rkt:225:13: for-loop
+parse-loop1114
+/mnt/rudybot/loop.rkt:62:6: do-one-line
+
+:( 1 03:33:51 [erich@ip-10-171-85-229 rudybot] (nick-in-incubot-spew)$ PATH=/mnt/racket-5.2.900.1/bin/:$PATH  ./freenode-main.rkt

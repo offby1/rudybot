@@ -5,8 +5,8 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
 
 #lang racket
 
-(require (planet schematics/schemeunit:3:4)
-         (planet schematics/schemeunit:3/text-ui))
+(require rackunit
+         rackunit/text-ui)
 
 ;; TODO -- consider keeping this data someplace other than (or in
 ;; addition to) a file on disk -- like Amazon's S3.  That way if I

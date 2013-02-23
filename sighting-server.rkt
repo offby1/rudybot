@@ -12,7 +12,7 @@
 ;; http://server:8080/servlets/sighting-server.ss
 #lang racket
 
-(require (planet offby1/offby1/zdate)
+(require "zdate.rkt"
          mzlib/etc
          web-server/servlet
          net/url)

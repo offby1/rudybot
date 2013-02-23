@@ -2,8 +2,8 @@
 ;; incubot.rkt.
 (require
  (prefix-in db: db)
- (planet schematics/schemeunit:3:4)
- (planet schematics/schemeunit:3/text-ui))
+ rackunit
+ rackunit/text-ui)
 
 (define-binary-check (check-sets-equal? actual expected)
   (and (set-empty? (set-subtract actual expected))

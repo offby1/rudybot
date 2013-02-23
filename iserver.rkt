@@ -8,7 +8,8 @@
    make-corpus
    )
  (only-in "vars.rkt" *incubot-logger*)
- (only-in "utterance.rkt" utterance-text))
+ (only-in "utterance.rkt" utterance-text)
+ racket/async-channel)
 
 (provide make-incubot-server)
 (define (make-incubot-server)
@@ -20,7 +21,7 @@
       (let loop ([c (make-corpus '())])
         (let ([message (thread-receive)])
           (match message
-            [(list client-thread verb string)
+            [(list client-channel verb string)
              (call-with-values
                  (thunk
                   (with-handlers ([exn? (lambda (e)
@@ -38,15 +39,16 @@
                        (log "Unknown verb ~s" verb)
                        (values #f c)))))
                (lambda (response corpus)
-                 (thread-send client-thread response)
+                 (async-channel-put client-channel response)
                  (loop corpus)))]
-            [(list client-thread ...)
+            [(list client-channel ...)
              (log  "Got unexpected message ~s" message)
-             (thread-send client-thread #f)
+             (async-channel-put client-channel #f)
              (loop c)]
             [_ (fprintf (current-error-port) "Whiskey Tango Foxtrot: ~s~%" message)
                (loop c)]))))))
 
   (lambda (command-sym inp)
-    (thread-send server-thread (list (current-thread) command-sym inp))
-    (thread-receive)))
+    (define client-channel (make-async-channel 1))
+    (thread-send server-thread (list client-channel command-sym inp))
+    (async-channel-get client-channel)))

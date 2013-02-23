@@ -5,9 +5,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 #lang racket
 (require net/url
-         (planet dherman/json:3:0)
-         (planet schematics/schemeunit:3)
-         (planet schematics/schemeunit:3/text-ui))
+         json
+         rackunit
+         rackunit/text-ui)
 
 (provide xlate t8 main)
 
@@ -58,15 +58,17 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
      str
      (lambda (whole-match digits)
        (string (integer->char (string->number digits))))))
+
   (define (named str)
     (regexp-replace*
      #px"&([a-z]+);"
      str
      (lambda (whole-match word)
-       (let ([replacement (hash-ref entity-integers-by-name word #f)])
-         (if replacement
-             (format "&#~a;" replacement)
-             str)))))
+       (cond
+        ((hash-ref entity-integers-by-name word #f)
+         => (curry format "&#~a;"))
+        (else
+         str)))))
   (numeric (named str)))
 
 (define-test-suite replace-tests
@@ -158,15 +160,15 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
   (check-equal?
    (xlate "en" "it" "forty-five separate amendments")
-   "40-cinque emendamenti separati")
+   "45 emendamenti separati")
 
   (check-equal?
    (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
-   "Chauve-souris: je n'ai frotté dans votre visage, mais?")
+   "fledermaus: je n'ai frotté dans votre visage encore?")
 
   (check-equal?
-   "Invalid Value"
-   (xlate "frotz" "plotz" "I doubt this will get translated properly")))
+   (xlate "frotz" "plotz" "I doubt this will get translated properly")
+   "Invalid Value"))
 
 (define-test-suite all-tests
   replace-tests
