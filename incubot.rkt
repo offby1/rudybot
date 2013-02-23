@@ -53,6 +53,10 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
   ;; select distinct(word), count(word) c from log_word_map group
   ;; by word having c> 20000 order by c desc limit 20;
+
+  ;; I strongly suspect that I can just nuke this code, since I am
+  ;; already keeping track of each word's popularity in the
+  ;; "word_popularity" table.
   (define noise (set "a" "and" "be" "but" "emacs" "for" "have" "i" "if" "in" "is" "it" "not" "of" "on" "that" "the" "to" "with" "you"))
   (set-subtract words noise))
 
