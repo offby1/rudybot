@@ -35,31 +35,6 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
                (newline (current-error-port))))
          (string-append "incubot-server:" fmt) args))
 
-(define (omit-needless words)
-  ;; Finding the popularity of a word takes time proportional to that
-  ;; popularity.  For example, to find the popularity of the word
-  ;; "it", we must scan through the log_word_map index, counting the
-  ;; number of occurrences.  For a common word like "it", that's slow!
-
-  ;; Since we're ultimately only interested in _unpopular_ words, we
-  ;; can simply filter out a bunch of the more popular words from our
-  ;; input set ``words'', and rank only the remaining words.  An
-  ;; example I tried showed that without such filtering, it took about
-  ;; 8 seconds to return a witticism; with filtering, it was .4
-  ;; seconds.  Seems worthwhile!
-
-  ;; I got this list by querying a reasonbly-current copy of the
-  ;; corpus like so:
-
-  ;; select distinct(word), count(word) c from log_word_map group
-  ;; by word having c> 20000 order by c desc limit 20;
-
-  ;; I strongly suspect that I can just nuke this code, since I am
-  ;; already keeping track of each word's popularity in the
-  ;; "word_popularity" table.
-  (define noise (set "a" "and" "be" "but" "emacs" "for" "have" "i" "if" "in" "is" "it" "not" "of" "on" "that" "the" "to" "with" "you"))
-  (set-subtract words noise))
-
 (provide  incubot-sentence)
 (define incubot-sentence
   (match-lambda*
@@ -71,7 +46,7 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
     (incubot-sentence (string->lowercased-words s) c)]
 
    [(list (? set? ws) (? corpus? c))
-    (let ([rare (rarest (omit-needless ws) c)])
+    (let ([rare (rarest ws c)])
       (and rare
            (random-choose-string-containing-word rare c)))]
    [bogon
