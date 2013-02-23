@@ -1,8 +1,7 @@
 ;; Run me in "drRacket"
 #lang racket
 (require plot
-         (planet schematics/schemeunit:3)
-         (planet schematics/schemeunit:3/text-ui))
+         rackunit)
 
 ;; jordanb says the quotes aren't coming out randomly.  I don't
 ;; particularly believe him, but let's see.  I'll find (what look
@@ -32,7 +31,7 @@
 (check-bb '(#(0 1)) 0 0 1 1)
 (check-bb '(#(0 0) #(0 1)) 0 0 0 1)
 (check-bb '(#(0 0) #(0 1) #(1 0)) 0 1 0 1)
-
+
 (define *ifn*  "big-log")
 (call-with-input-file *ifn*
   (lambda (ip)

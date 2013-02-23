@@ -8,8 +8,8 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 (require
  net/uri-codec
  net/url
- (planet schematics/schemeunit:3)
- (planet schematics/schemeunit:3/text-ui))
+ rackunit
+ rackunit/text-ui)
 
 ;; stolen from erc-button.el in Emacs 22
 (provide url-regexp)

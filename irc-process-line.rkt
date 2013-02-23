@@ -2,8 +2,8 @@
 
 (provide irc-process-line)
 
-(require scheme/sandbox
-         scheme/system
+(require racket/sandbox
+         racket/system
          srfi/13
          srfi/14
          (except-in "sandboxes.rkt" main)
@@ -16,7 +16,6 @@
          (except-in "quotes.rkt" main)
          (except-in "re.rkt" main)
          (except-in "tinyurl.rkt" main)
-         (planet schematics/macro/macro)
          (planet neil/numspell/numspell))
 
 (define (is-master?)
@@ -50,7 +49,8 @@
          (map (lambda (info)
                 (format "~a was seen ~ain ~a ~a ago~a"
                         (sighting-who   info)
-                        (aif it (sighting-action? info) (string-append it " ") "")
+                        (cond [(sighting-action? info) => (λ (it) (string-append it " "))]
+                              [else ""])
                         (sighting-where info)
                         (describe-since (sighting-when  info))
                         (let ([words (string-join (sighting-words info))])
