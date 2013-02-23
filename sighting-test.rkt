@@ -3,9 +3,8 @@
 exec  racket --require "$0" --main -- ${1+"$@"}
 |#
 #lang racket
-(require (planet schematics/schemeunit:2/test)
-         (planet schematics/schemeunit:2/text-ui)
-         (planet schematics/schemeunit:2/util)
+(require rackunit
+         rackunit/text-ui
          (except-in "userinfo.rkt" main))
 
 
@@ -68,5 +67,5 @@ exec  racket --require "$0" --main -- ${1+"$@"}
         (check-equal? looked-up-uc looked-up-lc))))))
 
 (define (main . args)
-  (exit (test/text-ui sighting-tests 'verbose)))
+  (exit (run-tests sighting-tests 'verbose)))
 (provide (all-defined-out))

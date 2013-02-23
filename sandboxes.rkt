@@ -5,10 +5,10 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 
 #lang racket
 
-(require scheme/sandbox
+(require racket/sandbox
          net/url
-         (planet schematics/schemeunit:3)
-         (planet schematics/schemeunit:3/text-ui))
+         rackunit
+         rackunit/text-ui)
 
 (struct sandbox (evaluator last-used-time) #:transparent #:mutable)
 (provide (rename-out [public-make-sandbox make-sandbox]))
