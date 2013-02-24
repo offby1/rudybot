@@ -11,6 +11,14 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
   (thread
    (lambda ()
      (let re-read ()
+       ;; Instead of, or in addition to, reading the quotes file
+       ;; .. how about
+
+       ;; SELECT * FROM log
+       ;; JOIN          log_word_map ON log_word_map.log_id = log.rowid
+       ;; WHERE         log_word_map.word = 'lets'
+       ;; AND           (log.text GLOB '[lL]et?s*' OR log.text GLOB '[lL]ets*')
+
        (fprintf (current-error-port)
                 "Reading quotes file~%")
        (let push-one ([all (shuffle (call-with-input-file "quotes" read))])
