@@ -70,15 +70,32 @@
       ([candidates
         (db:query-rows
          (corpus-db c)
+         ;; The AND part of the WHERE clause excludes utterances where
+         ;; the word in question is at the start, and is followed by a
+         ;; colon.  That's because our caller will throw such a
+         ;; leading thing away, believing it to be someone's nick, and
+         ;; hence not suitable for display as a witticism.
+
+         ;; For example, if 'rare' is 'offby1', and there is an entry
+         ;; in the log like ``offby1: your bot rocks my world'', this
+         ;; query will skip that entry.
+
+         ;; Note that this is a bit too strict -- it will also
+         ;; exclude, e.g., ``offby1 has two hands: a left and a
+         ;; right'' because the LIKE clause will "see" ``offby1''
+         ;; followed by a colon.  Without proper regexp support built
+         ;; into the database, I don't see an easy way around this.
          @string-append{
                         SELECT text
-                        FROM log
-                        JOIN log_word_map
-                        ON log.rowid = log_word_map.log_id
-                        WHERE log_word_map.word = ?
-                        LIMIT 100
+                        FROM   log
+                        JOIN   log_word_map
+                        ON     log.rowid = log_word_map.log_id
+                        WHERE  log_word_map.word = ?
+                        AND    text NOT LIKE ?
+                        LIMIT  100
                         }
-         rare)])
+         rare
+         (string-append rare "%:"))])
   (and (not (null? candidates))
        (random-choose (map (curryr vector-ref 0) candidates)))))
 
@@ -219,7 +236,14 @@
    set
    (filter (compose positive? string-length)
            (map (compose
+
+                 ;; Nix leading single-quotes.
                  (strip #px"^'+")
+
+                 ;; Nix trailing single-quotes.
                  (strip #px"'+$")
-                 (strip #px"[^'[:alpha:]]+"))
+
+                 ;; keep only single-quotes and letters.
+                 (strip #px"[^'[:alpha:]]+")
+                 )
                 ws))))

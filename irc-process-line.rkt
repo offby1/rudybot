@@ -804,14 +804,12 @@
     (if (regexp-match #px"^http(s)?://" str)
         str
         ((strip-just-one #px"^\\w+?: *") str)))
-  ;; trouble: trimming the leading nick may have discarded the word on
-  ;; which incubot triggered, making the result totally
-  ;; non-sequiturious.  Perhaps this trimming should be moved into the
-  ;; incubot code, where it can be done more intelligently.
 
   (and (string? incubot-witticism)
        (lambda ()
-         (reply "~a" (trim-ACTION (trim-leading-nick incubot-witticism))))))
+         (reply "~a"
+                (trim-ACTION
+                 (trim-leading-nick incubot-witticism))))))
 
 ;; ----------------------------------------------------------------------------
 ;; Main dispatchers
