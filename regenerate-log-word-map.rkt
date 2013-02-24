@@ -4,6 +4,13 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
 #lang at-exp racket
+
+;; This program recreates the "log_word_map" table, based on the
+;; contents of the "log" table (and then recreates word_popularity
+;; based on the contents of log_word_map :-).  I cannot remember why
+;; I thought I needed it, but it seems to work, so there's no harm in
+;; keeping it.
+
 (require "corpus.rkt"
          (prefix-in db: db)
          racket/date)

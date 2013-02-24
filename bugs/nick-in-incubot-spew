@@ -1,6 +1,0 @@
-2012-03-19T18:31:29Z <= ((prefix #"ijp!~user@host109-154-219-91.range109-154.btcentralplus.com") (command #"PRIVMSG") (para
-2012-03-19T18:31:33Z incubot-server:(#(bremner 4954) #(sorry 7832) #(say 14087) #(to 303960))
-2012-03-19T18:31:33Z incubot-server:incubot chose "bremner", which appears 4954 times
-2012-03-19T18:31:38Z => PRIVMSG #emacs :ijp: auctex works, it's just the info files that are missing.
-
-This is wrong: incubot chose "bremner", but that word doesn't appear in the output.
