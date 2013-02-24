@@ -3,33 +3,34 @@
 exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 |#
 
-#lang racket
+#lang at-exp racket
 (require "corpus.rkt"
          (prefix-in db: db)
          racket/date)
 
-;; Before running this, prep the db by hand:
-;; CREATE TABLE new_log_word_map(word TEXT, log_id INTEGER);
-
-(define *batch-size* 10000)
+(define *batch-size* 2000)
 
 (date-display-format 'iso-8601)
 
 (provide main)
 (define (main . args)
   (let ([conn (db:sqlite3-connect
-               #:database "corpus.db"
+               #:database "temporary-corpus.db"
                #:mode 'read/write)])
-    (let ([rows-to-process (db:query-value conn "select count(*) from log")])
+    (fprintf (current-error-port) "Deleting from the log_word_map table.  This can take a surprisingly long itme ... ")
+    (time (db:query-exec conn "DELETE FROM log_word_map"))
+    (fprintf (current-error-port) "done.~%")
+
+    (let ([rows-to-process (db:query-value conn "SELECT COUNT(*) FROM log")])
       (db:start-transaction conn)
 
       (for ([(id row) (db:in-query
                        conn
-                       "select rowid, text from log"
+                       "SELECT rowid, text FROM log"
                        #:fetch *batch-size*)])
 
         (for ([word (string->lowercased-words row)])
-          (db:query-exec conn "insert into new_log_word_map values ($1, $2)"
+          (db:query-exec conn "INSERT INTO log_word_map VALUES ($1, $2)"
                          word id))
         (set! rows-to-process (sub1 rows-to-process))
 
@@ -42,5 +43,17 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
           (db:start-transaction conn)))
 
-      (db:commit-transaction conn)
-      )))
+      (db:commit-transaction conn))
+
+    ;; Now backfill another table.  Amusingly: word_popularity is just
+    ;; a summary of log_word_map, which is itself a summary of log.
+    ;; Perhaps a relational database isn't the right tool after all
+    ;; (maybe some sorta text-indexing system is).
+    (db:query-exec conn "DELETE FROM word_popularity")
+    (db:query-exec conn
+                   @string-append{
+                                  INSERT INTO word_popularity(word, occurrences)
+                                       SELECT word, count(word)
+                                         FROM log_word_map
+                                     GROUP BY word
+                                  })))
