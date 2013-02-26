@@ -95,7 +95,7 @@
                         LIMIT  100
                         }
          rare
-         (string-append rare "%:"))])
+         (string-append rare "%:%"))])
   (and (not (null? candidates))
        (random-choose (map (curryr vector-ref 0) candidates)))))
 
