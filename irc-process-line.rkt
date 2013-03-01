@@ -506,11 +506,11 @@
                     ;; prevent flooding
                     [(>= displayed *max-values-to-display*)
                      (reply
-                      "; ~a values is enough for anybody; here's the rest in a list: ~s"
+                      "; ~a values is enough for anybody; here's the rest in a list: ~v"
                       (number->english *max-values-to-display*)
                       (filter (lambda (x) (not (void? x))) values))
                      #t]
-                    [else (reply "; Value~a: ~s"
+                    [else (reply "; Value~a: ~v"
                                  (if (positive? displayed)
                                    (format "#~a" (add1 displayed))
                                    "")
