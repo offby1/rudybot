@@ -8,7 +8,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
 (require "loop.rkt"
          (except-in "vars.rkt" log)
          "git-version.rkt"
-         (except-in "clearenv.rkt" main)
+         "clearenv.rkt"
          (only-in "servers.rkt" real-server)
          (only-in "userinfo.rkt" *userinfo-database-directory-name*)
          (only-in "iserver.rkt" make-incubot-server)

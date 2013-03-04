@@ -1,15 +1,10 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
-|#
-
 #lang racket
 
 (require
  net/uri-codec
- net/url
- rackunit
- rackunit/text-ui)
+ net/url)
+
+(module+ test (require rackunit rackunit/text-ui))
 
 ;; stolen from erc-button.el in Emacs 22
 (provide url-regexp)
@@ -35,28 +30,25 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      url]
     [_ "??"]))
 
-
-(define tinyurl-tests
+(module+ test
+ (define tinyurl-tests
 
-  (test-suite
-   "tinyurl"
-   (test-case
-    "absurdly long"
-    (check-regexp-match
-     #px"^http://tinyurl.com/.{5,6}$"
-     (make-tiny-url "http://www.badastronomy.com/bablog/2008/05/26/best-image-ever/whoa/baby/surely-this-URL-is-long-enough-to-make-tiny")))
-   (test-case
-    "photo.net"
-    (with-handlers
-        ([exn:fail:network?
-          (lambda (e)
-            (fprintf (current-error-port)
-                     "Can't contact tinyurl; skipping the test~%"))])
-      (check-regexp-match
-       #px"^http://tinyurl.com/.{5,6}$"
-       (make-tiny-url "http://photo.net"))))))
+   (test-suite
+    "tinyurl"
+    (test-case
+     "absurdly long"
+     (check-regexp-match
+      #px"^http://tinyurl.com/.{5,6}$"
+      (make-tiny-url "http://www.badastronomy.com/bablog/2008/05/26/best-image-ever/whoa/baby/surely-this-URL-is-long-enough-to-make-tiny")))
+    (test-case
+     "photo.net"
+     (with-handlers
+         ([exn:fail:network?
+           (lambda (e)
+             (fprintf (current-error-port)
+                      "Can't contact tinyurl; skipping the test~%"))])
+       (check-regexp-match
+        #px"^http://tinyurl.com/.{5,6}$"
+        (make-tiny-url "http://photo.net"))))))
+ (run-tests tinyurl-tests 'verbose))
 
-(define (main . args)
-  (exit (run-tests tinyurl-tests 'verbose)))
-
-(provide main)

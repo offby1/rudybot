@@ -20,9 +20,9 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
           make-corpus)
  (only-in "utils.rkt" safely)
  "utterance.rkt"
- rackunit
- rackunit/text-ui
  unstable/debug)
+
+(module+ test (require rackunit rackunit/text-ui))
 
 (define (add-utterance-to-corpus u c)
   (add-sentence-to-corpus (utterance-text u) c))
@@ -58,27 +58,28 @@ exec racket -l errortrace --require "$0" --main -- ${1+"$@"}
      ]
     [_ #f]))
 
-(define-test-suite tests
-  (for ([line '("2010-01-19T03:01:31Z <= \":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot: uptime\""
-                "2010-01-19T03:01:31Z <= ((prefix #\"offby1!n=user@pdpc/supporter/monthlybyte/offby1\") (command #\"PRIVMSG\") (params (param #\"##cinema\") (param #\"rudybot: uptime\")))")])
+(module+ test
+ (define-test-suite tests
+   (for ([line '("2010-01-19T03:01:31Z <= \":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot: uptime\""
+                 "2010-01-19T03:01:31Z <= ((prefix #\"offby1!n=user@pdpc/supporter/monthlybyte/offby1\") (command #\"PRIVMSG\") (params (param #\"##cinema\") (param #\"rudybot: uptime\")))")])
 
-    (check-equal? (log-file-string->utterance line)
-                  #s(utterance "2010-01-19T03:01:31Z"
-                               "offby1"
-                               "##cinema"
-                               "rudybot: uptime")))
-  (let ()
-    (define tricky
-      #<<TRICKY
+     (check-equal? (log-file-string->utterance line)
+                   #s(utterance "2010-01-19T03:01:31Z"
+                                "offby1"
+                                "##cinema"
+                                "rudybot: uptime")))
+   (let ()
+     (define tricky
+#<<TRICKY
 2010-02-27T17:43:52Z <= ":jcowan!~jcowan@cpe-98-14-172-204.nyc.res.rr.com PRIVMSG #scheme :I see.  \"Degenerate\" is the word.  Or even \"skanky\"."
 TRICKY
-      )
-    (check-equal? (log-file-string->utterance tricky)
-                  #s(utterance "2010-02-27T17:43:52Z"
-                               "jcowan"
-                               "#scheme"
-                               "I see.  \"Degenerate\" is the word.  Or even \"skanky\"."))
-    ))
+       )
+     (check-equal? (log-file-string->utterance tricky)
+                   #s(utterance "2010-02-27T17:43:52Z"
+                                "jcowan"
+                                "#scheme"
+                                "I see.  \"Degenerate\" is the word.  Or even \"skanky\"."))))
+ (run-tests tests))
 
 
 (define (pe fmt . args)
@@ -98,8 +99,8 @@ TRICKY
      input-file-names))
   (cond
    [(null? input-file-names)
-    (displayln "You didn't specify any input files; running unit tests instead of parsing" (current-error-port))
-    (exit (if (positive?  (run-tests tests)) 1 0))]
+    (displayln "You didn't specify any input files; use raco test to run unit tests" (current-error-port))
+    (exit 0)]
    [(< 1 (length input-file-names))
     (error 'backfill "I want at most one input file name; instead you gave me ~s" input-file-names)]
    [else

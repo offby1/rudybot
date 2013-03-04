@@ -1,7 +1,4 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
-|#
+#lang racket
 
 ;; Some code to reply in an alarmingly-human-like way.  Idea, but not
 ;; the code, utterly stolen from Peter Danenberg (aka "klutometis"),
@@ -17,10 +14,9 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 ;; utterance chosen at random from that set, favoring the longer
 ;; (presumably more-interesting) ones.
 
-#lang racket
 (require
- scheme/set
- scheme/include
+ racket/set
+ racket/include
  "corpus.rkt"
  "utterance.rkt"
  (only-in "vars.rkt" *incubot-logger*))
