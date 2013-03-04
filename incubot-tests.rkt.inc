@@ -1,3 +1,5 @@
+;; -*-scheme-*-
+
 ;; Not a complete file, as you can see; meant to be included into
 ;; incubot.rkt.
 (module+ test
@@ -104,4 +106,3 @@
 
   (*incubot-logger* (lambda args (apply fprintf (current-error-port) args) (newline (current-error-port))))
   (run-tests all-tests 'verbose))
-

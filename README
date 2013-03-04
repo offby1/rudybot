@@ -7,3 +7,7 @@ caused by using the "racket-textual" package instead of "racket".
 specs etc:
 http://tools.ietf.org/html/rfc1459
 http://www.irchelp.org/irchelp/rfc/ctcpspec.html
+
+Run the tests like this:
+
+    $ raco test .

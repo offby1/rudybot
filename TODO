@@ -1,14 +1,5 @@
 # -*-org-*-
 
-* Find a sensible way to run tests
-"crude-test-runner" is just that: crude.  It doesn't notice if a
-subtest fails.  Perhaps the recent (March 2012) chatter about
-"submodules" on the racket mailing list
-(http://thread.gmane.org/gmane.comp.lang.racket.devel/5582) points to
-a solution (have each .rkt file define a submodule named "tests", and
-use some as-yet-nonexistent test runner that finds and runs all such
-submodules).
-
 * Roll the log file over
 that is, don't let it grow without bound, but instead, once it gets to
 a certain size, rename it and start a new file.

@@ -157,19 +157,11 @@
 
     (check-equal?
      (xlate "en" "it" "forty-five separate amendments")
-     "40-cinque emendamenti separati")
-
-    (check-equal?
-     (xlate "en" "it" "forty-five separate amendments")
      "45 emendamenti separati")
 
     (check-equal?
      (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
      "fledermaus: je n'ai frotté dans votre visage encore?")
-
-    (check-equal?
-     (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
-     "Chauve-souris: je n'ai frotté dans votre visage, mais?")
 
     (check-equal?
      (xlate "frotz" "plotz" "I doubt this will get translated properly")

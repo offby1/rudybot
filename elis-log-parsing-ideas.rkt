@@ -96,4 +96,5 @@
 (define-syntax string->utterance (make-rename-transformer #'string->utterance3))
 (define-syntax parse-file        (make-rename-transformer #'parse-file1))
 
-(time (parse-file "new-big-log" "parsed"))
+(module+ main
+  (time (parse-file "new-big-log" "parsed")))

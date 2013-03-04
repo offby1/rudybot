@@ -21,7 +21,7 @@
  "utterance.rkt"
  (only-in "vars.rkt" *incubot-logger*))
 
-(include "incubot-tests.rkt")
+(include "incubot-tests.rkt.inc")
 
 (provide log)
 (define (log fmt . args)
