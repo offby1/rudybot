@@ -1,14 +1,9 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
-|#
-
 #lang racket
 
 (require racket/sandbox
-         net/url
-         rackunit
-         rackunit/text-ui)
+         net/url)
+
+(module+ test (require rackunit rackunit/text-ui))
 
 (struct sandbox (evaluator last-used-time) #:transparent #:mutable)
 (provide (rename-out [public-make-sandbox make-sandbox]))
@@ -126,116 +121,112 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
       (define (GRAB) ((hash-ref name->grabber name (lambda () void))))
       (namespace-set-variable-value! 'GRAB GRAB))))
 
-
 (print-hash-table #t)
 
-(define sandboxes-tests
+(module+ test
+ (define sandboxes-tests
 
-  (let ([*sandboxes-by-nick* (make-hash)])
-    (test-suite
-     "sandboxes"
-
-     (let ([s (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
-       (check-equal? (sandbox-eval s "(dict-update '((a . 9) (b . 2) (a . 1)) 'a add1 0)") '((a . 10) (b . 2) (a . 1))))
-
-     (test-case
-      "simple get"
-      (let ([s (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
-        (check-pred sandbox? s)
-        (check-equal? (sandbox-eval s "3") 3)))
-
-     (test-case
-      "command line args inaccessible"
-      (let ([s (get-sandbox-by-name *sandboxes-by-nick* "charlie")])
-        (check-pred zero? (vector-length (sandbox-eval s "(current-command-line-arguments)")))))
-
-     (test-case
-      "output"
-      (let ([s (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
-        (sandbox-eval s "(display \"You bet!\")")
-        (check-equal? (sandbox-get-stdout s) "You bet!")
-        (sandbox-eval s "(display \"Whatever\")")
-        (check-equal? (sandbox-get-stdout s) "Whatever")))
-
+   (let ([*sandboxes-by-nick* (make-hash)])
      (test-suite
-      "timeouts"
-      (test-exn
-       "sleeps too long"
-       exn:fail?
-       (lambda ()
-         (sandbox-eval
-          (get-sandbox-by-name *sandboxes-by-nick* "sleepy"
-                               #:timeout-seconds 1)
-          "(sleep 20)")))
+      "sandboxes"
 
-      (test-exn
-       "gacks on incomplete input"
-       exn:fail?
-       (lambda ()
-         (sandbox-eval
-          (get-sandbox-by-name *sandboxes-by-nick*"oops")
-          "("
-          ))))
+      (let ([s (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
+        (check-equal? (sandbox-eval s "(dict-update '((a . 9) (b . 2) (a . 1)) 'a add1 0)") '((a . 10) (b . 2) (a . 1))))
 
-     (let ([charlies-sandbox #f]
-           [keiths-sandbox   #f])
+      (test-case
+       "simple get"
+       (let ([s (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
+         (check-pred sandbox? s)
+         (check-equal? (sandbox-eval s "3") 3)))
 
-       (test-suite
-        "distinct "
-        #:before
+      (test-case
+       "command line args inaccessible"
+       (let ([s (get-sandbox-by-name *sandboxes-by-nick* "charlie")])
+         (check-pred zero? (vector-length (sandbox-eval s "(current-command-line-arguments)")))))
+
+      (test-case
+       "output"
+       (let ([s (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
+         (sandbox-eval s "(display \"You bet!\")")
+         (check-equal? (sandbox-get-stdout s) "You bet!")
+         (sandbox-eval s "(display \"Whatever\")")
+         (check-equal? (sandbox-get-stdout s) "Whatever")))
+
+      (test-suite
+       "timeouts"
+       (test-exn
+        "sleeps too long"
+        exn:fail?
         (lambda ()
-          (set! *sandboxes-by-nick* (make-hash))
-          (set! charlies-sandbox (get-sandbox-by-name *sandboxes-by-nick* "charlie"))
-          (set! keiths-sandbox   (get-sandbox-by-name *sandboxes-by-nick* "keith")))
-        (test-false
-         "keeps sandboxes distinct, by name"
-         (eq? charlies-sandbox keiths-sandbox))
-        (test-case
-         "remembers state"
-         (sandbox-eval charlies-sandbox "(define x 99)")
-         (let ([this-better-still-be-charlies (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
-           (check-equal? (sandbox-eval this-better-still-be-charlies
-                                       "x")
-                         99))
-         (check-exn
-          exn:fail?
-          (lambda () (sandbox-eval keiths-sandbox "x"))
-          "keith's sandbox didn't gack when I referenced 'x' -- even though we never defined it."))))
-     ;; I'm not sure what I want to do here.  On the one hand, I want
-     ;; all calls to "getenv" to fail in the sandbox; on the other
-     ;; hand, I cannot think of an elegant way to have the sandbox
-     ;; itself ensure that (currently I'm counting on the bot's "main"
-     ;; function to clear the environment).
+          (sandbox-eval
+           (get-sandbox-by-name *sandboxes-by-nick* "sleepy"
+                                #:timeout-seconds 1)
+           "(sleep 20)")))
+
+       (test-exn
+        "gacks on incomplete input"
+        exn:fail?
+        (lambda ()
+          (sandbox-eval
+           (get-sandbox-by-name *sandboxes-by-nick*"oops")
+           "("
+           ))))
+
+      (let ([charlies-sandbox #f]
+            [keiths-sandbox   #f])
+
+        (test-suite
+         "distinct "
+         #:before
+         (lambda ()
+           (set! *sandboxes-by-nick* (make-hash))
+           (set! charlies-sandbox (get-sandbox-by-name *sandboxes-by-nick* "charlie"))
+           (set! keiths-sandbox   (get-sandbox-by-name *sandboxes-by-nick* "keith")))
+         (test-false
+          "keeps sandboxes distinct, by name"
+          (eq? charlies-sandbox keiths-sandbox))
+         (test-case
+          "remembers state"
+          (sandbox-eval charlies-sandbox "(define x 99)")
+          (let ([this-better-still-be-charlies (get-sandbox-by-name *sandboxes-by-nick*"charlie")])
+            (check-equal? (sandbox-eval this-better-still-be-charlies
+                                        "x")
+                          99))
+          (check-exn
+           exn:fail?
+           (lambda () (sandbox-eval keiths-sandbox "x"))
+           "keith's sandbox didn't gack when I referenced 'x' -- even though we never defined it."))))
+      ;; I'm not sure what I want to do here.  On the one hand, I want
+      ;; all calls to "getenv" to fail in the sandbox; on the other
+      ;; hand, I cannot think of an elegant way to have the sandbox
+      ;; itself ensure that (currently I'm counting on the bot's "main"
+      ;; function to clear the environment).
 
 ;;;      (test-case
 ;;;       "environment"
 ;;;       (let ([s (get-sandbox-by-name *sandboxes-by-nick* "yow")])
 ;;;         (check-false (sandbox-eval s "(getenv \"HOME\")"))))
 
-     (test-case
-      "immediately recycles dead sandbox"
-      (check-exn exn:fail:sandbox-terminated?
-                 (lambda ()
-                   (sandbox-eval
-                    (get-sandbox-by-name *sandboxes-by-nick* "yow")
-                    "(kill-thread (current-thread))")))
-      (check-equal?
-       (sandbox-eval
-        (get-sandbox-by-name *sandboxes-by-nick* "yow")
-        "3")
-       3)
-      )
-     )))
+      (test-case
+       "immediately recycles dead sandbox"
+       (check-exn exn:fail:sandbox-terminated?
+                  (lambda ()
+                    (sandbox-eval
+                     (get-sandbox-by-name *sandboxes-by-nick* "yow")
+                     "(kill-thread (current-thread))")))
+       (check-equal?
+        (sandbox-eval
+         (get-sandbox-by-name *sandboxes-by-nick* "yow")
+         "3")
+        3)
+       )
+      )))
+ (run-tests sandboxes-tests))
 
 (provide get-sandbox-by-name
          sandbox-evaluator
          sandbox-eval
          sandbox-get-stderr
          sandbox-get-stdout
-         sandbox-give
-         sandboxes-tests
-         main
-         )
+         sandbox-give)
 
-(define (main . args)
-  (exit (run-tests sandboxes-tests)))

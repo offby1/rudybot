@@ -1,7 +1,7 @@
 #lang racket
 
 (require
- (except-in "incubot.rkt" main)
+ "incubot.rkt"
  (only-in "corpus.rkt"
    add-string-to-corpus
    corpus?

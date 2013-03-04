@@ -1,12 +1,6 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec  racket  --require "$0" --main -- ${1+"$@"}
-|#
-
 #lang racket
 
-(require rackunit
-         rackunit/text-ui)
+(module+ test (require rackunit rackunit/text-ui))
 
 ;; TODO -- consider keeping this data someplace other than (or in
 ;; addition to) a file on disk -- like Amazon's S3.  That way if I
@@ -28,11 +22,12 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
   ;; I've forgotten why I put (?<=.) in the regexp :-(
   (string-downcase (regexp-replace #rx"(?<=.)([`_]*)$" n "")))
 
-(define-test-suite canonicalize-nick-tests
-  (check-equal? "plunderblunder" (canonicalize-nick "plunderblunder"))
-  (check-equal? "sam" (canonicalize-nick "sam`"))
-  (check-equal? "sam" (canonicalize-nick "sam_`_`"))
-)
+(module+ test
+  (define-test-suite canonicalize-nick-tests
+    (check-equal? "plunderblunder" (canonicalize-nick "plunderblunder"))
+    (check-equal? "sam" (canonicalize-nick "sam`"))
+    (check-equal? "sam" (canonicalize-nick "sam_`_`"))
+    ))
 
 (define (canonical-nick->infopath n)
   (let ([base (build-path (*userinfo-database-directory-name*)
@@ -128,9 +123,8 @@ exec  racket  --require "$0" --main -- ${1+"$@"}
  [userinfo-ref (->* (string? any/c) (any/c) any)]
  [userinfo-set! (-> string? any/c any/c any)])
 
-(define-test-suite all-tests
-  canonicalize-nick-tests)
+(module+ test
+  (define-test-suite all-tests
+    canonicalize-nick-tests)
+  (run-tests all-tests))
 
-(provide main)
-(define (main . args)
-  (exit (run-tests all-tests)))

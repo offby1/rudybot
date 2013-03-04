@@ -1,17 +1,11 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec racket --require "$0" --main -- ${1+"$@"}
-|#
-
 #lang racket
 
 (require
  (prefix-in srfi-19- srfi/19)
  racket/date
- racket/trace
- rackunit
- rackunit/text-ui
- )
+ racket/trace)
+
+(module+ test (require rackunit rackunit/text-ui))
 
 (define (zdate
          [the-time (srfi-19-current-time)]
@@ -94,21 +88,22 @@ exec racket --require "$0" --main -- ${1+"$@"}
    (else
     (error 'zdate "Don't know what to do with ~s" the-time))))
 
-(provide zdate main)
-(define (main . args)
-  (exit
-   (run-tests
-    (test-suite
-     "yeah"
-     (check-equal? (zdate 0 #:offset 0) "1970-01-01T00:00:00Z")
-     (check-equal? (zdate (srfi-19-make-date 0 0 0 0 1 1 1970 0) #:offset 0) "1970-01-01T00:00:00Z")
-     (check-equal? (zdate (srfi-19-make-time 'time-utc 0 0) #:offset 0) "1970-01-01T00:00:00Z")
-     (check-equal? (zdate "January 18, 1964" #:offset 0) "1964-01-18T00:00:00Z")
-     (check-equal? (zdate "2008-12-28T10:53:26-0500") "2008-12-28T15:53:26Z")
-     (check-equal? (zdate "2008-12-28T15:53:26Z") "2008-12-28T15:53:26Z")
-     (check-equal? (zdate (struct-copy
-                           date
-                           (seconds->date (find-seconds 0 0 0 1 1 1970))
-                           [time-zone-offset 0])
-                          #:offset 0)
-                   "1970-01-01T00:00:00Z")))))
+(provide zdate)
+
+(module+ test
+  (run-tests
+   (test-suite
+    "yeah"
+    (check-equal? (zdate 0 #:offset 0) "1970-01-01T00:00:00Z")
+    (check-equal? (zdate (srfi-19-make-date 0 0 0 0 1 1 1970 0) #:offset 0) "1970-01-01T00:00:00Z")
+    (check-equal? (zdate (srfi-19-make-time 'time-utc 0 0) #:offset 0) "1970-01-01T00:00:00Z")
+    (check-equal? (zdate "January 18, 1964" #:offset 0) "1964-01-18T00:00:00Z")
+    (check-equal? (zdate "2008-12-28T10:53:26-0500") "2008-12-28T15:53:26Z")
+    (check-equal? (zdate "2008-12-28T15:53:26Z") "2008-12-28T15:53:26Z")
+    (check-equal? (zdate (struct-copy
+                          date
+                          (seconds->date (find-seconds 0 0 0 1 1 1970))
+                          [time-zone-offset 0])
+                         #:offset 0)
+                  "1970-01-01T00:00:00Z"))))
+
