@@ -1,13 +1,8 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
-|#
-
 #lang racket
 
-(require (planet neil/numspell/numspell)
-         rackunit
-         rackunit/text-ui)
+(require (planet neil/numspell/numspell))
+
+(module+ test (require rackunit rackunit/text-ui))
 
 (define (seconds->english secs)
   (let loop ([units secs]
@@ -70,12 +65,12 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
           final)
      ", ")))
 
-
-(define-binary-check (check-spelled-out-time input-seconds expected-string)
-  (equal? (spelled-out-time input-seconds)
-          expected-string))
-
-(define spelled-out-time-tests
+(module+ test
+ (define-binary-check (check-spelled-out-time input-seconds expected-string)
+   (equal? (spelled-out-time input-seconds)
+           expected-string))
+ 
+ (define spelled-out-time-tests
 
   (test-suite
    "spelled-out-time"
@@ -91,11 +86,10 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
    (check-spelled-out-time (* 2 24 3600) "two days")
    (check-spelled-out-time (* 1 60 60 24 7 52 100)   "one century")
    (check-spelled-out-time (* 1 60 60 24 7 52 100 10)"ten centuries")))
-
-(define (main . args)
-  (exit (run-tests spelled-out-time-tests 'verbose)))
+ 
+ (run-tests spelled-out-time-tests 'verbose))
 
 (provide/contract
  [seconds->english (-> natural-number/c (listof (cons/c symbol? natural-number/c)))]
  [spelled-out-time  (-> natural-number/c string?)])
-(provide main)
+

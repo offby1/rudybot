@@ -13,7 +13,7 @@ fi
          (except-in "vars.rkt" log)
          "git-version.rkt"
          (except-in "quotes.rkt" main)
-         (except-in "clearenv.rkt" main)
+         "clearenv.rkt"
          (only-in "corpus.rkt" make-corpus)
          (only-in "iserver.rkt" make-incubot-server)
          scheme/port)

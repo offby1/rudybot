@@ -17,7 +17,7 @@ exec  racket --require "$0" --main -- ${1+"$@"}
 (define old-sightings-root "/home/erich/live-bot/sightings.db")
 (define new-sightings-root "/home/erich/live-bot/userinfo.db")
 
-(define nick-dirs
+(define (nick-dirs)
   (reverse
    (fold-files
     (lambda (path flavor accum)
@@ -47,6 +47,7 @@ exec  racket --require "$0" --main -- ${1+"$@"}
         (pretty-print (list (cons 'sightings structs)) op)
         (newline op))))))
 
-(for ([nick nick-dirs])
-  (upgrade! nick))
-(rename-file-or-directory old-sightings-root new-sightings-root)
+(module+ main
+  (for ([nick (nick-dirs)])
+    (upgrade! nick))
+  (rename-file-or-directory old-sightings-root new-sightings-root))

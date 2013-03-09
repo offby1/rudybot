@@ -1,15 +1,10 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
-|#
-
 #lang racket
 (require net/url
-         json
-         rackunit
-         rackunit/text-ui)
+         json)
 
-(provide xlate t8 main)
+(module+ test (require rackunit rackunit/text-ui))
+
+(provide xlate t8)
 
 ;; The returned data sometimes has HTML entities in it; the functions
 ;; on this page translate those to regular characters.
@@ -71,35 +66,35 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
          str)))))
   (numeric (named str)))
 
-(define-test-suite replace-tests
-  (check-equal?
-   (replace-html-entities "")
-   "")
+(module+ test
+  (define-test-suite replace-tests
+    (check-equal?
+     (replace-html-entities "")
+     "")
 
-  (check-equal?
-   (replace-html-entities "frotz")
-   "frotz")
+    (check-equal?
+     (replace-html-entities "frotz")
+     "frotz")
 
-  (check-equal?
-   (replace-html-entities "&frotz;")
-   "&frotz;")
+    (check-equal?
+     (replace-html-entities "&frotz;")
+     "&frotz;")
 
-  (check-equal?
-   (replace-html-entities "&amp;")
-   "&")
+    (check-equal?
+     (replace-html-entities "&amp;")
+     "&")
 
-  (check-equal?
-   (replace-html-entities "&quot;plonk&quot;")
-   "\"plonk\"")
+    (check-equal?
+     (replace-html-entities "&quot;plonk&quot;")
+     "\"plonk\"")
 
-  (check-equal?
-   (replace-html-entities "frotz&#77;")
-   "frotzM")
+    (check-equal?
+     (replace-html-entities "frotz&#77;")
+     "frotzM")
 
-  (check-equal?
-   (replace-html-entities "frotz&#123;why not&#65;")
-   "frotz{why notA"))
-
+    (check-equal?
+     (replace-html-entities "frotz&#123;why not&#65;")
+     "frotz{why notA")))
 
 ;; Translate text using Google's translation API v2.
 
@@ -125,14 +120,15 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
    get-pure-port
    read-json))
 
-(define-test-suite snag-tests
-  (check-equal?
-   (hash-ref
-    (hash-ref
-     (snag "print \"hello, world\\n\"" "perl" "java")
-     'error)
-    'message)
-   "Invalid Value"))
+(module+ test
+  (define-test-suite snag-tests
+    (check-equal?
+     (hash-ref
+      (hash-ref
+       (snag "print \"hello, world\\n\"" "perl" "java")
+       'error)
+      'message)
+     "Invalid Value")))
 
 ;; List of language codes, to "from" and "to":
 ;; https://developers.google.com/translate/v2/using_rest#language-params
@@ -156,24 +152,23 @@ exec  racket -l errortrace --require "$0" --main -- ${1+"$@"}
 
 (define t8 xlate)
 
-(define-test-suite xlate-tests
+(module+ test
+  (define-test-suite xlate-tests
 
-  (check-equal?
-   (xlate "en" "it" "forty-five separate amendments")
-   "45 emendamenti separati")
+    (check-equal?
+     (xlate "en" "it" "forty-five separate amendments")
+     "45 emendamenti separati")
 
-  (check-equal?
-   (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
-   "fledermaus: je n'ai frotté dans votre visage encore?")
+    (check-equal?
+     (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
+     "fledermaus: je n'ai frotté dans votre visage encore?")
 
-  (check-equal?
-   (xlate "frotz" "plotz" "I doubt this will get translated properly")
-   "Invalid Value"))
+    (check-equal?
+     (xlate "frotz" "plotz" "I doubt this will get translated properly")
+     "Invalid Value"))
 
-(define-test-suite all-tests
-  replace-tests
-  snag-tests
-  xlate-tests)
-
-(define (main . args)
-  (exit (run-tests all-tests 'verbose)))
+  (define-test-suite all-tests
+    replace-tests
+    snag-tests
+    xlate-tests)
+  (run-tests all-tests 'verbose))

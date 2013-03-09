@@ -1,13 +1,6 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec racket --require "$0" --main -- ${1+"$@"}
-|#
-
 #lang racket
-(require
- rackunit
- rackunit/text-ui
- )
+
+(module+ test (require rackunit rackunit/text-ui))
 
 (define (eat-ws inp)
  (regexp-try-match #px"^[[:space:]]+" inp))
@@ -57,28 +50,26 @@ exec racket --require "$0" --main -- ${1+"$@"}
                  [params . ,(parse-params message)])
              (parse-crlf message)))))]))
 
-(define-test-suite all-tests
-  (check-equal? (parse-params (open-input-string ":"))
-                '())
-  (check-equal?
-   (parse-message
-    ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot:   uptime")
-   '((prefix #"offby1!n=user@pdpc/supporter/monthlybyte/offby1")
-     (command #"PRIVMSG")
+(module+ test
+ (define-test-suite all-tests
+   (check-equal? (parse-params (open-input-string ":"))
+                 '())
+   (check-equal?
+    (parse-message
+     ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG ##cinema :rudybot:   uptime")
+    '((prefix #"offby1!n=user@pdpc/supporter/monthlybyte/offby1")
+      (command #"PRIVMSG")
 
-     ;; Ahh! It honors multiple consecutive spaces!  The old way didn't.
-     (params (param #"##cinema") (param #"rudybot:   uptime"))))
+      ;; Ahh! It honors multiple consecutive spaces!  The old way didn't.
+      (params (param #"##cinema") (param #"rudybot:   uptime"))))
 
-  (check-equal?
-   (parse-message
-    ":nick!knack@frotz 123 #channel :some stuff")
-   '((prefix #"nick!knack@frotz")
-     (command #"123")
-     (params (param #"#channel")
-             (param #"some stuff")))))
+   (check-equal?
+    (parse-message
+     ":nick!knack@frotz 123 #channel :some stuff")
+    '((prefix #"nick!knack@frotz")
+      (command #"123")
+      (params (param #"#channel")
+              (param #"some stuff")))))
 
-(provide main)
-(define (main)
-  (let ([status (run-tests all-tests 'verbose)])
-    (when (positive? status)
-      (exit 1))))
+ (run-tests all-tests 'verbose))
+

@@ -1,13 +1,8 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec  racket --require "$0" --main -- ${1+"$@"}
-|#
 #lang racket
+
 (require rackunit
          rackunit/text-ui
-         (except-in "userinfo.rkt" main))
-
-
+         "userinfo.rkt")
 
 (define sighting-tests
 
@@ -66,6 +61,5 @@ exec  racket --require "$0" --main -- ${1+"$@"}
             [looked-up-uc  (lookup-sightings "BOB")])
         (check-equal? looked-up-uc looked-up-lc))))))
 
-(define (main . args)
-  (exit (run-tests sighting-tests 'verbose)))
-(provide (all-defined-out))
+(run-tests sighting-tests 'verbose)
+

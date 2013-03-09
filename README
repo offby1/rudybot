@@ -7,3 +7,13 @@ caused by using the "racket-textual" package instead of "racket".
 specs etc:
 http://tools.ietf.org/html/rfc1459
 http://www.irchelp.org/irchelp/rfc/ctcpspec.html
+
+Run the tests like this:
+
+    $ raco test -x .
+
+Unfortunately, you'll have to pay attention to the output of "raco
+test", since it will likely exit with 0 status even if some of the
+tests fail.  This is IMHO a misfeature of "raco test"; the Racket
+developers seem disinclined to change it (see
+http://bugs.racket-lang.org/query/?cmd=view&pr=13573).

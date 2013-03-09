@@ -6,16 +6,16 @@
          racket/system
          srfi/13
          srfi/14
-         (except-in "sandboxes.rkt" main)
+         "sandboxes.rkt"
          "vars.rkt"
          "git-version.rkt"
          "userinfo.rkt"
          "utils.rkt"
-         (except-in "xlate.rkt" main)
-         (except-in "spelled-out-time.rkt" main)
+         "xlate.rkt"
+         "spelled-out-time.rkt"
          (except-in "quotes.rkt" main)
-         (except-in "re.rkt" main)
-         (except-in "tinyurl.rkt" main)
+         "re.rkt"
+         "tinyurl.rkt"
          (planet neil/numspell/numspell))
 
 (define (is-master?)
