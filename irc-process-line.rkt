@@ -446,6 +446,40 @@
 (defverb #:hidden (ping) "am I alive?"
   (reply "pong"))
 
+(defverb (botsnack) "a treat"
+  (reply (random-botsnack)))
+
+(define (random-botsnack)
+  (define len (vector-length botsnack-responses))
+  (vector-ref botsnack-responses (random len)))
+
+(define botsnack-responses
+  #(;; fsbot "standard" responses
+    "yay!"
+    ":)"
+    "/me dances happily"
+    "thank you!"
+    "/me beams"
+    "my favourite snack!"
+
+    ;; rudybot proprietary extensions
+
+    ;;; ungrateful
+    "yech, generic brand"
+    "barely even a mouthful"
+    "do I look like I eat vegan botsnacks?"
+
+    ;;; grateful
+    "you, sir, are a gent of the highest calibre"
+    "thank you and one day I will return the favour"
+    "OMG that's just what I needed LOL"
+
+    ;;; other
+    "yow!"
+    "this is going straight to my thighs"
+    "come on man, one more. I need my fix!"
+    ))
+
 ;; ----------------------------------------------------------------------------
 ;; Evaluation related stuffs
 
