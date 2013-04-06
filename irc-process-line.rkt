@@ -447,7 +447,7 @@
   (reply "pong"))
 
 (defverb (botsnack) "a treat"
-  (reply (random-botsnack)))
+  (pm (*response-target*) (random-botsnack)))
 
 (define (random-botsnack)
   (define len (vector-length botsnack-responses))
@@ -457,9 +457,9 @@
   #(;; fsbot "standard" responses
     "yay!"
     ":)"
-    "/me dances happily"
+    "\1ACTION dances happily\1"
     "thank you!"
-    "/me beams"
+    "\1ACTION beams\1"
     "my favourite snack!"
 
     ;; rudybot proprietary extensions
