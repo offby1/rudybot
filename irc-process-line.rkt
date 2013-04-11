@@ -446,6 +446,8 @@
 (defverb #:hidden (ping) "am I alive?"
   (reply "pong"))
 
+;; TODO -- the "botsnack" and "quote" verbs are, for all intents,
+;; identical; merge them?
 (defverb (botsnack) "a treat"
   (pm (*response-target*) (random-botsnack)))
 
@@ -467,6 +469,7 @@
     ;;; ungrateful
     "yech, generic brand"
     "barely even a mouthful"
+    "mmm ... cheesesteak ..."
     "do I look like I eat vegan botsnacks?"
 
     ;;; grateful
@@ -478,6 +481,8 @@
     "yow!"
     "this is going straight to my thighs"
     "come on man, one more. I need my fix!"
+    "Mighty tasty cereal flakes, Mrs. McDonough."
+    "A légpárnás tele van angolnák."
     ))
 
 ;; ----------------------------------------------------------------------------
