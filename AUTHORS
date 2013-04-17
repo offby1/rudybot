@@ -5,3 +5,8 @@ Eli Barzilay <eli@barzilay.org>
 Peter Danenberg (aka "klutometis") wrote a separate bot, "incubot",
 which inspired the similarly-named files here.  The code is all mine,
 though.
+
+Asumu Takikawa <asumu@ccs.neu.edu> reorganized the unit tests, and
+removed or simplified some PLaneT dependencies.
+
+Ian Price <ianprice90@googlemail.com> added the "botsnack" verb.
