@@ -136,3 +136,5 @@ This is also github issue 12: https://github.com/offby1/rudybot/issues/12
 This hopefully won't require a code change, but it'd be good if it
 _didn't_ run as me, since if it did, it could conceivably read my
 Sekrit files.
+* Amend "quotes" list
+... with e.g., http://www.cyber.com.au/~twb/fortunes/emacs.quip
