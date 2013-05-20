@@ -10,6 +10,7 @@
  (only-in "lexer.rkt" parse-message)
  "zdate.rkt"
  srfi/19
+ irc
  )
 
 (define *log-ports* (make-parameter (list (current-error-port)
@@ -56,14 +57,14 @@
                    (lambda (exn)
                      (printf "Oh noes! ~a!~%" (exn-message exn))
                      (connect-and-run server-maker (add1 consecutive-failed-connections)))])
-    (let-values ([(ip op) (server-maker)])
+    (let* ([connection (server-maker)]
+           [incoming (irc-connection-incoming connection)])
       (*connection-start-time* (current-seconds))
       (log "Bot version ~a starting" (git-version))
       (let do-one-line ([cfc consecutive-failed-connections])
-        (let ([ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) ip)]
+        (let ([ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) incoming)]
               [retry (lambda ()
-                       (close-input-port ip)
-                       (close-output-port op)
+                       (irc-quit connection)
                        (connect-and-run server-maker (add1 cfc)))])
 
           (if (not ready-ip)
