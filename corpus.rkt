@@ -211,7 +211,7 @@
   (string? corpus? . -> . corpus?)
 
   (define (offensive? s)
-    (regexp-match #px"\\bnigger\\b" s))
+    (regexp-match #px"nigger" s))
 
   (when (not (offensive? s))
     (add-sentence-to-corpus s c))

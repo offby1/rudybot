@@ -35,17 +35,17 @@ defverb #:master (censor objectionable_words) ...
 
 would eliminate rows in the incubot db that contain those words.
 
-delete from log_word_map where rowid in ( select log_word_map.log_id from log_word_map where word in 
-        (objectionable_words) );
-delete from log_word_map where word in (objectionable_words) ;
-delete from word_popularity where word in (objectionable_words) ;
+delete from log where rowid in ( select log_word_map.log_id from log_word_map where word in 
+        ("Nasty", "nasty") );
+delete from log_word_map where word in ("Nasty", "nasty") ;
+delete from word_popularity where word in ("Nasty", "nasty") ;
 
 Also note that this will leave ghosts in log_word_map -- references to
 the deleted rows from "log".  This will nix those:
 
         DELETE FROM log_word_map
               WHERE log_id IN (
-                 SELECT log_id 
+                 SELECT DISTINCT log_id 
                    FROM log_word_map 
               LEFT JOIN log 
                      ON log.rowid = log_word_map.log_id
