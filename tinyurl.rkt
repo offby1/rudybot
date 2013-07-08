@@ -28,6 +28,7 @@
   (match  (url->tinyurl-body url port->string)
     [(regexp #rx"http://.*" (list url))
      url]
+    ;; TODO -- this is stupid.  Put an error in the log instead.
     [_ "??"]))
 
 (module+ test
@@ -51,4 +52,3 @@
         #px"^http://tinyurl.com/.{5,6}$"
         (make-tiny-url "http://photo.net"))))))
  (run-tests tinyurl-tests 'verbose))
-
