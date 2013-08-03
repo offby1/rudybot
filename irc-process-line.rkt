@@ -117,9 +117,6 @@
 (defmatcher IRC-COMMAND "NOTICE"
   (send-NICK-and-USER))
 
-(defmatcher IRC-COMMAND "PING"
-  (out "PONG ~a" (car (*current-words*))))
-
 (defmatcher IRC-COMMAND (regexp #rx"^:((.*)!(.*)@(.*))$"
                                 (list _ full-id nick id host))
   (define (espy target action words)
