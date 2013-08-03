@@ -11,6 +11,7 @@
  "zdate.rkt"
  srfi/19
  irc
+ racket/async-channel
  )
 
 (define *log-ports* (make-parameter (list (current-error-port)
@@ -36,10 +37,10 @@
 
 ;; Given a line of input from the server, do something side-effecty.
 ;; Writes to OP get sent back to the server.
-(define (slightly-more-sophisticated-line-proc line)
-  (log "<= ~s" (parse-message line))
+(define (slightly-more-sophisticated-line-proc message)
+  (log "<= ~s" message)
   (parameterize ([*logger* log])
-    (irc-process-line line)))
+    (irc-process-line (irc-message-content message))))
 
 (define (connect-and-run
          server-maker
@@ -62,30 +63,30 @@
       (*connection-start-time* (current-seconds))
       (log "Bot version ~a starting" (git-version))
       (let do-one-line ([cfc consecutive-failed-connections])
-        (let ([ready-ip (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) incoming)]
+        (let ([ready-incoming (sync/timeout (*bot-gives-up-after-this-many-silent-seconds*) incoming)]
               [retry (lambda ()
                        (irc-quit connection)
                        (connect-and-run server-maker (add1 cfc)))])
 
-          (if (not ready-ip)
+          (if (not ready-incoming)
               (begin
                 (log
                  "Bummer: ~a seconds passed with no news from the server"
                  (*bot-gives-up-after-this-many-silent-seconds*))
                 (retry))
-              (let ([line (read-line ready-ip 'return-linefeed)])
-                (match line
+              (let ([message ready-incoming])
+                (match message
                   [(? eof-object?)
                    (when retry-on-hangup?
                      (log
                       "Uh oh, server hung up on us")
                      (retry))]
-                  [(regexp #rx"^ERROR :(.*)$" (list _ whine))
+                  [(irc-message _ _ _ (regexp #rx"^ERROR :(.*)$" (list _ whine)))
                    (log "Hmm, error: ~s" whine)
                    (retry)]
                   [_
-                   (parameterize ([*irc-output* op])
-                     (slightly-more-sophisticated-line-proc line))
+                   (parameterize ([*irc-connection* connection])
+                     (slightly-more-sophisticated-line-proc message))
                    (do-one-line 0)]))))))))
 
 (provide/contract

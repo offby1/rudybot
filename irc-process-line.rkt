@@ -16,7 +16,8 @@
          (except-in "quotes.rkt" main)
          "re.rkt"
          "tinyurl.rkt"
-         (planet neil/numspell/numspell))
+         (planet neil/numspell/numspell)
+         irc)
 
 (define (is-master?)
   (let ([mm (unbox *my-master*)] [id (*full-id*)])
@@ -86,7 +87,7 @@
          ;; to inject IRC commands into our output.
          [str (regexp-replace* #rx"[\n\r]" str " <NEWLINE> ")])
     (log "=> ~a" str)
-    (fprintf (*irc-output*) "~a~%" str)))
+    (fprintf (irc-connection-out-port (*irc-connection*)) "~a~%" str)))
 
 (define (pm #:notice? [notice? #f] target fmt . args)
   (out "~a" (format "~a ~a :~a"
