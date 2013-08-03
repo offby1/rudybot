@@ -16,7 +16,8 @@ fi
          "clearenv.rkt"
          (only-in "corpus.rkt" make-corpus)
          (only-in "iserver.rkt" make-incubot-server)
-         scheme/port)
+         scheme/port
+         irc)
 
 (define (real-server)
   (irc-get-connection (*irc-server-hostname*) (*irc-server-port*)))
