@@ -9,6 +9,7 @@
          "sandboxes.rkt"
          "vars.rkt"
          "git-version.rkt"
+         (only-in "http.rkt" exn:fail:http? exn:fail:http-code)
          "userinfo.rkt"
          "utils.rkt"
          "xlate.rkt"
@@ -225,9 +226,14 @@
              (for ([word (in-list (cons first-word rest))])
                (match word
                  [(regexp url-regexp (list url _ _))
-                  (with-handlers ([exn? (lambda (e)
-                                          (log "Trouble with tinyurl: ~s" (exn-message e)))])
-                    (when (<= 75 (string-length url))
+                  (when (<= 75 (string-length url))
+                    ;; TODO -- calling this synchronously seems like a
+                    ;; bad idea -- what if the call takes forever?
+                    (with-handlers ([exn:fail:http?
+                                     (lambda (e)
+                                       (pm target "tinyurl is feeling poorly today: ~a (~a)"
+                                           (exn:fail:http-code e)
+                                           (exn-message e)))])
                       (pm target "~a" (make-tiny-url url))))
                   ]
                  [_ #f])))
