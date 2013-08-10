@@ -89,10 +89,8 @@
     (log "=> ~a" str)
     (fprintf (irc-connection-out-port (*irc-connection*)) "~a~%" str)))
 
-(define (pm #:notice? [notice? #f] target fmt . args)
-  (out "~a" (format "~a ~a :~a"
-                    (if notice? "NOTICE" "PRIVMSG")
-                    target (apply format fmt args))))
+(define (pm #:notice? [notice? #f] target message)
+  ((if notice? irc-send-notice irc-send-message) (*irc-connection*) target message))
 
 ;; ----------------------------------------------------------------------------
 ;; General IRC protocol matchers
@@ -107,7 +105,7 @@
     (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
          (git-version))
     (if (*nickserv-password*)
-        (pm "NickServ" "identify ~a" (*nickserv-password*))
+        (pm "NickServ" (format "identify ~a" (*nickserv-password*)))
         (log "I'd register my nick, if I had a password."))
     (set-box! *authentication-state* 'tried)))
 
@@ -179,11 +177,11 @@
          (when (equal? "VERSION" request-word)
            (pm #:notice? #t
                nick
-               "\u0001VERSION ~a (eric.hanchrow@gmail.com):v4.~a:Racket scheme version ~a on ~a\0001"
-               (unbox *my-nick*)
-               (git-version)
-               (version)
-               (system-type 'os)))]
+               (format "\u0001VERSION ~a (eric.hanchrow@gmail.com):v4.~a:Racket scheme version ~a on ~a\0001"
+                       (unbox *my-nick*)
+                       (git-version)
+                       (version)
+                       (system-type 'os))))]
 
         [(list "PRIVMSG" target (colon first-word) rest ...)
          ;; Unspeakable hack -- "irc-process-line" is way too dumb, and
@@ -226,7 +224,7 @@
                   (with-handlers ([exn? (lambda (e)
                                           (log "Trouble with tinyurl: ~s" (exn-message e)))])
                     (when (<= 75 (string-length url))
-                      (pm target "~a" (make-tiny-url url))))
+                      (pm target (make-tiny-url url))))
                   ]
                  [_ #f])))
            (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
@@ -391,7 +389,7 @@
                             (if (is-master?) "* " "")
                             (format (if (is-master?) "*~a: " "~a: ")
                                     for-whom))])
-    (pm response-target "~a~a" response-prefix (apply format fmt args))))
+    (pm response-target (format "~a~a" response-prefix (apply format fmt args)))))
 
 ;; ----------------------------------------------------------------------------
 ;; Misc utilities
@@ -418,7 +416,7 @@
   (let ([q (one-quote)])
     ;; special case: jordanb doesn't want quotes prefixed with his nick.
     (match (*for-whom*)
-      [(regexp #rx"^jordanb") (pm (*response-target*) "~a" q)]
+      [(regexp #rx"^jordanb") (pm (*response-target*) q)]
       [_ (reply "~a" q)])))
 
 (defverb (source) "my source location"
@@ -535,7 +533,7 @@
                             (msg  (string-append msg* " to get it (case sensitive)")))
                        (if (not (regexp-match? #rx"^#" response-target))
                          ;; announce privately if given privately
-                         (pm give-to "~a ~a" for-whom msg)
+                         (pm give-to (format "~a ~a" for-whom msg))
                          ;; cheap no-nag feature
                          (let* ((l last-give-instructions)
                                 (msg (if (and l
@@ -546,7 +544,7 @@
                            (set! last-give-instructions
                                  (cons response-target (current-seconds)))
                            (pm response-target
-                               "~a: ~a ~a" give-to for-whom msg))))
+                               (format "~a: ~a ~a" give-to for-whom msg)))))
                      #t])) ; said something
             (define (display-output name output-getter)
               (let ([output (output-getter s)])
@@ -703,14 +701,14 @@
 
 (define-syntax-rule (defspecbotverbs db ...)
   (begin (defverb #:hidden (db term (... ...)) "look something up"
-           (pm (*response-target*) "specbot: ~a ~a" 'db (string-join term)))
+           (pm (*response-target*) (format "specbot: ~a ~a" 'db (string-join term))))
          ...))
 (defspecbotverbs
   db clhs r5rs cocoa elisp clim ieee754 ppc posix man cltl2 cltl2-section)
 
 (define-syntax-rule (defminionverbs verb ...)
   (begin (defverb #:hidden (verb stuff (... ...)) "do some minion work"
-           (pm (*response-target*) "minion: ~a ~a" 'verb (string-join stuff)))
+           (pm (*response-target*) (format "minion: ~a ~a" 'verb (string-join stuff))))
          ...))
 (defminionverbs chant advice memo)
 
@@ -751,10 +749,10 @@
     (reply "not a proper channel name")))
 
 (defverb #:master (tell who stuff ...) "tell me to tell someone something"
-  (pm (*response-target*) "~a: ~a" who (string-join stuff)))
+  (pm (*response-target*) (format "~a: ~a" who (string-join stuff))))
 
 (defverb #:master (emote stuff ...) "tell me to do something"
-  (pm (*response-target*) "\1ACTION ~a\1" (string-join stuff)))
+  (pm (*response-target*) (format "\1ACTION ~a\1" (string-join stuff))))
 
 (defverb #:master (for who stuff more ...) "tell me something in someone's name"
   (parameterize ([*full-id* ""]) ; avoid allowing master commands
