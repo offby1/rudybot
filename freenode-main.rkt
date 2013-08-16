@@ -26,6 +26,10 @@ exec racket --require "$0" --main -- ${1+"$@"}
    #:program "rudybot"
    #:once-each)
 
+  ;; TODO -- the equivalent of "echo -17 > /proc/self/oom_adj", to
+  ;; immunize this process from being killed by the dreaded oom_killer
+  ;; (it happened once).  See http://linux-mm.org/OOM_Killer
+
   (log "Main starting: ~a" (git-version))
 
   ;; (parameterize ([current-namespace (module->namespace "freenode-main.rkt")])
