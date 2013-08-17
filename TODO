@@ -12,6 +12,9 @@ available on Ubuntu 10.04 in the "daemontools" package)
 * Get rid of "in/on" in the output of the "seen" command
 surely I can figure out which preposition is appropriate.
 
+https://github.com/offby1/rudybot/issues/23 says more or less the same
+thing.
+
 * Run with "--warn info"
 ... and fix the various lint-like warnings that come up
 
