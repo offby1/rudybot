@@ -6,5 +6,5 @@ So, delete it:
 
 begin transaction;
 delete from log where rowid = 7544;
-delete from log_word_map where log_id = 7544;  -- slow, alas: I don't index log_id in this table
+delete from log_word_map where log_id = 7544;
 commit;
