@@ -113,6 +113,23 @@ and do what "let's" would do.
 <jordanb> I'm using emacs over X because it's less broken than tramp.
 ERC> 
 #+END_EXAMPLE
+** Favor utterances whose target word appears early
+Imagine we've chosen the word "enhance", and we find the the DB these two strings:
+"Enhance your manhood with Presto Manhood Enlarger™"
+"I would have preferred to enhance that with soup"
+
+Those strings are about the same length, so the current code will
+weight them about the same.  But there's something to be said for
+giving the first one more weight, since when you read it, you see the
+word earlier ... those examples I just gave above don't really
+demonstrate the value, so let's take a real example:
+
+: 2013-09-08T18:27:18Z incubot-server:incubot chose "enhance", which appears 117 times
+: 2013-09-08T18:27:20Z => PRIVMSG #emacs :macrobat: how do I enable SLIME autocompletion in my lisp buffer? ideally using the auto-complete extension for a nice display of the completion options. I've installed ac-slime, but that only seems to enhance the auto-completion in my SLIME REPL, not the buffer in which I am editing my file.
+
+That utterance is so long that you could die of boredom before getting
+to the bit that uses the word "enhance".  _That_ is why we should
+favor utterances where the word appears early.
 
 * Replace minion
 
