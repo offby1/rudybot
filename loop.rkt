@@ -40,7 +40,7 @@
 (define (slightly-more-sophisticated-line-proc message)
   (log "<= ~s" message)
   (parameterize ([*logger* log])
-    (irc-process-line (irc-message-content message))))
+    (irc-process-line message)))
 
 (define (connect-and-run
          server-maker
