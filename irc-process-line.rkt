@@ -48,18 +48,24 @@
         (format "No sign of ~a" n)
         (string-join
          (map (lambda (info)
-                (format "~a was seen ~ain ~a ~a ago~a"
-                        (sighting-who   info)
-                        (cond [(sighting-action? info) => (λ (it) (string-append it " "))]
-                              [else ""])
-                        (sighting-where info)
-                        (describe-since (sighting-when  info))
-                        (let ([words (string-join (sighting-words info))])
-                          (if (positive? (string-length words))
-                              (format ", saying \"~a\"" words)
-                              ""))))
+                (string-join
+                 (list
+                  (format "~a was seen" (sighting-who   info))
+                  (cond [(not (string? (sighting-action? info)))
+                         (format "in ~a" (sighting-where info))]
+                        [(equal? "quitting" (sighting-action? info))
+                         (format "~a" (sighting-action? info))]
+                        [else
+                         (format "~a in ~a" it (sighting-action? info))])
+                  (format "~a ago~a" (describe-since (sighting-when  info))
+                          (let ([words (string-join (sighting-words info))])
+                            (if (positive? (string-length words))
+                                (format ", saying \"~a\"" words)
+                                ""))))
+                 " "))
               ss)
-         ", and then "))))
+
+         ", and then ")))))
 
 ;; For rate limiting -- every time we respond to a direct request, we
 ;; save the time under the requstor's nick.  That way, we can later
