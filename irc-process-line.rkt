@@ -100,10 +100,13 @@
 
 (define (send-NICK-and-USER)
   (when (eq? (unbox *authentication-state*) 'havent-even-tried)
-    (out "NICK ~a" (unbox *my-nick*))
+    (irc-set-nick (*irc-connection*) (unbox *my-nick*))
     ;; RFC 1459 suggests that most of this data is ignored.
-    (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
-         (git-version))
+    (irc-set-user-info (*irc-connection*)
+                       "luser"
+                       "unknown-host"
+                       "localhost"
+                       (format "Eric Hanchrow's bot, version ~a" (git-version)))
     (if (*nickserv-password*)
         (pm "NickServ" (format "identify ~a" (*nickserv-password*)))
         (log "I'd register my nick, if I had a password."))
