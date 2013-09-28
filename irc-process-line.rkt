@@ -28,11 +28,6 @@
 (define rx:word #px"(?:\\p{L}+|\\p{N}+|\\p{S}|\\p{P})+")
 (define (split-words str)
   (regexp-match* rx:word str))
-;; A pattern like (word-list x y rest) binds x to the first word in the string, y to the second word,
-;; and rest to a list of the rest of the words
-;;(define-match-expander word-list
-;;  (syntax-rules ()
-;;    [(word-list first rest ...) (app split-words (list-rest first rest ...))]))
 
 ;; (colon w) is a pattern that matches coloned words, and registers
 ;; their position
