@@ -25,6 +25,15 @@
           [(string? mm) (equal? mm id)]
           [else #f])))
 
+(define rx:word #px"(?:\\p{L}+|\\p{N}+|\\p{S}|\\p{P})+")
+(define (split-words str)
+  (regexp-match* rx:word str))
+;; A pattern like (word-list x y rest) binds x to the first word in the string, y to the second word,
+;; and rest to a list of the rest of the words
+;;(define-match-expander word-list
+;;  (syntax-rules ()
+;;    [(word-list first rest ...) (app split-words (list-rest first rest ...))]))
+
 ;; (colon w) is a pattern that matches coloned words, and registers
 ;; their position
 (define (starts-with-colon str)
@@ -117,21 +126,23 @@
          (log "I seem to be called ~s now" new-nick)
          (set-box! *my-nick* new-nick)]
         [(irc-message _ command args _) (log "I seem to have said ~s" (cons command args))])
-      (match (*current-words*)
-        [(list "KICK" target victim mumblage ...)
+      (match (*current-message*)
+        [(irc-message _ "KICK" (list target victim mumblage) _)
          (espy target (format "kicking ~a" victim) mumblage)]
-        [(list "MODE" target mode-data ...)
+        ;; list "MODE" target mode-data ...)
+        [(irc-message _ "MODE" (list target mode-data ...) _)
          (espy target (format "changing the mode to '~a'" mode-data) '())]
-        [(list "INVITE" lucky-recipient (colon party) further ...)
+        ;; (list "INVITE" lucky-recipient (colon party) further ...)
+        [(irc-message _ "INVITE" (list lucky-recipient party further ...) _)
          (espy host (format "inviting ~a to ~a" lucky-recipient party)
                further)]
-        [(list "NICK" (colon first-word) rest ...)
-         (espy host (format "changing their nick to ~a" first-word) '())]
-        [(list "TOPIC" target (colon first-word) rest ...)
+        [(irc-message _ "NICK" (list new-nick rest ...) _)
+         (espy host (format "changing their nick to ~a" new-nick) '())]
+        [(irc-message _ "TOPIC" (list target new-topic) _)
          (espy target
-               (format "changing the channel's topic to '~a'"
-                       (string-join (cons first-word rest))) '())]
-        [(list "JOIN" (or target (colon target)))
+               (format "changing the channel's topic to '~a'" new-topic)
+               '())]
+        [(irc-message _ "JOIN" (list target) _)
          ;; Alas, this pretty much never triggers, since duncanm keeps his client
          ;; session around for ever
          (when (regexp-match #rx"^duncanm" nick)
@@ -141,18 +152,18 @@
          (espy target
                "joining"
                '())]
-        [(list "NICK" (colon new-nick))
+        [(irc-message _ "NICK" (list new-nick) _)
          ;; TODO -- call espy with the old nick, or the new one, or both?
          (log "~a wants to be known as ~a" nick new-nick)]
-        [(list "PART" target (colon first-word) rest ...)
-         (espy target
-               "leaving the channel"
-               (cons first-word rest))]
-        [(list "PRIVMSG"
-               target
-               (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
-               inner-words ...
-               (regexp #px"(.*)\u0001$" (list _ trailing )))
+        [(irc-message _ "PART" (list target rest) _)
+         (espy target "leaving the channel" rest)]
+        [(irc-message _
+                      "PRIVMSG"
+                      (list target
+                            (app split-words (list (regexp #px"^\u0001([[:alpha:]]+)" (list _ extended-data-word))
+                                                   inner-words ...
+                                                   (regexp #px"(.*)\u0001$" (list _ trailing )))))
+                      _)
          ((*incubot-server*) 'put-string (string-join (append inner-words (list trailing)) " "))
          (espy target
                (format "doing ~a: ~a" extended-data-word
@@ -161,10 +172,13 @@
                '())]
         ;; Hard to see how this will ever match, given that the above clause
         ;; would seem to match VERSION
-        [(list "PRIVMSG"
-               target
-               (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
-               rest ...)
+        [(irc-message _
+                      "PRIVMSG"
+                      (list target
+                            (app split-words
+                                 (list (regexp #px"^\u0001(.*)\u0001" (list _ request-word ))
+                                       rest ...)))
+                      _)
          (log "request: ~s" request-word)
          (when (equal? "VERSION" request-word)
            (pm #:notice? #t
@@ -175,7 +189,7 @@
                        (version)
                        (system-type 'os))))]
 
-        [(list "PRIVMSG" target (colon first-word) rest ...)
+        [(irc-message _ "PRIVMSG" (list target (app split-words (list first-word rest ...))) _)
          ;; Unspeakable hack -- "irc-process-line" is way too dumb, and
          ;; merely hands us whitespace-delimited tokens; it should
          ;; really have some knowledge of what IRC lines look like, and
@@ -254,11 +268,11 @@
                 " "))
               ])])]
 
-        [(list "QUIT" (colon first-word) rest ...)
-         (espy host "quitting"
-               (cons first-word rest))]
-        [_ (log "~a said ~s, which I don't understand" nick
-                (text-from-word (*current-words*)))])))
+        [(irc-message _ "QUIT" (list quit-message) _)
+         (espy host "quitting" quit-message)]
+        [(irc-message _ command args _)
+         (log "~a said ~s, which I don't understand" nick
+                (text-from-word (cons command args)))])))
 
 (defmatcher IRC-COMMAND (irc-message host _ _ _)
   (match (*current-words*)
@@ -849,7 +863,6 @@
                  (cons (car p) (cons (+ (cadr p) b) (+ (cadr p) e)))))
     r))
 
-(define rx:word #px"(?:\\p{L}+|\\p{N}+|\\p{S}|\\p{P})+")
 (define (irc-process-line message)
   (define line (irc-message-content message))
   (let* ([posns (regexp-match-positions* rx:word line)]
