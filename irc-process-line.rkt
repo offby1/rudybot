@@ -78,17 +78,6 @@
 ;; races)
 (define last-give-instructions #f)
 
-(define (out format-string . args)
-  (let* ([str (apply format format-string args)]
-         [str (if (> (string-length str) *max-output-line*)
-                (string-append (substring str 0 (- *max-output-line* 4)) " ...")
-                str)]
-         ;; don't display newlines, so that Bad Guys won't be able
-         ;; to inject IRC commands into our output.
-         [str (regexp-replace* #rx"[\n\r]" str " <NEWLINE> ")])
-    (log "=> ~a" str)
-    (fprintf (irc-connection-out-port (*irc-connection*)) "~a~%" str)))
-
 (define (pm #:notice? [notice? #f] target message)
   ((if notice? irc-send-notice irc-send-message) (*irc-connection*) target message))
 
@@ -293,7 +282,7 @@
         ;; authenticate..
 
         ;; ":NickServ!NickServ@services. NOTICE rudybot :You are now identified for \u0002rudebot\u0002."
-        (for ([c (*initial-channels*)]) (out "JOIN ~a" c))]
+        (for ([c (*initial-channels*)]) (irc-join-channel (*irc-connection*) c))]
        [(366)
         (log "I, ~a, seem to have joined channel ~a."
              mynick
@@ -301,7 +290,7 @@
        [(433)
         (log "Nuts, gotta try a different nick")
         (set-box! *my-nick* (string-append (unbox *my-nick*) "_"))
-        (out "NICK ~a" (unbox *my-nick*))])]
+        (irc-set-nick (*irc-connection*) (unbox *my-nick*))])]
     [(list)
      (log "Completely unparseable line from the server.  current-words ~s; host ~s"
           (*current-words*)
@@ -743,12 +732,12 @@
 
 (defverb #:master (join channel) "ask me to join a channel"
   (if (regexp-match? #rx"^#" channel)
-    (begin (out "JOIN ~a" channel) (reply "OK"))
+    (begin (irc-join-channel (*irc-connection*) channel) (reply "OK"))
     (reply "not a proper channel name")))
 
 (defverb #:master (part channel) "ask me to part from a channel"
   (if (regexp-match? #rx"^#" channel)
-    (begin (out "PART ~a" channel) (reply "OK"))
+    (begin (irc-part-channel (*irc-connection*) channel) (reply "OK"))
     (reply "not a proper channel name")))
 
 (defverb #:master (tell who stuff ...) "tell me to tell someone something"
@@ -765,7 +754,7 @@
   (pm "NickServ" (format "ghost ~a ~a" victim (*nickserv-password*))))
 
 (defverb #:master (nick new-nick) "tell me to rename myself"
-  (out "NICK ~a" new-nick))
+  (irc-set-nick (*irc-connection*) new-nick))
 
 (defverb #:master (system command ...) "run something"
   (let ([s (open-output-string)])
