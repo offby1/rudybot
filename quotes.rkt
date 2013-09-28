@@ -4,8 +4,11 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 |#
 
 #lang racket
+(require racket/runtime-path)
 
 (define *the-channel* (make-channel))
+
+(define-runtime-path quotes-file "quotes")
 
 (define *dealer*
   (thread
@@ -21,7 +24,7 @@ exec  racket -l errortrace --require $0 --main -- ${1+"$@"}
 
        (fprintf (current-error-port)
                 "Reading quotes file~%")
-       (let push-one ([all (shuffle (call-with-input-file "quotes" read))])
+       (let push-one ([all (shuffle (call-with-input-file quotes-file read))])
          (if (null? all)
              (re-read)
              (begin
