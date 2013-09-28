@@ -275,14 +275,14 @@
                 (text-from-word (cons command args)))])))
 
 (defmatcher IRC-COMMAND (irc-message host _ _ _)
-  (match (*current-words*)
+  (match (*current-message*)
 
     ;; ircd-seven (http://freenode.net/seven.shtml) emits this as soon
     ;; as we connect
-    [(list "NOTICE" blather ...)
+    [(irc-message _ "NOTICE" _ _)
      (send-NICK-and-USER)]
 
-    [(list digits mynick blather ...)
+    [(irc-message _ digits (list mynick blather ...) _)
      (case (string->number digits)
        [(1)
         (log "Yay, we're in")
@@ -305,9 +305,9 @@
         (log "Nuts, gotta try a different nick")
         (set-box! *my-nick* (string-append (unbox *my-nick*) "_"))
         (irc-set-nick (*irc-connection*) (unbox *my-nick*))])]
-    [(list)
-     (log "Completely unparseable line from the server.  current-words ~s; host ~s"
-          (*current-words*)
+    [(irc-message _ _ _ content)
+     (log "Completely unparseable line from the server.  message ~s; host ~s"
+          content
           host)]))
 
 (defmatcher IRC-COMMAND _ (log "Duh?"))
@@ -872,6 +872,5 @@
                          s))
                      posns)])
     (when (null? words) (log "BAD IRC LINE: ~a" line))
-    (parameterize ([*current-message* message]
-                   [*current-words* (cdr words)])
+    (parameterize ([*current-message* message])
       (domatchers IRC-COMMAND message))))
