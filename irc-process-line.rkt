@@ -56,7 +56,7 @@
                         [(equal? "quitting" (sighting-action? info))
                          (format "~a" (sighting-action? info))]
                         [else
-                         (format "~a in ~a" it (sighting-action? info))])
+                         (format "~a in ~a" (sighting-action? info) (sighting-where info))])
                   (format "~a ago~a" (describe-since (sighting-when  info))
                           (let ([words (string-join (sighting-words info))])
                             (if (positive? (string-length words))
@@ -65,7 +65,7 @@
                  " "))
               ss)
 
-         ", and then ")))))
+         ", and then "))))
 
 ;; For rate limiting -- every time we respond to a direct request, we
 ;; save the time under the requstor's nick.  That way, we can later
