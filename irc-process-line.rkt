@@ -840,7 +840,7 @@
   (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
 
   ;; Ideally we'd prevent ACTION from getting into the corpus in the
-  ;; first place.
+  ;; first place.  See https://github.com/offby1/rudybot/issues/14
   (define (trim-ACTION str)
     (regexp-replace #rx"\1ACTION (.*)\1" str "\\1"))
 
