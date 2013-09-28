@@ -413,7 +413,7 @@
   (let* ([response-target "memoserv"]
          [for-whom        (*for-whom*)])
     (pm response-target  "send ~a ~a" recipient (string-join message " "))
-    (reply "I asked `memosrv' to forward the message to ~a." for-whom)))
+    (reply "I asked `memosrv' to forward the message to ~a." recipient)))
 
 (defverb (help ?what) "what tricks can I do?"
   (let ([what (and ?what (string->symbol ?what))]
