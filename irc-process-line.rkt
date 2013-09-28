@@ -112,11 +112,11 @@
   (define (espy target action words)
     (note-sighting (make-sighting nick target (current-seconds) action words)))
   (if (equal? nick (unbox *my-nick*))
-      (match (*current-words*)
-        [(list "NICK" (colon new-nick))
+      (match (*current-message*)
+        [(irc-message _ "NICK" (list new-nick) _)
          (log "I seem to be called ~s now" new-nick)
          (set-box! *my-nick* new-nick)]
-        [_ (log "I seem to have said ~s" (*current-words*))])
+        [(irc-message _ command args _) (log "I seem to have said ~s" (cons command args))])
       (match (*current-words*)
         [(list "KICK" target victim mumblage ...)
          (espy target (format "kicking ~a" victim) mumblage)]
