@@ -11,6 +11,8 @@
   (let ([unsetenv (get-ffi-obj 'unsetenv #f (_fun _bytes -> _int))])
     (let loop ()
       (match
+          ;; I've seen this ptr-ref fail, too (on Jon Schuster's
+          ;; Macbook); no idea why.
           (ptr-ref (get-ffi-obj 'environ #f _pointer) _bytes)
         [(regexp #rx"^(.*?)=(.*)$" (list _ k v))
          (unsetenv k)
@@ -27,4 +29,3 @@
      (for ([v '("FOO" "HOME" "PATH" "EDITOR" "SNICKERDOODLE")])
        (check-false (getenv v) v)))))
   (run-tests hmm-tests))
-
