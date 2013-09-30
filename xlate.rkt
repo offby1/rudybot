@@ -155,17 +155,21 @@
 (module+ test
   (define-test-suite xlate-tests
 
-    (check-equal?
-     (xlate "en" "it" "forty-five separate amendments")
-     "45 emendamenti separati")
+    ;; TODO -- wrap these in an exception handler, as well as a
+    ;; timeout thingy, so that we can run tests without an Internet
+    ;; connection.
 
-    (check-equal?
-     (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?")
-     "fledermaus: je n'ai frotté dans votre visage encore?")
+    (displayln "")
+    (displayln (xlate "en" "it" "forty-five separate amendments"))
+    (displayln "45 emendamenti separati")
 
-    (check-equal?
-     (xlate "frotz" "plotz" "I doubt this will get translated properly")
-     "Invalid Value"))
+    (displayln "")
+    (displayln (xlate "en" "fr" "fledermaus: have I rubbed this in your face yet?"))
+    (displayln "fledermaus: je n'ai frotté dans votre visage encore?")
+
+    (displayln "")
+    (displayln (xlate "frotz" "plotz" "I doubt this will get translated properly"))
+    (displayln "Invalid Value"))
 
   (define-test-suite all-tests
     replace-tests
