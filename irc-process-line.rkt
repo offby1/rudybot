@@ -503,6 +503,7 @@
     "come on man, one more. I need my fix!"
     "Mighty tasty cereal flakes, Mrs. McDonough."
     "A légpárnás tele van angolnák."
+    "\1ACTION wiggles his eyebrows at his cousin gabot\1"
     ))
 
 ;; ----------------------------------------------------------------------------
