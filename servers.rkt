@@ -16,13 +16,11 @@ fi
          "clearenv.rkt"
          (only-in "corpus.rkt" make-corpus)
          (only-in "iserver.rkt" make-incubot-server)
-         scheme/port)
+         scheme/port
+         irc)
 
 (define (real-server)
-  (let-values ([(ip op) (tcp-connect (*irc-server-hostname*)
-                                     (*irc-server-port*))])
-    (file-stream-buffer-mode op 'line)
-    (values ip op)))
+  (irc-get-connection (*irc-server-hostname*) (*irc-server-port*)))
 
 (define (make-preloaded-server op)
   (lambda ()

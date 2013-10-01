@@ -35,8 +35,8 @@
 (define *connection-start-time* (make-parameter #f))
 
 ;; some state is put globally, to be able to separate functions conveniently
-(define *irc-output*      (make-parameter #f))
-(define *current-words*   (make-parameter #f))
+(define *irc-connection*  (make-parameter #f))
+(define *current-message* (make-parameter #f))
 (define *response-target* (make-parameter #f))
 (define *for-whom*        (make-parameter #f))
 (define *full-id*         (make-parameter #f))

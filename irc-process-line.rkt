@@ -17,13 +17,18 @@
          (except-in "quotes.rkt" main)
          "re.rkt"
          "tinyurl.rkt"
-         (planet neil/numspell/numspell))
+         (planet neil/numspell/numspell)
+         irc)
 
 (define (is-master?)
   (let ([mm (unbox *my-master*)] [id (*full-id*)])
     (cond [(regexp? mm) (regexp-match? mm id)]
           [(string? mm) (equal? mm id)]
           [else #f])))
+
+(define rx:word #px"(?:\\p{L}+|\\p{N}+|\\p{S}|\\p{P})+")
+(define (split-words str)
+  (regexp-match* rx:word str))
 
 ;; (colon w) is a pattern that matches coloned words, and registers
 ;; their position
@@ -84,73 +89,62 @@
 ;; races)
 (define last-give-instructions #f)
 
-(define (out format-string . args)
-  (let* ([str (apply format format-string args)]
-         [str (if (> (string-length str) *max-output-line*)
-                (string-append (substring str 0 (- *max-output-line* 4)) " ...")
-                str)]
-         ;; don't display newlines, so that Bad Guys won't be able
-         ;; to inject IRC commands into our output.
-         [str (regexp-replace* #rx"[\n\r]" str " <NEWLINE> ")])
-    (log "=> ~a" str)
-    (fprintf (*irc-output*) "~a~%" str)))
-
-(define (pm #:notice? [notice? #f] target fmt . args)
-  (out "~a" (format "~a ~a :~a"
-                    (if notice? "NOTICE" "PRIVMSG")
-                    target (apply format fmt args))))
+(define (pm #:notice? [notice? #f] target message)
+  ((if notice? irc-send-notice irc-send-message) (*irc-connection*) target message))
 
 ;; ----------------------------------------------------------------------------
 ;; General IRC protocol matchers
 
-(defmatcher IRC-COMMAND "ERROR"
+(defmatcher IRC-COMMAND (irc-message _ "ERROR" _ _)
   (log "Uh oh!"))
 
 (define (send-NICK-and-USER)
   (when (eq? (unbox *authentication-state*) 'havent-even-tried)
-    (out "NICK ~a" (unbox *my-nick*))
+    (irc-set-nick (*irc-connection*) (unbox *my-nick*))
     ;; RFC 1459 suggests that most of this data is ignored.
-    (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
-         (git-version))
+    (irc-set-user-info (*irc-connection*)
+                       "luser"
+                       "unknown-host"
+                       "localhost"
+                       (format "Eric Hanchrow's bot, version ~a" (git-version)))
     (if (*nickserv-password*)
-        (pm "NickServ" "identify ~a" (*nickserv-password*))
+        (pm "NickServ" (format "identify ~a" (*nickserv-password*)))
         (log "I'd register my nick, if I had a password."))
     (set-box! *authentication-state* 'tried)))
 
 ;; This message doesn't contain much information; it really just means
 ;; we've connected.  And not all servers emit this anyway.  The server
 ;; on freenode did up to about January 2010
-(defmatcher IRC-COMMAND "NOTICE"
+(defmatcher IRC-COMMAND (irc-message _ "NOTICE" _ _)
   (send-NICK-and-USER))
 
-(defmatcher IRC-COMMAND "PING"
-  (out "PONG ~a" (car (*current-words*))))
-
-(defmatcher IRC-COMMAND (regexp #rx"^:((.*)!(.*)@(.*))$"
-                                (list _ full-id nick id host))
+(defmatcher IRC-COMMAND (irc-message (regexp #rx"^((.*)!(.*)@(.*))$" (list _ full-id nick id host))
+                                     _ _ _)
   (define (espy target action words)
     (note-sighting (make-sighting nick target (current-seconds) action words)))
   (if (equal? nick (unbox *my-nick*))
-      (match (*current-words*)
-        [(list "NICK" (colon new-nick))
+      (match (*current-message*)
+        [(irc-message _ "NICK" (list new-nick) _)
          (log "I seem to be called ~s now" new-nick)
          (set-box! *my-nick* new-nick)]
-        [_ (log "I seem to have said ~s" (*current-words*))])
-      (match (*current-words*)
-        [(list "KICK" target victim mumblage ...)
+        [(irc-message _ command args _) (log "I seem to have said ~s" (cons command args))])
+      (match (*current-message*)
+        [(irc-message _ "KICK" (list target victim mumblage) _)
          (espy target (format "kicking ~a" victim) mumblage)]
-        [(list "MODE" target mode-data ...)
+        ;; list "MODE" target mode-data ...)
+        [(irc-message _ "MODE" (list target mode-data ...) _)
          (espy target (format "changing the mode to '~a'" mode-data) '())]
-        [(list "INVITE" lucky-recipient (colon party) further ...)
+        ;; (list "INVITE" lucky-recipient (colon party) further ...)
+        [(irc-message _ "INVITE" (list lucky-recipient party further ...) _)
          (espy host (format "inviting ~a to ~a" lucky-recipient party)
                further)]
-        [(list "NICK" (colon first-word) rest ...)
-         (espy host (format "changing their nick to ~a" first-word) '())]
-        [(list "TOPIC" target (colon first-word) rest ...)
+        [(irc-message _ "NICK" (list new-nick rest ...) _)
+         (espy host (format "changing their nick to ~a" new-nick) '())]
+        [(irc-message _ "TOPIC" (list target new-topic) _)
          (espy target
-               (format "changing the channel's topic to '~a'"
-                       (string-join (cons first-word rest))) '())]
-        [(list "JOIN" (or target (colon target)))
+               (format "changing the channel's topic to '~a'" new-topic)
+               '())]
+        [(irc-message _ "JOIN" (list target) _)
          ;; Alas, this pretty much never triggers, since duncanm keeps his client
          ;; session around for ever
          (when (regexp-match #rx"^duncanm" nick)
@@ -160,18 +154,18 @@
          (espy target
                "joining"
                '())]
-        [(list "NICK" (colon new-nick))
+        [(irc-message _ "NICK" (list new-nick) _)
          ;; TODO -- call espy with the old nick, or the new one, or both?
          (log "~a wants to be known as ~a" nick new-nick)]
-        [(list "PART" target (colon first-word) rest ...)
-         (espy target
-               "leaving the channel"
-               (cons first-word rest))]
-        [(list "PRIVMSG"
-               target
-               (regexp #px"^:\u0001([[:alpha:]]+)" (list _ extended-data-word ))
-               inner-words ...
-               (regexp #px"(.*)\u0001$" (list _ trailing )))
+        [(irc-message _ "PART" (list target rest) _)
+         (espy target "leaving the channel" rest)]
+        [(irc-message _
+                      "PRIVMSG"
+                      (list target
+                            (app split-words (list (regexp #px"^\u0001([[:alpha:]]+)" (list _ extended-data-word))
+                                                   inner-words ...
+                                                   (regexp #px"(.*)\u0001$" (list _ trailing )))))
+                      _)
          ((*incubot-server*) 'put-string (string-join (append inner-words (list trailing)) " "))
          (espy target
                (format "doing ~a: ~a" extended-data-word
@@ -180,21 +174,24 @@
                '())]
         ;; Hard to see how this will ever match, given that the above clause
         ;; would seem to match VERSION
-        [(list "PRIVMSG"
-               target
-               (regexp #px"^:\u0001(.*)\u0001" (list _ request-word ))
-               rest ...)
+        [(irc-message _
+                      "PRIVMSG"
+                      (list target
+                            (app split-words
+                                 (list (regexp #px"^\u0001(.*)\u0001" (list _ request-word ))
+                                       rest ...)))
+                      _)
          (log "request: ~s" request-word)
          (when (equal? "VERSION" request-word)
            (pm #:notice? #t
                nick
-               "\u0001VERSION ~a (eric.hanchrow@gmail.com):v4.~a:Racket scheme version ~a on ~a\0001"
-               (unbox *my-nick*)
-               (git-version)
-               (version)
-               (system-type 'os)))]
+               (format "\u0001VERSION ~a (eric.hanchrow@gmail.com):v4.~a:Racket scheme version ~a on ~a\0001"
+                       (unbox *my-nick*)
+                       (git-version)
+                       (version)
+                       (system-type 'os))))]
 
-        [(list "PRIVMSG" target (colon first-word) rest ...)
+        [(irc-message _ "PRIVMSG" (list target (app split-words (list first-word rest ...))) _)
          ;; Unspeakable hack -- "irc-process-line" is way too dumb, and
          ;; merely hands us whitespace-delimited tokens; it should
          ;; really have some knowledge of what IRC lines look like, and
@@ -240,8 +237,9 @@
                                        (pm target "tinyurl is feeling poorly today: ~a (~a)"
                                            (exn:fail:http-code e)
                                            (exn-message e)))])
-                      (pm target "~a" (make-tiny-url url))))
+                      (pm target (make-tiny-url url))))
                   ]
+
                  [_ #f])))
            (when (and (regexp-match? #rx"^(?i:let(')?s)" first-word)
                       (regexp-match? #rx"^(?i:jordanb)" nick))
@@ -278,21 +276,21 @@
                 " "))
               ])])]
 
-        [(list "QUIT" (colon first-word) rest ...)
-         (espy host "quitting"
-               (cons first-word rest))]
-        [_ (log "~a said ~s, which I don't understand" nick
-                (text-from-word (*current-words*)))])))
+        [(irc-message _ "QUIT" (list quit-message) _)
+         (espy host "quitting" quit-message)]
+        [(irc-message _ command args _)
+         (log "~a said ~s, which I don't understand" nick
+                (text-from-word (cons command args)))])))
 
-(defmatcher IRC-COMMAND (colon host)
-  (match (*current-words*)
+(defmatcher IRC-COMMAND (irc-message host _ _ _)
+  (match (*current-message*)
 
     ;; ircd-seven (http://freenode.net/seven.shtml) emits this as soon
     ;; as we connect
-    [(list "NOTICE" blather ...)
+    [(irc-message _ "NOTICE" _ _)
      (send-NICK-and-USER)]
 
-    [(list digits mynick blather ...)
+    [(irc-message _ digits (list mynick blather ...) _)
      (case (string->number digits)
        [(1)
         (log "Yay, we're in")
@@ -306,7 +304,7 @@
         ;; authenticate..
 
         ;; ":NickServ!NickServ@services. NOTICE rudybot :You are now identified for \u0002rudebot\u0002."
-        (for ([c (*initial-channels*)]) (out "JOIN ~a" c))]
+        (for ([c (*initial-channels*)]) (irc-join-channel (*irc-connection*) c))]
        [(366)
         (log "I, ~a, seem to have joined channel ~a."
              mynick
@@ -314,10 +312,10 @@
        [(433)
         (log "Nuts, gotta try a different nick")
         (set-box! *my-nick* (string-append (unbox *my-nick*) "_"))
-        (out "NICK ~a" (unbox *my-nick*))])]
-    [(list)
-     (log "Completely unparseable line from the server.  current-words ~s; host ~s"
-          (*current-words*)
+        (irc-set-nick (*irc-connection*) (unbox *my-nick*))])]
+    [(irc-message _ _ _ content)
+     (log "Completely unparseable line from the server.  message ~s; host ~s"
+          content
           host)]))
 
 (defmatcher IRC-COMMAND _ (log "Duh?"))
@@ -405,7 +403,7 @@
                             (if (is-master?) "* " "")
                             (format (if (is-master?) "*~a: " "~a: ")
                                     for-whom))])
-    (pm response-target "~a~a" response-prefix (apply format fmt args))))
+    (pm response-target (format "~a~a" response-prefix (apply format fmt args)))))
 
 ;; ----------------------------------------------------------------------------
 ;; Misc utilities
@@ -440,7 +438,7 @@
   (let ([q (one-quote)])
     ;; special case: jordanb doesn't want quotes prefixed with his nick.
     (match (*for-whom*)
-      [(regexp #rx"^jordanb") (pm (*response-target*) "~a" q)]
+      [(regexp #rx"^jordanb") (pm (*response-target*) q)]
       [_ (reply "~a" q)])))
 
 (defverb (source) "my source location"
@@ -597,7 +595,7 @@
                             (msg  (string-append msg* " to get it (case sensitive)")))
                        (if (not (regexp-match? #rx"^#" response-target))
                          ;; announce privately if given privately
-                         (pm give-to "~a ~a" for-whom msg)
+                         (pm give-to (format "~a ~a" for-whom msg))
                          ;; cheap no-nag feature
                          (let* ((l last-give-instructions)
                                 (msg (if (and l
@@ -608,7 +606,7 @@
                            (set! last-give-instructions
                                  (cons response-target (current-seconds)))
                            (pm response-target
-                               "~a: ~a ~a" give-to for-whom msg))))
+                               (format "~a: ~a ~a" give-to for-whom msg)))))
                      #t])) ; said something
             (define (display-output name output-getter)
               (let ([output (output-getter s)])
@@ -789,19 +787,19 @@
 
 (defverb #:master (join channel) "ask me to join a channel"
   (if (regexp-match? #rx"^#" channel)
-    (begin (out "JOIN ~a" channel) (reply "OK"))
+    (begin (irc-join-channel (*irc-connection*) channel) (reply "OK"))
     (reply "not a proper channel name")))
 
 (defverb #:master (part channel) "ask me to part from a channel"
   (if (regexp-match? #rx"^#" channel)
-    (begin (out "PART ~a" channel) (reply "OK"))
+    (begin (irc-part-channel (*irc-connection*) channel) (reply "OK"))
     (reply "not a proper channel name")))
 
 (defverb #:master (tell who stuff ...) "tell me to tell someone something"
-  (pm (*response-target*) "~a: ~a" who (string-join stuff)))
+  (pm (*response-target*) (format "~a: ~a" who (string-join stuff))))
 
 (defverb #:master (emote stuff ...) "tell me to do something"
-  (pm (*response-target*) "\1ACTION ~a\1" (string-join stuff)))
+  (pm (*response-target*) (format "\1ACTION ~a\1" (string-join stuff))))
 
 (defverb #:master (for who stuff more ...) "tell me something in someone's name"
   (parameterize ([*full-id* ""]) ; avoid allowing master commands
@@ -811,7 +809,7 @@
   (pm "NickServ" (format "ghost ~a ~a" victim (*nickserv-password*))))
 
 (defverb #:master (nick new-nick) "tell me to rename myself"
-  (out "NICK ~a" new-nick))
+  (irc-set-nick (*irc-connection*) new-nick))
 
 (defverb #:master (system command ...) "run something"
   (let ([s (open-output-string)])
@@ -906,8 +904,8 @@
                  (cons (car p) (cons (+ (cadr p) b) (+ (cadr p) e)))))
     r))
 
-(define rx:word #px"(?:\\p{L}+|\\p{N}+|\\p{S}|\\p{P})+")
-(define (irc-process-line line)
+(define (irc-process-line message)
+  (define line (irc-message-content message))
   (let* ([posns (regexp-match-positions* rx:word line)]
          [words (map (lambda (p)
                        (let ([s (substring line (car p) (cdr p))])
@@ -915,5 +913,5 @@
                          s))
                      posns)])
     (when (null? words) (log "BAD IRC LINE: ~a" line))
-    (parameterize ([*current-words* (cdr words)])
-      (domatchers IRC-COMMAND (car words)))))
+    (parameterize ([*current-message* message])
+      (domatchers IRC-COMMAND message))))
