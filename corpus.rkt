@@ -6,6 +6,9 @@
  (only-in "utils.rkt" safely)
  )
 
+(module+ test
+  (require rackunit))
+
 (provide (except-out (struct-out corpus) corpus))
 (struct corpus (db) #:transparent)
 
@@ -229,22 +232,30 @@
          (for/and ([item (in-set thing)])
                   (pred item)))))
 
+(define/contract (clean-up-string s)
+  (string? . -> . string?)
+  (define (strip rx) (curryr (curry regexp-replace* rx) ""))
+  (define (keep rx)
+    (lambda (s) (string-join (regexp-match* rx s) ""))
+    )
+  ((compose
+
+   ;; Nix leading single-quotes.
+   (strip #px"^'+")
+
+   ;; Nix trailing single-quotes.
+   (strip #px"'+$")
+
+   ;; keep only single-quotes and letters.
+   (keep #px"('|\\p{L})+")) s))
+
+(module+ test
+  (check-equal? (clean-up-string "hey 'yöo!u\"") "hey'yöou"))
+
 (provide wordlist->wordset)
 (define/contract (wordlist->wordset ws)
   ((listof string?) . -> . (setof string?))
-  (define (strip rx) (curryr (curry regexp-replace* rx) ""))
   (apply
    set
    (filter (compose positive? string-length)
-           (map (compose
-
-                 ;; Nix leading single-quotes.
-                 (strip #px"^'+")
-
-                 ;; Nix trailing single-quotes.
-                 (strip #px"'+$")
-
-                 ;; keep only single-quotes and letters.
-                 (strip #px"[^'[:alpha:]]+")
-                 )
-                ws))))
+           (map clean-up-string ws))))
