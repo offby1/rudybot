@@ -38,14 +38,14 @@
 (define (describe-since when)
   (spelled-out-time (- (current-seconds) when)))
 
-(define (nick->sighting-string n)
+(define (nick->sighting-string n more)
   ;; We might have accidentally stored a bunch of sightings for this
   ;; nick.  If we were to display them all, they might get truncated,
   ;; due to the 500-character output limit.  So userinfo always gives
   ;; us at most two of the recent ones.
   (let ([ss (lookup-sightings n)])
     (if (null? ss)
-        (format "No sign of ~a" n)
+        (format "I've never seen ~a before"  (string-join (cons n more) " "))
         (string-join
          (map (lambda (info)
                 (string-join
@@ -456,11 +456,11 @@
 (defverb (url) "my web page"
   (reply "https://github.com/offby1/rudybot"))
 
-(defverb (seen nick) "did I see someone?"
+(defverb (seen nick more ...) "did I see someone?"
   ;; TODO -- if "nick" is fsbot, and the last time we saw 'em was
   ;; quite a while ago, suggest /msg fledermaus (fsbot's owner).
   ;; Thanks to jlf for the idea.
-  (reply "~a" (nick->sighting-string nick)))
+  (reply "~a" (nick->sighting-string nick more)))
 
 (defverb (uptime) "how long was I awake"
   (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
