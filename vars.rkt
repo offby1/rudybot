@@ -35,7 +35,7 @@
 (define *connection-start-time* (make-parameter #f))
 
 ;; some state is put globally, to be able to separate functions conveniently
-(define *irc-output*      (make-parameter #f))
+(define *irc-output*      (make-parameter (current-output-port)))
 (define *current-words*   (make-parameter #f))
 (define *response-target* (make-parameter #f))
 (define *for-whom*        (make-parameter #f))
@@ -43,7 +43,7 @@
 
 ;; Not sure it makes sense for these two to be separate; but adding
 ;; *incubot-logger* seemed the quickest way to get logging in incubot
-(define *logger*          (make-parameter #f))
+(define *logger*          (make-parameter void))
 (define *incubot-logger*  (make-parameter #f))
 
 (provide log)
