@@ -473,6 +473,9 @@
 (defverb #:hidden (ping) "am I alive?"
   (reply "pong"))
 
+(defverb (snotback) "another treat"
+  (pm (*response-target*) "Yum! Oysters."))
+
 ;; TODO -- the "botsnack" and "quote" verbs are, for all intents,
 ;; identical; merge them?
 (defverb (botsnack) "a treat"
