@@ -468,7 +468,7 @@
          (describe-since (*connection-start-time*))))
 
 (defverb #:whine (t8 from to text ...) "translate TEXT from FROM to TO"
-  (reply (xlate from to (string-join text " "))))
+  (reply "~a" (xlate from to (string-join text " "))))
 
 (defverb #:hidden (ping) "am I alive?"
   (reply "pong"))
@@ -479,7 +479,7 @@
 ;; TODO -- the "botsnack" and "quote" verbs are, for all intents,
 ;; identical; merge them?
 (defverb (botsnack) "a treat"
-  (pm (*response-target*) (random-botsnack)))
+  (pm (*response-target*) "~a" (random-botsnack)))
 
 (define (random-botsnack)
   (define len (vector-length botsnack-responses))
