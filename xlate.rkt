@@ -114,6 +114,7 @@
     ;; query
     `([key . ,(bytes->string/utf-8 (get-preference 'google-API-key))]
       [q . ,text]
+      [source . ,from]
       [target . ,to])
     #f ;; fragment
     )
