@@ -1,0 +1,26 @@
+-- Let's delete all traces of the word "nasty", because that's a nasty word.
+-- I haven't tested this in its entirety, but have done the various bits at various times.
+
+BEGIN TRANSACTION;
+
+DELETE FROM log
+      WHERE rowid IN (
+          SELECT log_word_map.log_id
+          FROM log_word_map
+          WHERE word IN ("Nasty", "nasty") );
+
+DELETE FROM log_word_map
+      WHERE word IN ("Nasty", "nasty") ;
+
+DELETE FROM word_popularity
+      WHERE word IN ("Nasty", "nasty") ;
+
+DELETE FROM log_word_map
+      WHERE log_id IN (
+         SELECT DISTINCT log_id 
+           FROM log_word_map 
+      LEFT JOIN log 
+             ON log.rowid = log_word_map.log_id
+  WHERE text IS NULL );
+
+COMMIT;
