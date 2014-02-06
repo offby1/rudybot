@@ -35,7 +35,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
   ;; (parameterize ([current-namespace (module->namespace "freenode-main.rkt")])
   ;;   (read-eval-print-loop))
 
-  (parameterize* ([*irc-server-hostname* "irc.freenode.org"]
+  (parameterize* ([*irc-server-hostname* "chat.freenode.org"]
                   [*irc-server-port* 6667]
                   [*userinfo-database-directory-name* "userinfo.db"]
                   [*incubot-logger* log]
