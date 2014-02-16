@@ -844,6 +844,45 @@
                   my-namespace)))))
 
 ;; ----------------------------------------------------------------------------
+;; describedb
+(require "describedb.rkt")
+
+  (define (format-defs qr def)
+    (let* ([defcount (length qr)]
+           [hdr (list (format "Found ~a defintions for `~a':" defcount def))])
+      (if (eq? defcount 0)
+          (list (format "No definitions found for `~a'" def))
+          (append hdr (for/list ([et (in-list qr)] [num (in-naturals)])
+                        (format "[~a] ~a" num (vector-ref et 1)))))))
+
+  (defverb  (sd def) "show entries for <entry>"
+    (for ([s (format-defs (defc-get-def def) def)])
+      (pm (*response-target*) "~a" s)))
+
+  (defverb  (ad defid text ...) "add definition for <entry>"
+    (defc-add-def defid (string-join text " "))
+    (pm (*response-target*) "Definition for `~a' added" defid))
+
+(defverb (dd defid ...) "delete definition for <entry> [id]... If no id is specified the first id will be deleted"
+
+    (let* ([did (car defid)]
+           [rest (cdr defid)]
+           [eids (if (empty? rest) 
+                     (list "0") rest)])
+      (for ([eid (in-list eids)])
+        (with-handlers 
+            ([exn:fail?
+                      (lambda (err) 
+                          (pm (*response-target*) 
+                              "Cannot remove definition [~a] for `~a': ~a" 
+                              eid did (exn-message err)))])
+          (when (eq? #f (string->number eid))
+            (raise-user-error (format "~a is not a number" eid)))
+          
+          (defc-del-definition did (string->number eid))
+          (pm (*response-target*) "Definition [~a] for `~a' removed" eid did)))))
+
+;; ----------------------------------------------------------------------------
 ;; Incubot-like
 
 (define (get-incubot-witticism words)
