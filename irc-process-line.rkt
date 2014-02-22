@@ -839,6 +839,11 @@
                          (string-append "(begin " (string-join expr) ")")))
                   my-namespace)))))
 
+;; Handy for when I discover the bot has somehow lost its auth --
+;; perhaps due to a netsplit
+(defverb #:master (reauth) "Resend password to NickServ"
+  (pm "NickServ" "identify ~a" (*nickserv-password*)))
+
 ;; ----------------------------------------------------------------------------
 ;; Incubot-like
 
