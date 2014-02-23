@@ -842,46 +842,46 @@
             (eval (read (open-input-string
                          (string-append "(begin " (string-join expr) ")")))
                   my-namespace)))))
-
+
 ;; ----------------------------------------------------------------------------
 ;; describedb
 (require "describedb.rkt")
 
-  (define (format-defs qr def)
-    (let* ([defcount (length qr)]
-           [hdr (list (format "Found ~a defintions for `~a':" defcount def))])
-      (if (eq? defcount 0)
-          (list (format "No definitions found for `~a'" def))
-          (append hdr (for/list ([et (in-list qr)] [num (in-naturals)])
-                        (format "[~a] ~a" num (vector-ref et 1)))))))
+(define (format-defs qr def)
+  (if (null? qr)
+      (list (format "No definitions found for `~a'" def))
+      (cons (format "Found ~a defintions for `~a':" (length qr) def)
+            (for/list ([et (in-list qr)]
+                       [num (in-naturals)])
+              (format "[~a] ~a" num (vector-ref et 1))))))
 
-  (defverb  (sd def) "show entries for <entry>"
-    (for ([s (format-defs (defc-get-def def) def)])
-      (pm (*response-target*) "~a" s)))
 
-  (defverb  (ad defid text ...) "add definition for <entry>"
-    (defc-add-def defid (string-join text " "))
-    (pm (*response-target*) "Definition for `~a' added" defid))
+(defverb  (sd def) "show entries for <entry>"
+  (for ([s (format-defs (defc-get-def def) def)])
+    (pm (*response-target*) "~a" s)))
 
-(defverb (dd defid ...) "delete definition for <entry> [id]... If no id is specified the first id will be deleted"
+(defverb  (ad defid text ...) "add definition for <entry>"
+  (defc-add-def defid (string-join text " "))
+  (pm (*response-target*) "Definition for `~a' added" defid))
 
-    (let* ([did (car defid)]
-           [rest (cdr defid)]
-           [eids (if (empty? rest) 
-                     (list "0") rest)])
-      (for ([eid (in-list eids)])
-        (with-handlers 
-            ([exn:fail?
-                      (lambda (err) 
-                          (pm (*response-target*) 
-                              "Cannot remove definition [~a] for `~a': ~a" 
-                              eid did (exn-message err)))])
-          (when (eq? #f (string->number eid))
-            (raise-user-error (format "~a is not a number" eid)))
-          
-          (defc-del-definition did (string->number eid))
-          (pm (*response-target*) "Definition [~a] for `~a' removed" eid did)))))
+(defverb (dd term indices ...)
+  "delete definitions for <term> [indices]... indices defaults to [0] -- i.e., just delete the first definition."
 
+  (when (empty? indices)
+    (set! indices (list "0")))
+
+  (for ([index (in-list indices)])
+    (with-handlers
+        ([exn:fail?
+          (lambda (err)
+            (pm (*response-target*)
+                "Cannot remove definition [~a] for ~s: ~a"
+                index term (exn-message err)))])
+
+      (defc-del-definition term (string->number index))
+      (pm (*response-target*) "Definition [~a] for `~a' removed" index term))))
+
+
 ;; ----------------------------------------------------------------------------
 ;; Incubot-like
 
