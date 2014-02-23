@@ -1,12 +1,3 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-if [ "x$BOTDEBUG" != "xno" ]; then
-  exec racket -l errortrace --require $0 --main -- ${1+"$@"}
-else
-  exec racket --require $0 --main -- ${1+"$@"}
-fi
-|#
-
 #lang racket
 
 (require "loop.rkt"
@@ -14,6 +5,7 @@ fi
          "git-version.rkt"
          (except-in "quotes.rkt" main)
          "clearenv.rkt"
+         (only-in "corpus.rkt" make-test-corpus-from-sentences)
          (only-in "iserver.rkt" make-incubot-server)
          (only-in "describedb.rkt" make-definitions-server)
          scheme/port)
@@ -46,10 +38,6 @@ fi
                     (display "\r\n" op))
                   (cond
                    (#t
-                    (list
-                     (c "eval (require racket/date)")
-                     (c "eval (date->string (seconds->date 1333210982))")))
-                   (#f
                     (list
                      (meh "Hey everyone!  What's happening?")
                      (c "uptime")
@@ -246,8 +234,12 @@ fi
   (parameterize* ([*bot-gives-up-after-this-many-silent-seconds* 1/4]
                   [*log-ports* (list (current-error-port))]
                   [*incubot-logger* log]
-                  [*incubot-server* (make-incubot-server)]
-                  [*definitions-server* (make-definitions-server)])
+                  [*db-file-name*  "/tmp/test-corpus.db"]
+                  [*incubot-server* (make-incubot-server
+                                     (make-test-corpus-from-sentences  #:dbfile (*db-file-name*)))]
+                  [*definitions-server* (make-definitions-server)]
+                  )
+
     (connect-and-run
      (make-preloaded-server (open-output-nowhere))
      #:retry-on-hangup? #f)))
@@ -278,7 +270,7 @@ fi
     (connect-and-run
      (make-hanging-up-server))))
 
-(define (main . args)
+(module+ test
   (fprintf (current-error-port) "Say goodbye to your environment ...")
   (clearenv)
   (fprintf (current-error-port) " poof~%")

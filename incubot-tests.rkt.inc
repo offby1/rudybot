@@ -79,9 +79,9 @@
 
   (define-test-suite lets-tests
     (let ([corpus (make-test-corpus-from-sentences
-                   '("Let's start with a capital letter"
-                     "let's ignore case"
-                     "LET'S SHOUT"))])
+                   #:sentences '("Let's start with a capital letter"
+                                 "let's ignore case"
+                                 "LET'S SHOUT"))])
       (define (try input)
         (check-not-false (incubot-sentence input corpus) input))
       (try "let's")

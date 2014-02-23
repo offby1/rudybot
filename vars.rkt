@@ -1,7 +1,8 @@
 #lang racket/base
 
 (require racket/file
-         "utils.rkt")
+         "utils.rkt"
+         (only-in mzlib/etc this-expression-source-directory))
 (provide (all-defined-out))
 
 ;; This value depends on the server; this seems to work for freenode
@@ -60,6 +61,10 @@
 
 ;; This retrieves a sentence from the "incubot" server.
 (define *incubot-server* (make-parameter (lambda ignored #f)))
+
+(define *db-file-name*
+  (make-parameter
+   (build-path (this-expression-source-directory) "corpus.db")))
 
 ;; This gets, sets, and deletes "definitions" (basically just a
 ;; mapping of strings to strings).

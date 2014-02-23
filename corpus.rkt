@@ -4,6 +4,7 @@
  unstable/debug
  (only-in mzlib/etc this-expression-source-directory)
  (only-in "utils.rkt" safely)
+ (only-in "vars.rkt" *db-file-name*)
  )
 
 (module+ test
@@ -135,16 +136,12 @@
     (for ([w (string->lowercased-words s)])
       (log-word! (corpus-db c) w log-id))))
 
-(define *db-file-name*
-  (make-parameter
-   (build-path (this-expression-source-directory)
-               "corpus.db")))
-
 (provide make-test-corpus-from-sentences)
-(define (make-test-corpus-from-sentences [sentences '("waka ja waka"
-                                                      "Some thing"
-                                                      "Some thing else")])
-  (parameterize ([*db-file-name* "/tmp/test-corpus.db"])
+(define (make-test-corpus-from-sentences #:sentences [sentences '("waka ja waka"
+                                                                  "Some thing"
+                                                                  "Some thing else")]
+                                         #:dbfile [db-file-name  "/tmp/test-corpus.db"])
+  (parameterize ([*db-file-name* db-file-name])
     (make-corpus-from-sentences
      sentences
      #:nuke-existing? #t

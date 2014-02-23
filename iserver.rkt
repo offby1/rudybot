@@ -12,13 +12,13 @@
  racket/async-channel)
 
 (provide make-incubot-server)
-(define (make-incubot-server)
+(define (make-incubot-server [corpus #f])
   (define server-thread
     ;; Reads 'get' or 'put-string' commands from a client, and does the
     ;; corresponding work.
     (thread
      (thunk
-      (let loop ([c (make-corpus '())])
+      (let loop ([c (or corpus (make-corpus '() #:create-tables? #t))])
         (let ([message (thread-receive)])
           (match message
             [(list client-channel verb string)
