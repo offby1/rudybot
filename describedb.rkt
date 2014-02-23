@@ -31,6 +31,25 @@
 (define (get-defs conn term)
   (map (curryr vector-ref 0) (query-rows conn "SELECT descr FROM dtable WHERE term=? ORDER BY rowid ASC" term)))
 
+(module+ test
+  (require rackunit)
+  (let ([conn (connect-to-db "describe-test.db")])
+    (call-with-transaction
+     conn
+     (thunk
+      (define original-count (length (get-defs conn "cat")))
+      (add-definition conn "cat" "kitty")
+      (check-equal? (- (length (get-defs conn "cat")) original-count) 1)
+      (del-defintion conn "cat")
+      (check-equal? (- (length (get-defs conn "cat")) original-count) 0)
+
+
+      (query-exec conn  "DELETE FROM dtable WHERE term=?" "cat")
+      (add-definition conn "cat" "one")
+      (add-definition conn "cat" "two")
+      (add-definition conn "cat" "three")
+      (check-equal? (get-defs conn "cat") (list "one" "two" "three"))))))
+
 (define (make-definitions-server)
   (define server-thread
     (thread
@@ -50,22 +69,3 @@
     (define client-channel (make-async-channel 1))
     (thread-send server-thread (list client-channel args))
     (async-channel-get client-channel)))
-
-(module+ test
-  (require rackunit)
-  (let ([conn (connect-to-db "describe-test.db")])
-    (call-with-transaction
-     conn
-     (thunk
-      (define original-count (length (get-defs conn "cat")))
-      (add-definition conn "cat" "kitty")
-      (check-equal? (- (length (get-defs conn "cat")) original-count) 1)
-      (del-defintion conn "cat")
-      (check-equal? (- (length (get-defs conn "cat")) original-count) 0)
-
-
-      (query-exec conn  "DELETE FROM dtable WHERE term=?" "cat")
-      (add-definition conn "cat" "one")
-      (add-definition conn "cat" "two")
-      (add-definition conn "cat" "three")
-      (check-equal? (get-defs conn "cat") (list "one" "two" "three"))))))
