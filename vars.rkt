@@ -60,3 +60,7 @@
 
 ;; This retrieves a sentence from the "incubot" server.
 (define *incubot-server* (make-parameter (lambda ignored #f)))
+
+;; This gets, sets, and deletes "definitions" (basically just a
+;; mapping of strings to strings).
+(define *definitions-server* (make-parameter (lambda ignored #f)))

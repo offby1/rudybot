@@ -851,18 +851,18 @@
   (if (null? qr)
       (list (format "No definitions found for `~a'" def))
       (cons (format "Found ~a defintions for `~a':" (length qr) def)
-            (for/list ([et (in-list qr)]
+            (for/list ([et qr]
                        [num (in-naturals)])
-              (format "[~a] ~a" num (vector-ref et 1))))))
+              (format "[~a] ~a" num et)))))
 
 
-(defverb  (sd def) "show entries for <entry>"
-  (for ([s (format-defs (defc-get-def def) def)])
+(defverb  (sd term) "show entries for <term>"
+  (for ([s (format-defs ((*definitions-server*) 'get term))])
     (pm (*response-target*) "~a" s)))
 
-(defverb  (ad defid text ...) "add definition for <entry>"
-  (defc-add-def defid (string-join text " "))
-  (pm (*response-target*) "Definition for `~a' added" defid))
+(defverb  (ad term text ...) "add definition for <term>"
+  ((*definitions-server*) 'add term (string-join text " "))
+  (pm (*response-target*) "Definition for `~a' added" term))
 
 (defverb (dd term indices ...)
   "delete definitions for <term> [indices]... indices defaults to [0] -- i.e., just delete the first definition."
@@ -870,7 +870,7 @@
   (when (empty? indices)
     (set! indices (list "0")))
 
-  (for ([index (in-list indices)])
+  (for ([index indices])
     (with-handlers
         ([exn:fail?
           (lambda (err)
@@ -878,7 +878,7 @@
                 "Cannot remove definition [~a] for ~s: ~a"
                 index term (exn-message err)))])
 
-      (defc-del-definition term (string->number index))
+      ((*definitions-server*) 'del term (string->number index))
       (pm (*response-target*) "Definition [~a] for `~a' removed" index term))))
 
 

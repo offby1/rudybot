@@ -15,7 +15,7 @@ fi
          (except-in "quotes.rkt" main)
          "clearenv.rkt"
          (only-in "iserver.rkt" make-incubot-server)
-         (only-in "defserver.rkt" make-definitions-server)
+         (only-in "describedb.rkt" make-definitions-server)
          scheme/port)
 
 (define (real-server)
