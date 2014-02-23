@@ -1,7 +1,8 @@
 #lang racket/base
 
 (require scheme/match scheme/system scheme/promise
-         (for-syntax scheme/base syntax/boundmap))
+         (for-syntax scheme/base syntax/boundmap)
+         (only-in db exn:fail:sql? exn:fail:sql-sqlstate))
 
 (provide from-env run-command call-with-PATH defmatcher domatchers defautoloads)
 
@@ -66,11 +67,12 @@
 ;; locked.  In practice, it doesn't seem to work, so ... we just
 ;; ignore the exception :-|
 
-;; TODO -- only ignore the "sqlite3-db-is-locked" exception.
 (provide safely)
 (define-syntax-rule (safely body ...)
-  (with-handlers ([exn:fail?
+  (with-handlers ([exn:fail:sql?
                    (lambda (e)
+                     (when (not (eq? 'busy (exn:fail:sql-sqlstate e)))
+                       (raise e))
                      (fprintf (current-error-port) "~a; ignoring~%" e))
                    ])
     body ...))
