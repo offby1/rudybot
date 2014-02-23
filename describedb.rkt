@@ -29,7 +29,7 @@
       (query-exec conn  "DELETE FROM dtable WHERE rowid=?" (vector-ref target 0))))))
 
 (define (get-defs conn term)
-  (query-rows conn "SELECT descr FROM dtable WHERE term=? ORDER BY rowid ASC" term))
+  (map (curryr vector-ref 0) (query-rows conn "SELECT descr FROM dtable WHERE term=? ORDER BY rowid ASC" term)))
 
 (define (make-definitions-server)
   (define server-thread
@@ -61,5 +61,11 @@
       (add-definition conn "cat" "kitty")
       (check-equal? (- (length (get-defs conn "cat")) original-count) 1)
       (del-defintion conn "cat")
-      (check-equal? (- (length (get-defs conn "cat")) original-count) 0)))
-    ))
+      (check-equal? (- (length (get-defs conn "cat")) original-count) 0)
+
+
+      (query-exec conn  "DELETE FROM dtable WHERE term=?" "cat")
+      (add-definition conn "cat" "one")
+      (add-definition conn "cat" "two")
+      (add-definition conn "cat" "three")
+      (check-equal? (get-defs conn "cat") (list "one" "two" "three"))))))
