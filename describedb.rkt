@@ -2,8 +2,8 @@
 (require db
          (only-in racket/async-channel make-async-channel async-channel-get))
 
-(define (connect-to-db)
-  (let ([conn (sqlite3-connect #:database "definitions.sqlite" #:mode 'create)])
+(define (connect-to-db [name "definitions.db"])
+  (let ([conn (sqlite3-connect #:database name #:mode 'create)])
     (query-exec conn "CREATE TABLE IF NOT EXISTS dtable (term VARCHAR(128) NOT NULL, descr TEXT)")
     conn))
 
@@ -52,7 +52,7 @@
     (async-channel-get client-channel)))
 
 (module+ test
-  (let ([conn (connect-to-db)])
+  (let ([conn (connect-to-db "describe-test.db")])
     (call-with-transaction
      conn
      (thunk

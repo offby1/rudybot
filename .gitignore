@@ -1,11 +1,10 @@
 *.db
 *.db-journal
 *~
+/nohup.out
 TAGS
 big-log
 big-log.*
 compiled
 parsed-log
 sandbox-log
-/nohup.out
-/definitions.sqlite
