@@ -1,63 +1,45 @@
 #lang racket
-(require db)
+(require db
+         (only-in racket/async-channel make-async-channel async-channel-get))
 
 (define (connect-to-db)
   (let ([conn (sqlite3-connect #:database "local.db" #:mode 'create)])
-    (create-db conn)
-    (if conn conn #f)))
+    (query-exec conn "CREATE TABLE IF NOT EXISTS dtable (id INTEGER PRIMARY KEY AUTOINCREMENT, term VARCHAR(128) NOT NULL, descr TEXT);")
+    conn))
 
-(define (create-db conn)
-  (query-exec conn "create table if not exists dtable (id integer PRIMARY KEY AUTOINCREMENT, did varchar(128) not null, descr text);")  #t)
+(define (add-definition conn term descr)
+  (query-exec conn "INSERT INTO dtable VALUES (NULL, ?, ?);" term descr))
 
-(define (purge-db conn)
-  (query-exec conn "drop table dtable"))
+(define (del-defintion conn term [entry-id 0])
+  (query-exec conn  "DELETE FROM dtable WHERE id=?" entry-id))
 
-(define (add-definition conn did descr)
-  (let ([q (format "insert into dtable values (NULL, '~a', '~a');" did descr)])
-    (query-exec conn q)))
+(define (get-def conn term)
+  (query-rows conn "SELECT id, descr FROM dtable WHERE term=?" term))
 
-(define (do-create)
-  (let ([c (connect-to-db)])
-    (create-db c)))
+(define (make-definitions-server)
+  (define server-thread
+    (thread
+     (thunk
+      (define conn (connect-to-db))
+      (let loop ()
+        (match-let ([(list channel args) (thread-receive)])
+          (match args
+            [(list 'add term descr)    (add-definition conn term descr)]
+            [(list 'del term)          (del-defintion conn term)]
+            [(list 'del term entry-id) (del-defintion conn term entry-id)]
+            [(list 'get term)          (get-def conn term)]))
 
-(define (do-query text)
-  (let ([c (connect-to-db)])
-    (query-rows c text)))
+        (loop)))))
 
-(define (get-def conn did)
-  (query-rows conn (format "select id, descr from dtable where did='~a'" did)))
+  (lambda args
+    (define client-channel (make-async-channel 1))
+    (thread-send server-thread (list client-channel args))
+    (async-channel-get client-channel)))
 
-(define (get-def-count conn did)
-  (car (query-list conn (format "select count(did) from dtable where did='~a'" did))))
-
-(define (do-del-defintion conn id)
-  (let ([q (format "delete from dtable where id=~a;" id)])
-    (query-exec conn q)))
-
-(define (del-defintion conn did [entry-id 0])
-  (let ([defs (get-def conn did)])
-    (when (>= entry-id (length defs))
-      (error (format "`~a'[~a] is not found" did entry-id)))
-
-    (let ([def-id (vector-ref (list-ref defs entry-id) 0)])
-      (do-del-defintion conn def-id))))
-
-(define defc (connect-to-db))
-
-(define (defc-add-def did descr) 
-  (add-definition defc did descr))
-
-(define (defc-get-def did) 
-  (get-def defc did))
-
-(define (defc-kill-db)
-  (purge-db defc))
-
-(define (defc-get-def-count did)
-  (get-def-count defc did))
-
-(define (defc-del-definition did [entry-id 0])
-  (del-defintion defc did entry-id))
-
-(provide defc-add-def defc-get-def defc-kill-db defc-get-def-count defc-del-definition)
-
+(module+ test
+  (let ([conn (connect-to-db)])
+    (add-definition conn "cat" "kitty")
+    (printf "This had better be 'kitty':        ~s~%" (get-def conn "cat"))
+    (del-defintion conn "cat")
+    (printf "This had better be fewer 'kitty's: ~s~%" (get-def conn "cat"))
+    ))
