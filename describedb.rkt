@@ -1,20 +1,35 @@
-#lang racket
+#lang at-exp racket
 (require db
          (only-in racket/async-channel make-async-channel async-channel-get))
 
 (define (connect-to-db)
-  (let ([conn (sqlite3-connect #:database "local.db" #:mode 'create)])
-    (query-exec conn "CREATE TABLE IF NOT EXISTS dtable (id INTEGER PRIMARY KEY AUTOINCREMENT, term VARCHAR(128) NOT NULL, descr TEXT);")
+  (let ([conn (sqlite3-connect #:database "definitions.sqlite" #:mode 'create)])
+    (query-exec conn "CREATE TABLE IF NOT EXISTS dtable (term VARCHAR(128) NOT NULL, descr TEXT)")
     conn))
 
 (define (add-definition conn term descr)
-  (query-exec conn "INSERT INTO dtable VALUES (NULL, ?, ?);" term descr))
+  (query-exec conn "INSERT INTO dtable VALUES (?, ?);" term descr))
 
 (define (del-defintion conn term [entry-id 0])
-  (query-exec conn  "DELETE FROM dtable WHERE id=?" entry-id))
+  (call-with-transaction
+   conn
+   (thunk
+    (let* ([all-definitions
+            (query-rows
+             conn
+             @string-append{
+                            SELECT   rowid, descr
+                            FROM     dtable
+                            WHERE    term=?
+                            ORDER BY rowid ASC
+                            LIMIT    ?
+                            }
+             term (add1 entry-id))]
+           [target (last all-definitions)])
+      (query-exec conn  "DELETE FROM dtable WHERE rowid=?" (vector-ref target 0))))))
 
-(define (get-def conn term)
-  (query-rows conn "SELECT id, descr FROM dtable WHERE term=?" term))
+(define (get-defs conn term)
+  (query-rows conn "SELECT descr FROM dtable WHERE term=? ORDER BY rowid ASC" term))
 
 (define (make-definitions-server)
   (define server-thread
@@ -27,7 +42,7 @@
             [(list 'add term descr)    (add-definition conn term descr)]
             [(list 'del term)          (del-defintion conn term)]
             [(list 'del term entry-id) (del-defintion conn term entry-id)]
-            [(list 'get term)          (get-def conn term)]))
+            [(list 'get term)          (get-defs conn term)]))
 
         (loop)))))
 
@@ -38,8 +53,12 @@
 
 (module+ test
   (let ([conn (connect-to-db)])
-    (add-definition conn "cat" "kitty")
-    (printf "This had better be 'kitty':        ~s~%" (get-def conn "cat"))
-    (del-defintion conn "cat")
-    (printf "This had better be fewer 'kitty's: ~s~%" (get-def conn "cat"))
+    (call-with-transaction
+     conn
+     (thunk
+      (define original-count (length (get-defs conn "cat")))
+      (add-definition conn "cat" "kitty")
+      (printf "This had better be 1: ~s~%" (- (length (get-defs conn "cat")) original-count))
+      (del-defintion conn "cat")
+      (printf "This had better be 0: ~s~%" (- (length (get-defs conn "cat")) original-count))))
     ))

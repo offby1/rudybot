@@ -8,3 +8,4 @@ compiled
 parsed-log
 sandbox-log
 /nohup.out
+/definitions.sqlite
