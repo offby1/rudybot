@@ -120,16 +120,13 @@
     (thunk
      (db:query-exec
       db
-      "INSERT INTO log_word_map VALUES (?, ?)"
-      w log-id)
+      "INSERT INTO log_word_map VALUES (?, ?)" w log-id)
      (db:query-exec
       db
-      "insert or ignore into word_popularity  values (?, 0) "
-      w)
+      "INSERT OR IGNORE INTO word_popularity VALUES (?, 0) " w)
      (db:query-exec
       db
-      "UPDATE word_popularity SET occurrences = occurrences + 1 WHERE word = ?"
-      w)))))
+      "UPDATE word_popularity SET occurrences = occurrences + 1 WHERE word = ?" w)))))
 
 (provide add-sentence-to-corpus)
 (define (add-sentence-to-corpus s c)
