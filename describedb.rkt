@@ -52,13 +52,14 @@
     (async-channel-get client-channel)))
 
 (module+ test
+  (require rackunit)
   (let ([conn (connect-to-db "describe-test.db")])
     (call-with-transaction
      conn
      (thunk
       (define original-count (length (get-defs conn "cat")))
       (add-definition conn "cat" "kitty")
-      (printf "This had better be 1: ~s~%" (- (length (get-defs conn "cat")) original-count))
+      (check-equal? (- (length (get-defs conn "cat")) original-count) 1)
       (del-defintion conn "cat")
-      (printf "This had better be 0: ~s~%" (- (length (get-defs conn "cat")) original-count))))
+      (check-equal? (- (length (get-defs conn "cat")) original-count) 0)))
     ))
