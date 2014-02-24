@@ -847,22 +847,22 @@
 ;; describedb
 (require "describedb.rkt")
 
-(define (format-defs qr def)
-  (if (null? qr)
-      (list (format "No definitions found for `~a'" def))
-      (cons (format "Found ~a defintions for `~a':" (length qr) def)
-            (for/list ([et qr]
+(define (format-defs term defs)
+  (if (equal? defs '())
+      (list (format "No definitions found for `~a'" defs))
+      (cons (format "Found ~a defintions for `~a':" (length defs) term)
+            (for/list ([et defs]
                        [num (in-naturals)])
               (format "[~a] ~a" num et)))))
 
 
-(defverb  (sd term) "show entries for <term>"
-  (for ([s (format-defs ((*definitions-server*) 'get term))])
-    (pm (*response-target*) "~a" s)))
+(defverb (sd term) "show entries for <term>"
+  (for ([s (format-defs term ((*definitions-server*) 'get term))])
+    (reply "~a" s)))
 
-(defverb  (ad term text ...) "add definition for <term>"
+(defverb (ad term text ...) "add definition for <term>"
   ((*definitions-server*) 'add term (string-join text " "))
-  (pm (*response-target*) "Definition for `~a' added" term))
+  (reply "Definition for `~a' added" term))
 
 (defverb (dd term indices ...)
   "delete definitions for <term> [indices]... indices defaults to [0] -- i.e., just delete the first definition."
@@ -879,7 +879,7 @@
                 index term (exn-message err)))])
 
       ((*definitions-server*) 'del term (string->number index))
-      (pm (*response-target*) "Definition [~a] for `~a' removed" index term))))
+      (reply "Definition [~a] for `~a' removed" index term))))
 
 
 ;; ----------------------------------------------------------------------------

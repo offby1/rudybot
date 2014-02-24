@@ -46,7 +46,12 @@
                      (c "everyone")
                      (c "plotz")
                      (meh "\1ACTION fred eats salami\1")
-                     (c "salami")))
+                     (c "salami")
+                     (c "sd cat")
+                     (c "ad cat kitty, or one who purrs")
+                     (c "sd cat")
+                     (c "dd cat")
+                     (c "sd cat")))
                    (#f
                     ;; Typical stuff from ircd-seven
                     `(":bartol.freenode.net NOTICE * :*** No Ident response"

@@ -9,6 +9,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
          (except-in "vars.rkt" log)
          "git-version.rkt"
          "clearenv.rkt"
+         (only-in "describedb.rkt" make-definitions-server)
          (only-in "servers.rkt" real-server)
          (only-in "userinfo.rkt" *userinfo-database-directory-name*)
          (only-in "iserver.rkt" make-incubot-server)
@@ -36,7 +37,8 @@ exec racket --require "$0" --main -- ${1+"$@"}
                   [*irc-server-port* 6667]
                   [*userinfo-database-directory-name* "userinfo.db"]
                   [*incubot-logger* log]
-                  [*incubot-server* (make-incubot-server)])
+                  [*incubot-server* (make-incubot-server)]
+                  [*definitions-server* (make-definitions-server)])
 
     (if (*nickserv-password*)
         (connect-and-run real-server)
