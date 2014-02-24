@@ -849,7 +849,7 @@
 
 (define (format-defs term defs)
   (if (equal? defs '())
-      (list (format "No definitions found for `~a'" defs))
+      (list (format "No definitions found for `~a'" term))
       (cons (format "Found ~a defintions for `~a':" (length defs) term)
             (for/list ([et defs]
                        [num (in-naturals)])
