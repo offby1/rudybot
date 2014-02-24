@@ -813,10 +813,6 @@
 (defverb #:master (emote stuff ...) "tell me to do something"
   (pm (*response-target*) "\1ACTION ~a\1" (string-join stuff)))
 
-(defverb #:master (for who stuff more ...) "tell me something in someone's name"
-  (parameterize ([*full-id* ""]) ; avoid allowing master commands
-    (do-cmd (*response-target*) who (cons stuff more))))
-
 (defverb #:master (ghost victim) "kill an errant client that's using my favorite nick"
   (pm "NickServ" (format "ghost ~a ~a" victim (*nickserv-password*))))
 
@@ -842,6 +838,12 @@
             (eval (read (open-input-string
                          (string-append "(begin " (string-join expr) ")")))
                   my-namespace)))))
+
+;; Handy for when I discover the bot has somehow lost its auth --
+;; perhaps due to a netsplit
+(defverb #:master (reauth) "Resend password to NickServ"
+  (pm "NickServ" "identify ~a" (*nickserv-password*)))
+
 
 ;; ----------------------------------------------------------------------------
 ;; describedb
