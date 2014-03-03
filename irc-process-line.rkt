@@ -419,14 +419,14 @@
   (let* ([response-target "memoserv"]
          [for-whom        (*for-whom*)])
     (pm response-target  "send ~a ~a" recipient (string-join message " "))
-    (reply "I asked `memosrv' to forward the message to ~a." recipient)))
+    (reply "I asked `MemoServ' to forward the message to ~a." recipient)))
 
 (defverb (later "tell" recipient message ...) "backwards-compatible \"tell\""
   ;; TODO -- this code is materially the same as that for "tell".  Refactor!
   (let* ([response-target "memoserv"]
          [for-whom        (*for-whom*)])
     (pm response-target  "send ~a ~a" recipient (string-join message " "))
-    (reply "I asked `memosrv' to forward the message to ~a." recipient)))
+    (reply "I asked `MemoServ' to forward the message to ~a." recipient)))
 
 (defverb (help ?what) "what tricks can I do?"
   (let ([what (and ?what (string->symbol ?what))]
