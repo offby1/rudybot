@@ -36,13 +36,22 @@
         0
         v)))
 
+;; We skip words that only occurred once, since if we included them,
+;; random-choose-string-containing-word would skip those utterances
+;; anyway.
 (provide corpus-rank-by-popularity)
 (define/contract (corpus-rank-by-popularity c wordset)
   (corpus? (set/c string?) . -> . (listof (vector/c string? natural-number/c)))
   (apply db:query-rows
          (corpus-db c)
          (format
-          "SELECT word, occurrences FROM word_popularity WHERE WORD IN (~a) ORDER BY occurrences ASC;"
+          @string-append{
+                        SELECT word, occurrences
+                        FROM word_popularity
+                        WHERE WORD IN (~a)
+                        AND occurrences > 1
+                        ORDER BY occurrences ASC
+                        }
           (string-join (build-list (set-count wordset) (const "?")) ","))
          (set-map wordset values)))
 
@@ -95,12 +104,17 @@
                         ON     log.rowid = log_word_map.log_id
                         WHERE  log_word_map.word = ?
                         AND    text NOT LIKE ?
+                        ORDER BY log.rowid DESC -- newest first
                         LIMIT  100
                         }
          rare
          (string-append rare "%:%"))])
-  (and (not (null? candidates))
-       (random-choose (map (curryr vector-ref 0) candidates)))))
+  (and (< 1 (length candidates))
+       (random-choose (map (curryr vector-ref 0)
+                           ;; Skip the first candidate so that the bot
+                           ;; doesn't spew back a message that he just
+                           ;; received.
+                           (cdr candidates))))))
 
 (define (id-of-newest-log db)
   (db:query-value db "SELECT MAX(rowid) FROM log"))
