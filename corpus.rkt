@@ -64,6 +64,18 @@
      sorted
      (random-favoring-smaller-numbers (length seq)))))
 
+(define (sans-max seq #:key [key values])
+  (let ([max-item
+         (for/fold ([max-so-far (car seq)])
+             ([item seq])
+             (if (< (key max-so-far) (key item))
+                 item
+                 max-so-far))])
+    (printf "max-item is ~a~%" max-item)
+    (filter (lambda(item)(not (equal? (key item)
+                                      (key max-item))))
+                        seq)))
+
 ;; TODO -- this feels inefficient, since we are sucking 100 rows from
 ;; the db, and then discarding all but one.  See if it's worth doing
 ;; this differently.
@@ -98,17 +110,20 @@
          ;; followed by a colon.  Without proper regexp support built
          ;; into the database, I don't see an easy way around this.
          @string-append{
-                        SELECT text
+                        SELECT log.text, log.rowid
                         FROM   log
                         JOIN   log_word_map
                         ON     log.rowid = log_word_map.log_id
                         WHERE  log_word_map.word = ?
                         AND    text NOT LIKE ?
-                        ORDER BY log.rowid DESC -- newest first
                         LIMIT  100
                         }
          rare
          (string-append rare "%:%"))])
+    ;; For some reason, doing an ORDER BY in the sql is insanely slow.
+    ;; So I simply omit the newest candidate, to ensure we're not
+    ;; echoing back something that someone just said.
+    (set! candidates (sans-max candidates #:key (curryr vector-ref 1)))
   (and (< 1 (length candidates))
        (random-choose (map (curryr vector-ref 0)
                            ;; Skip the first candidate so that the bot
