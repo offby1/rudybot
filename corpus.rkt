@@ -94,11 +94,18 @@
       ([candidates
         (db:query-rows
          (corpus-db c)
-         ;; The AND part of the WHERE clause excludes utterances where
-         ;; the word in question is at the start, and is followed by a
-         ;; colon.  That's because our caller will throw such a
-         ;; leading thing away, believing it to be someone's nick, and
-         ;; hence not suitable for display as a witticism.
+         ;; The first NOT LIKE part of the WHERE clause excludes
+         ;; utterances where the word in question is at the start, and
+         ;; is followed by a colon.  That's because our caller will
+         ;; throw such a leading thing away, believing it to be
+         ;; someone's nick, and hence not suitable for display as a
+         ;; witticism.
+
+         ;; The second simply discards utterances that begin with a
+         ;; comma, since those generally are commands to some other
+         ;; bot (specifically, "fsbot" in #emacs), and at least one
+         ;; person (aidalgol) has asked that rudybot not echo them
+         ;; back.
 
          ;; For example, if 'rare' is 'offby1', and there is an entry
          ;; in the log like ``offby1: your bot rocks my world'', this
@@ -116,6 +123,7 @@
                         ON     log.rowid = log_word_map.log_id
                         WHERE  log_word_map.word = ?
                         AND    text NOT LIKE ?
+                        AND    text NOT LIKE ',%'
                         LIMIT  100
                         }
          rare
