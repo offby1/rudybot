@@ -87,6 +87,9 @@
 ;; word-ID pairs, which are presumably smaller.  Of course that way we
 ;; wouldn't be able to make our selection based on the sentence's
 ;; length.
+
+;; See http://inessential.com/2014/03/29/unfrozen_cave_man_searching
+;; for some guy's ideas about using SQLite's full-text search.
 (provide random-choose-string-containing-word)
 (define/contract (random-choose-string-containing-word rare c)
   (string? corpus? . -> . (or/c string? #f))
