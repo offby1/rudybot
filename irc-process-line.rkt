@@ -413,16 +413,7 @@
 (defverb (bug more ...) "You suck."
   (reply "Yes, I know I suck: https://github.com/offby1/rudybot/issues"))
 
-(defverb (tell recipient message ...)
-  "Give RECIPIENT a MESSAGE when we next 'see' them.  Only works where
-\"memoserv\" is available, which in practice, means freenode."
-  (let* ([response-target "memoserv"]
-         [for-whom        (*for-whom*)])
-    (pm response-target  "send ~a ~a" recipient (string-join message " "))
-    (reply "I asked `MemoServ' to forward the message to ~a." recipient)))
-
 (defverb (later "tell" recipient message ...) "backwards-compatible \"tell\""
-  ;; TODO -- this code is materially the same as that for "tell".  Refactor!
   (let* ([response-target "memoserv"]
          [for-whom        (*for-whom*)])
     (pm response-target  "send ~a ~a" recipient (string-join message " "))
