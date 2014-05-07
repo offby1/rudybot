@@ -268,10 +268,6 @@
               (when (equal? target "#emacs")
                 (pm target "Woof."))]
 
-             [(regexp #px"^,(\\.+)" (list _ dots))
-              (when (equal? target "#emacs")
-                (pm target "fsbot: drink from flask"))]
-
              [",…"
               (when (equal? target "#emacs")
                 (pm target "\1ACTION makes like a tree, and leaves\1"))]
