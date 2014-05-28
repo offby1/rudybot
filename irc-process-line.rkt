@@ -420,7 +420,7 @@
 (defverb (later "tell" recipient message ...) "backwards-compatible \"tell\""
   (let* ([response-target "memoserv"]
          [for-whom        (*for-whom*)])
-    (pm response-target  "send ~a ~a" recipient (string-join message " "))
+    (pm response-target  "send ~a ~a says: ~a" recipient for-whom (string-join message " "))
     (reply "I asked `MemoServ' to forward the message to ~a." recipient)))
 
 (defverb (help ?what) "what tricks can I do?"
