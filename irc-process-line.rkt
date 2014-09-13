@@ -113,6 +113,7 @@
     (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
          (git-version))
     (if (*nickserv-password*)
+        ;; BUGBUG -- keep the password out of the log.
         (pm "NickServ" "identify ~a" (*nickserv-password*))
         (log "I'd register my nick, if I had a password."))
     (set-box! *authentication-state* 'tried)))
@@ -837,6 +838,7 @@
 ;; Handy for when I discover the bot has somehow lost its auth --
 ;; perhaps due to a netsplit
 (defverb #:master (reauth) "Resend password to NickServ"
+  ;; BUGBUG -- keep the password out of the log.
   (pm "NickServ" "identify ~a" (*nickserv-password*)))
 
 ;; ----------------------------------------------------------------------------
