@@ -418,6 +418,12 @@
 (defverb (bug more ...) "You suck."
   (reply "Yes, I know I suck: https://github.com/offby1/rudybot/issues"))
 
+(defverb (fom more ...) "Emit the URL for Greg Hendershott's 'Fear of Macros'"
+  (reply "http://www.greghendershott.com/fear-of-macros/ ~a" (string-join more)))
+
+(defverb (hopeless more ...) "Emit the URL that explains why the top level is hopeless"
+  (reply "https://gist.github.com/samth/3083053"))
+
 (defverb (later "tell" recipient message ...) "backwards-compatible \"tell\""
   (let* ([response-target "memoserv"]
          [for-whom        (*for-whom*)])
