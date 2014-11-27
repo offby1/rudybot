@@ -424,6 +424,9 @@
 (defverb (hopeless more ...) "Emit the URL that explains why the top level is hopeless"
   (reply "https://gist.github.com/samth/3083053"))
 
+(defverb (bad-eval more ...) "Emit the URL that explains why using 'eval' is generally a mistake"
+  (reply "http://blog.racket-lang.org/2011/10/on-eval-in-dynamic-languages-generally.html"))
+
 (defverb (later "tell" recipient message ...) "backwards-compatible \"tell\""
   (let* ([response-target "memoserv"]
          [for-whom        (*for-whom*)])
