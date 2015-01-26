@@ -424,6 +424,9 @@
 (defverb (hopeless more ...) "Emit the URL that explains why the top level is hopeless"
   (reply "https://gist.github.com/samth/3083053"))
 
+(defverb (falsy more ...) "Emit the URL that describes the various \"false\" values in various programming languages"
+  (reply "https://plus.google.com/+ShriramKrishnamurthi/posts/4qvvKYC1R8Y"))
+
 (defverb (bad-eval more ...) "Emit the URL that explains why using 'eval' is generally a mistake"
   (reply "http://blog.racket-lang.org/2011/10/on-eval-in-dynamic-languages-generally.html"))
 
