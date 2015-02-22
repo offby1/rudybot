@@ -69,7 +69,7 @@
  (define-binary-check (check-spelled-out-time input-seconds expected-string)
    (equal? (spelled-out-time input-seconds)
            expected-string))
- 
+
  (define spelled-out-time-tests
 
   (test-suite
@@ -86,10 +86,9 @@
    (check-spelled-out-time (* 2 24 3600) "two days")
    (check-spelled-out-time (* 1 60 60 24 7 52 100)   "one century")
    (check-spelled-out-time (* 1 60 60 24 7 52 100 10)"ten centuries")))
- 
+
  (run-tests spelled-out-time-tests 'verbose))
 
 (provide/contract
  [seconds->english (-> natural-number/c (listof (cons/c symbol? natural-number/c)))]
  [spelled-out-time  (-> natural-number/c string?)])
-
