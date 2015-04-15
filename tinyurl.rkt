@@ -10,6 +10,7 @@
 
 ;; stolen from erc-button.el in Emacs 22
 (provide url-regexp)
+;; TODO -- compare with https://tools.ietf.org/html/rfc3986#appendix-B
 (define url-regexp (pregexp "http(s)?(//[-a-zA-Z0-9_.]+:[0-9]*)?[-a-zA-Z0-9_=!?#$@~`%&*+\\/:;.,]+[-a-zA-Z0-9_=#$@~`%&*+\\/]"))
 
 (provide/contract [make-tiny-url (string? . -> . string?)])
