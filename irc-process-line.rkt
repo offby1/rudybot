@@ -470,6 +470,11 @@
   ;; Thanks to jlf for the idea.
   (reply "~a" (nick->sighting-string nick more)))
 
+;; TODO -- figure out how to make a proper alias, rather than copying
+;; and pasting the definition of "seen"
+(defverb (|where's| nick more ...) "did I see someone?"
+  (reply "~a" (nick->sighting-string nick more)))
+
 (defverb (uptime) "how long was I awake"
   (reply "I've been up for ~a; this tcp/ip connection has been up for ~a"
          (describe-since *start-time*)
