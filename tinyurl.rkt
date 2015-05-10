@@ -22,7 +22,9 @@
         "eensy.teensy.info"
         #f
         #t
-        (list (path/param "/shorten-/" '()))
+        `(
+          ,(path/param "shorten-" '())
+          ,(path/param "" '()))
         `((input_url . ,long-url))
         #f)
    get-pure-port/gack
