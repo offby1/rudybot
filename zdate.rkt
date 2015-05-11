@@ -7,6 +7,8 @@
 
 (module+ test (require rackunit rackunit/text-ui))
 
+(define date-executable (if (eq? (system-type) 'macosx) "/usr/local/bin/gdate" "/bin/date"))
+
 (define (zdate
          [the-time (srfi-19-current-time)]
          #:format [
@@ -39,7 +41,7 @@
                    stdin-op
                    stderr-ip)
                   (subprocess #f #f #f
-                              "/bin/date"
+                              date-executable
                               "-u"
                               "+%s"
                               (format "--date=~a" the-time))))
@@ -50,7 +52,7 @@
         (when (positive? stat)
           (copy-port stdout-ip (current-output-port))
           (copy-port stderr-ip (current-error-port))
-          (error 'zdate "/bin/date returned ~s" stat))
+          (error 'zdate "~a returned ~s" date-executable stat))
         (close-input-port stderr-ip))
       (let ((seconds-string (read-line stdout-ip)))
         (close-input-port stdout-ip)
