@@ -36,9 +36,6 @@
         0
         v)))
 
-;; We skip words that only occurred once, since if we included them,
-;; random-choose-string-containing-word would skip those utterances
-;; anyway.
 (provide corpus-rank-by-popularity)
 (define/contract (corpus-rank-by-popularity c wordset)
   (corpus? (set/c string?) . -> . (listof (vector/c string? natural-number/c)))
@@ -49,7 +46,6 @@
                         SELECT word, occurrences
                         FROM word_popularity
                         WHERE WORD IN (~a)
-                        AND occurrences > 1
                         ORDER BY occurrences ASC
                         }
           (string-join (build-list (set-count wordset) (const "?")) ","))
@@ -131,16 +127,7 @@
                         }
          rare
          (string-append rare "%:%"))])
-    ;; For some reason, doing an ORDER BY in the sql is insanely slow.
-    ;; So I simply omit the newest candidate, to ensure we're not
-    ;; echoing back something that someone just said.
-    (set! candidates (sans-max candidates #:key (curryr vector-ref 1)))
-  (and (< 1 (length candidates))
-       (random-choose (map (curryr vector-ref 0)
-                           ;; Skip the first candidate so that the bot
-                           ;; doesn't spew back a message that he just
-                           ;; received.
-                           (cdr candidates))))))
+  (random-choose (map (curryr vector-ref 0) candidates))))
 
 (define (id-of-newest-log db)
   (db:query-value db "SELECT MAX(rowid) FROM log"))
