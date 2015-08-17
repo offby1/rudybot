@@ -19,7 +19,7 @@
   (call/input-url
    (url "http"
         #f
-        "eensy.teensy.info"
+        "teensy.info"
         #f
         #t
         `(
