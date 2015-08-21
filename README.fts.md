@@ -1,8 +1,11 @@
 Random notes about sqlite's full-text stuff.
 
-I backed up the live db by doing `sqlite3 /mnt/rudybot/corpus.db .dump > /tmp/eyow`.
+I backed up the live db by doing
+
+    sqlite3 /mnt/rudybot/corpus.db .dump > /tmp/eyow
+
 That took a surprisingly long time -- five or ten minutes, maybe
-longer.  That file compressed nicely with gzip.  Then I copied it to
+longer (see Note below).  That file compressed nicely with gzip.  Then I copied it to
 the laptop, uncompressed, and loaded it into a fresh db via something
 like
 
@@ -26,3 +29,12 @@ like
     124 -- also about two seconds
 
 So ... I might be able to nix the `log_word_map` and `word_popularity` tables!
+
+Note: I probably should have done this instead:
+
+    :) 21:00:17 [ec2-user@ip-10-0-0-142 rudybot]$ time sqlite3 corpus.db '.backup backup.db'
+
+    real    1m49.144s
+    user    0m2.028s
+    sys     0m5.452s
+
