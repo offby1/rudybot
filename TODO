@@ -9,12 +9,6 @@ It might be easiest to invoke "multilog" from Dan Bernstein's
 "daemontools" (http://cr.yp.to/daemontools/daemontools-0.76.tar.gz ;
 available on Ubuntu 10.04 in the "daemontools" package)
 
-* Get rid of "in/on" in the output of the "seen" command
-surely I can figure out which preposition is appropriate.
-
-https://github.com/offby1/rudybot/issues/23 says more or less the same
-thing.
-
 * Run with "--warn info"
 ... and fix the various lint-like warnings that come up
 
@@ -26,6 +20,12 @@ accumulated data; they should be on S3 or something.
 Someone suggested Dropbox; that could work!
 
 * Incubot
+** Full-text!!
+Sqlite has what appears to be an easy and effective way to retrieve
+rows containing text tokens (https://www.sqlite.org/fts3.html); it
+seems a no-brainer to use that rather than doing whatever the hell it
+is I'm currently doing.
+
 ** Publish the last few "logs"
 
 For example, if someone says to him "you are clever" and he responds
@@ -38,7 +38,7 @@ defverb #:master (censor objectionable_words) ...
 
 would eliminate rows in the incubot db that contain those words.
 
-delete from log where rowid in ( select log_word_map.log_id from log_word_map where word in 
+delete from log where rowid in ( select log_word_map.log_id from log_word_map where word in
         ("Nasty", "nasty") );
 delete from log_word_map where word in ("Nasty", "nasty") ;
 delete from word_popularity where word in ("Nasty", "nasty") ;
@@ -48,9 +48,9 @@ the deleted rows from "log".  This will nix those:
 
         DELETE FROM log_word_map
               WHERE log_id IN (
-                 SELECT DISTINCT log_id 
-                   FROM log_word_map 
-              LEFT JOIN log 
+                 SELECT DISTINCT log_id
+                   FROM log_word_map
+              LEFT JOIN log
                      ON log.rowid = log_word_map.log_id
           WHERE text IS NULL );
 
@@ -111,7 +111,7 @@ and do what "let's" would do.
 <jordanb> O                                                                                                         [16:21]
 * offby1 makes a mental note to underweight recent utterances
 <jordanb> I'm using emacs over X because it's less broken than tramp.
-ERC> 
+ERC>
 #+END_EXAMPLE
 ** Favor utterances whose target word appears early
 Imagine we've chosen the word "enhance", and we find the the DB these two strings:
@@ -130,26 +130,6 @@ demonstrate the value, so let's take a real example:
 That utterance is so long that you could die of boredom before getting
 to the bit that uses the word "enhance".  _That_ is why we should
 favor utterances where the word appears early.
-
-* Replace minion
-
-<jcowan> Having IRC-based messaging is very nice
-<jcowan> I like phenny-style:  "rudybot: ask/tell <user> <message>", where the user is case insensitive
-         and ignores underscores.
-
-This is also github issue 12: https://github.com/offby1/rudybot/issues/12
-
-** Ideas
-- Prevent DOS.  Limit the total number of queued messages to something
-  reasonable, as well as their size.  New messages push out older
-  undelivered ones from the queue.
-- The queues live in a dictionary keyed by nick, or better yet, some
-  sort of canonicalized nick.  (canonicalize-nick in userinfo.rkt is
-  probably the right thing)
-- Every time rudybot sees a JOIN (or perhaps some other indication of
-  someone signing on) he'll check the dict to see if there are any
-  queued messages for that person
-- Messages should include who sent 'em, and when
 
 * Run as 'nobody' or some other user without permissions
 
