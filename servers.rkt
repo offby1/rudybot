@@ -14,7 +14,6 @@ fi
          "git-version.rkt"
          (except-in "quotes.rkt" main)
          "clearenv.rkt"
-         (only-in "corpus.rkt" make-corpus)
          (only-in "iserver.rkt" make-incubot-server)
          scheme/port)
 
@@ -45,11 +44,11 @@ fi
                     (display line op)
                     (display "\r\n" op))
                   (cond
-                   (#t
+                   (#f
                     (list
                      (c "eval (require racket/date)")
                      (c "eval (date->string (seconds->date 1333210982))")))
-                   (#f
+                   (#t
                     (list
                      (meh "Hey everyone!  What's happening?")
                      (c "uptime")
