@@ -43,17 +43,20 @@
 (define (find-witticism conn s)
   (let-values ([(rarest pop) (rarest-token conn s)])
     (and (integer? pop)
-         (let ([ro (random-offset conn)])
-           (db:query-value conn
-            @string-append{
-SELECT  f_log.text
-FROM    f_log
-WHERE   f_log.text MATCH ?
-AND     f_log.rowid > ?
-ORDER   BY f_log.rowid ASC
-LIMIT   1
-}
-            s ro)))))
+         (let loop ([ro (random-offset conn)])
+           (let ((texts (db:query-list conn
+                                       @string-append{
+                                                      SELECT  f_log.text
+                                                      FROM    f_log
+                                                      WHERE   f_log.text MATCH ?
+                                                      AND     f_log.rowid > ?
+                                                      ORDER   BY f_log.rowid ASC
+                                                      LIMIT   1
+                                                      }
+                                       s ro)))
+             (if (null? texts)
+                 (loop (quotient ro 2))
+                 (car texts)))))))
 
 (provide make-incubot-server)
 (define (make-incubot-server)
