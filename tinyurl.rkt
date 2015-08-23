@@ -39,7 +39,7 @@
      "absurdly long"
      (check-equal?
       (make-tiny-url "http://www.badastronomy.com/bablog/2008/05/26/best-image-ever/whoa/baby/surely-this-URL-is-long-enough-to-make-tiny")
-      "http://eensy.teensy.info/dloXC4cxoW"))
+      "http://teensy.info/dloXC4cxoW"))
     (test-case
      "photo.net"
      (with-handlers
@@ -49,5 +49,5 @@
                       "Can't contact tinyurl; skipping the test~%"))])
        (check-equal?
         (make-tiny-url "http://photo.net")
-        "http://eensy.teensy.info/do55JLwjk5")))))
+        "http://teensy.info/do55JLwjk5")))))
  (run-tests tinyurl-tests 'verbose))
