@@ -1,12 +1,3 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-if [ "x$BOTDEBUG" != "xno" ]; then
-  exec racket -l errortrace --require $0 --main -- ${1+"$@"}
-else
-  exec racket --require $0 --main -- ${1+"$@"}
-fi
-|#
-
 #lang racket
 
 (require "loop.rkt"
@@ -276,14 +267,14 @@ fi
     (connect-and-run
      (make-hanging-up-server))))
 
-(define (main . args)
+(module+ main
   (fprintf (current-error-port) "Say goodbye to your environment ...")
   (clearenv)
   (fprintf (current-error-port) " poof~%")
-;;  flaky-main
+  ;;  flaky-main
 ;;;   hanging-up-main
 ;;;   (localhost-main)
-     (preload-main)
+  (preload-main)
 ;;;   random-main
 ;;;   replay-main
   )

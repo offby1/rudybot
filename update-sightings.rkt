@@ -1,9 +1,3 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-#$Id: v4-script-template.ss 5863 2008-12-21 17:13:36Z erich $
-exec  racket --require "$0" --main -- ${1+"$@"}
-|#
-
 #lang racket
 
 ;; if this directory contains no subdirectories

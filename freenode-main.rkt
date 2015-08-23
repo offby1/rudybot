@@ -1,8 +1,3 @@
-#! /bin/sh
-#| Hey Emacs, this is -*-scheme-*- code!
-exec racket --require "$0" --main -- ${1+"$@"}
-|#
-
 #lang racket
 
 (require "loop.rkt"
@@ -15,7 +10,7 @@ exec racket --require "$0" --main -- ${1+"$@"}
 
          version/utils)
 
-(define (main . args)
+(module+ main
   (let ([required-version "5.2.900.1"])
     (when (not (>= (version->integer (version))
                    (version->integer required-version)))
