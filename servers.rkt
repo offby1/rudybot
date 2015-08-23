@@ -14,7 +14,6 @@ fi
          "git-version.rkt"
          (except-in "quotes.rkt" main)
          "clearenv.rkt"
-         (only-in "corpus.rkt" make-corpus)
          (only-in "iserver.rkt" make-incubot-server)
          scheme/port)
 
@@ -45,20 +44,20 @@ fi
                     (display line op)
                     (display "\r\n" op))
                   (cond
-                   (#t
+                   (#f
                     (list
                      (c "eval (require racket/date)")
                      (c "eval (date->string (seconds->date 1333210982))")))
-                   (#f
+                   (#t
                     (list
                      (meh "Hey everyone!  What's happening?")
                      (c "uptime")
-                     (c "settle")
-                     (meh "frotz: plotz.")
-                     (c "everyone")
+                     (c "settle your mettle")
+                     (c "frotz: plotz.")
+                     (c "everyone loves someone")
                      (c "plotz")
                      (meh "\1ACTION fred eats salami\1")
-                     (c "salami")))
+                     (c "is salami really made of meat?")))
                    (#f
                     ;; Typical stuff from ircd-seven
                     `(":bartol.freenode.net NOTICE * :*** No Ident response"

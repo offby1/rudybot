@@ -1,0 +1,10 @@
+* Stop existing rudybot
+* create `f_log` table from `log`
+  CREATE VIRTUAL TABLE f_log USING FTS4(text TEXT);
+  INSERT INTO f_log(text) SELECT text FROM log;
+  CREATE VIRTUAL TABLE ft_terms USING fts4aux(f_log);
+  CREATE VIRTUAL TABLE tok1 USING fts3tokenize('simple');
+* git checkout new-branch
+* start new rudybot
+
+... tried the above, but it pegged the CPU at 100% as soon as I addressed it in #emacs ... hmph
