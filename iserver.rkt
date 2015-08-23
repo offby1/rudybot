@@ -3,6 +3,7 @@
 (require
  (prefix-in db: db)
  (only-in mzlib/etc this-expression-source-directory)
+ (only-in "utils.rkt" safely)
  (only-in "vars.rkt" *incubot-logger*)
  unstable/debug)
 
@@ -12,10 +13,11 @@
                "corpus.db")))
 
 (define (add-sentence conn s)
-   (db:query-exec
-    conn
-    "INSERT INTO f_log VALUES (?)"
-    s))
+   (safely
+    (db:query-exec
+     conn
+     "INSERT INTO f_log VALUES (?)"
+     s)))
 
 
 (define (tokens-by-popularity conn s)
