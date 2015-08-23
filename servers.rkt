@@ -3,7 +3,7 @@
 (require "loop.rkt"
          (except-in "vars.rkt" log)
          "git-version.rkt"
-         (except-in "quotes.rkt" main)
+         "quotes.rkt"
          "clearenv.rkt"
          (only-in "iserver.rkt" make-incubot-server)
          scheme/port)

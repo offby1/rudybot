@@ -14,7 +14,7 @@
          "utils.rkt"
          "xlate.rkt"
          "spelled-out-time.rkt"
-         (except-in "quotes.rkt" main)
+         "quotes.rkt"
          "re.rkt"
          "tinyurl.rkt"
          (planet neil/numspell/numspell))
