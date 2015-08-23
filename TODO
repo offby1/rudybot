@@ -20,12 +20,6 @@ accumulated data; they should be on S3 or something.
 Someone suggested Dropbox; that could work!
 
 * Incubot
-** Full-text!!
-Sqlite has what appears to be an easy and effective way to retrieve
-rows containing text tokens (https://www.sqlite.org/fts3.html); it
-seems a no-brainer to use that rather than doing whatever the hell it
-is I'm currently doing.
-
 ** Publish the last few "logs"
 
 For example, if someone says to him "you are clever" and he responds
@@ -38,30 +32,12 @@ defverb #:master (censor objectionable_words) ...
 
 would eliminate rows in the incubot db that contain those words.
 
-delete from log where rowid in ( select log_word_map.log_id from log_word_map where word in
-        ("Nasty", "nasty") );
-delete from log_word_map where word in ("Nasty", "nasty") ;
-delete from word_popularity where word in ("Nasty", "nasty") ;
-
-Also note that this will leave ghosts in log_word_map -- references to
-the deleted rows from "log".  This will nix those:
-
-        DELETE FROM log_word_map
-              WHERE log_id IN (
-                 SELECT DISTINCT log_id
-                   FROM log_word_map
-              LEFT JOIN log
-                     ON log.rowid = log_word_map.log_id
-          WHERE text IS NULL );
-
 Note that such a command would be insanely dangerous; if I
 accidentally typed "censor the", I'd lose most of the corpus, since
 most log entries contain the word 'the'.
 
-Further, nixing stuff manually from the DB isn't perfect; it'd be good
-to then also nix it from the big-log; or (better) add some sort of
-blacklist so that if I recreate the db from the log, those nasty
-entries don't get re-added.
+In any case, deleting the word via a sqlite prompt is falling-down
+easy: see README.censor-nasty-words in this directory.
 
 ** Omit leading nicks from utterances
 The original incubot does this.  E.g., if we find
