@@ -23,7 +23,7 @@
 (define (tokens-by-popularity conn s)
   (db:query-list conn
                  @string-append{
-                                SELECT  tok1.token
+                                SELECT  DISTINCT(tok1.token)
                                 FROM    tok1
                                 JOIN    ft_terms ON ft_terms.term = tok1.token
                                 WHERE   INPUT=?
