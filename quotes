@@ -683,6 +683,9 @@
 ;; Giles Bowkett
 "How can we apply the lessons of ZZ Top in the workplace?"
 
+;; John Wiegley
+"I've laid out in my will that my heirs should continue working on my .emacs"
+
 ;; grepped from the #emacs logs by thunk on 08.31.10
 "Let's #define const volatile"
 "Let's (setq false t). For clarity."
