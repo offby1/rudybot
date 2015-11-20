@@ -464,6 +464,9 @@
 (defverb (url) "my web page"
   (reply "https://github.com/offby1/rudybot"))
 
+(defverb (sentientp) "imitate fsbot"
+  (reply "Any day now"))
+
 (defverb (seen nick more ...) "did I see someone?"
   ;; TODO -- if "nick" is fsbot, and the last time we saw 'em was
   ;; quite a while ago, suggest /msg fledermaus (fsbot's owner).
