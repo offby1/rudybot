@@ -273,6 +273,10 @@
               (when (equal? target "#emacs")
                 (pm target "\1ACTION makes like a tree, and leaves\1"))]
 
+             [",⋱"
+              (when (equal? target "#emacs")
+                (pm target "\1ACTION makes the sound of one hand clapping\1"))
+             ]
              [_
               ((*incubot-server*)
                'put-string
