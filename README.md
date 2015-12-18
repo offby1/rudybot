@@ -10,13 +10,7 @@ caused by using the ``racket-textual`` package instead of ``racket``.
 Run the tests like this:
 
     $ raco test -x .
-
-Unfortunately, you'll have to pay attention to the output of ``raco
-test``, since it will likely exit with 0 status even if some of the
-tests fail.  This is IMHO a misfeature of ``raco test``; the Racket
-developers seem disinclined to change it (see
-[this bug report](http://bugs.racket-lang.org/query/?cmd=view&pr=13573)).
-
+    
 # Some specs:
 
 - [rfc1459][]
