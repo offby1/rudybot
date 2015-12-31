@@ -16,11 +16,7 @@
 ;; This should probably be a hash table, keyed by network name.
 (define *initial-channels* ; env var can be "#foo,#bar"
   (make-parameter (from-env "BOTCHANNELS" '(
-                                            "##SICP"
-                                            "##cinema"
                                             "#emacs"
-                                            "#racket"
-                                            "#scheme"
                                             ) #rx",")))
 (define *nickserv-password*
   (make-parameter (from-env "BOTPASSWD" (get-preference '|rudybot-freenode-nickserv-password|))))
