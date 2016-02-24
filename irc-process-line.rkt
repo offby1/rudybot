@@ -4,6 +4,7 @@
 
 (require racket/sandbox
          racket/system
+         net/base64
          srfi/13
          srfi/14
          "sandboxes.rkt"
@@ -108,14 +109,14 @@
 
 (define (send-NICK-and-USER)
   (when (eq? (unbox *authentication-state*) 'havent-even-tried)
-    (out "NICK ~a" (unbox *my-nick*))
-    ;; RFC 1459 suggests that most of this data is ignored.
-    (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
-         (git-version))
+    (out "CAP REQ :sasl")
     (if (*nickserv-password*)
-        ;; BUGBUG -- keep the password out of the log.
-        (pm "NickServ" "identify ~a" (*nickserv-password*))
-        (log "I'd register my nick, if I had a password."))
+          (begin
+            (out "NICK ~a" (unbox *my-nick*))
+            (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
+                 (git-version))
+            (out "AUTHENTICATE PLAIN"))
+          (log "I'd register my nick, if I had a password."))
     (set-box! *authentication-state* 'tried)))
 
 ;; This message doesn't contain much information; it really just means
@@ -293,6 +294,18 @@
         [_ (log "~a said ~s, which I don't understand" nick
                 (text-from-word (*current-words*)))])))
 
+(defmatcher IRC-COMMAND "AUTHENTICATE"
+  (when (equal? '("+") (*current-words*))
+        (out "AUTHENTICATE ~a"
+             (bytes->string/utf-8
+              (let ((username  (unbox *my-nick*))
+                    ;; I suspect this account-name can be identical to
+                    ;; the password; I simply haven't yet tried that
+                    (account-name "rudebot")
+                    (password (*nickserv-password*)))
+                (base64-encode  (string->bytes/utf-8 (format "~a\0~a\0~a" account-name username password)) #"")))))
+  )
+
 (defmatcher IRC-COMMAND (colon host)
   (match (*current-words*)
 
@@ -303,8 +316,9 @@
 
     [(list digits mynick blather ...)
      (case (string->number digits)
-       [(1)
+       [(1 903)
         (log "Yay, we're in")
+        (out "CAP END")
         (set-box! *authentication-state* 'succeeded)
         ;; BUGBUG --this appears to be to soon to join.  _Most_
         ;; channels will let us join now; but some require that we
