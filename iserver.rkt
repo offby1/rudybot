@@ -4,8 +4,8 @@
  (prefix-in db: db)
  (only-in mzlib/etc this-expression-source-directory)
  (only-in "utils.rkt" safely)
- (only-in "vars.rkt" *incubot-logger*)
- unstable/debug)
+ (only-in "vars.rkt" *incubot-logger*))
+
 
 (define *db-file-name*
   (make-parameter
@@ -75,7 +75,6 @@
 (define (make-incubot-server)
   (define connection (db:sqlite3-connect
                       #:database (*db-file-name*)))
-  (dprintf "Connected to ~a: ~a" (*db-file-name*) connection)
   (lambda (command-sym inp)
     (match command-sym
       ['put-string
