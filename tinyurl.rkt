@@ -3,8 +3,7 @@
 (require
  (only-in net/uri-codec current-alist-separator-mode alist->form-urlencoded)
  (only-in net/url call/input-url string->url)
- (only-in net/url-structs path/param url)
- (only-in "http.rkt" get-pure-port/gack)
+ (only-in "http.rkt" post-pure-port/gack)
  )
 
 (module+ test (require rackunit rackunit/text-ui))
@@ -15,19 +14,17 @@
 (define url-regexp (pregexp "http(s)?(//[-a-zA-Z0-9_.]+:[0-9]*)?[-a-zA-Z0-9_=!?#$@~`%&*+\\/:;.,]+[-a-zA-Z0-9_=#$@~`%&*+\\/]"))
 
 (provide/contract [make-tiny-url (string? . -> . string?)])
-(define (make-tiny-url long-url)
+(define (make-tiny-url url)
   (call/input-url
-   (url "http"
-        #f
-        "teensy.info"
-        #f
-        #t
-        `(
-          ,(path/param "shorten-" '())
-          ,(path/param "" '()))
-        `((input_url . ,long-url))
-        #f)
-   get-pure-port/gack
+   (string->url "http://tinyurl.com/api-create.php")
+   (lambda (create-url)
+     (post-pure-port/gack
+      create-url
+      (string->bytes/utf-8
+       (parameterize ([current-alist-separator-mode 'amp])
+         (alist->form-urlencoded `([url . ,url]))))
+
+      (list "Content-Type: application/x-www-form-urlencoded")))
    port->string))
 
 (module+ test
@@ -39,7 +36,7 @@
      "absurdly long"
      (check-equal?
       (make-tiny-url "http://www.badastronomy.com/bablog/2008/05/26/best-image-ever/whoa/baby/surely-this-URL-is-long-enough-to-make-tiny")
-      "http://teensy.info/dloXC4cxoW"))
+      "http://tinyurl.com/3l4lw7"))
     (test-case
      "photo.net"
      (with-handlers
@@ -49,5 +46,5 @@
                       "Can't contact tinyurl; skipping the test~%"))])
        (check-equal?
         (make-tiny-url "http://photo.net")
-        "http://teensy.info/do55JLwjk5")))))
+        "http://tinyurl.com/uecfh")))))
  (run-tests tinyurl-tests 'verbose))

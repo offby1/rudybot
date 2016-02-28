@@ -8,21 +8,16 @@
   (require rackunit rackunit/text-ui))
 
 (require
- (only-in net/url post-impure-port get-impure-port))
+ (only-in net/url post-impure-port))
 
 (provide (struct-out exn:fail:http))
 (struct exn:fail:http exn:fail (code))
 
-(provide post-pure-port/gack get-pure-port/gack)
+(provide post-pure-port/gack)
 ;; Like post-pure-port, but raises an exception if the HTTP response
 ;; is anything other than 200.
 (define (post-pure-port/gack url post [header null])
   (let ([inp (post-impure-port url post header)])
-    (check-and-discard-status-and-header-lines inp)
-    inp))
-
-(define (get-pure-port/gack url [header null])
-  (let ([inp (get-impure-port url header)])
     (check-and-discard-status-and-header-lines inp)
     inp))
 
