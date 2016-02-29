@@ -1,33 +1,40 @@
+See also [the github issues page](https://github.com/offby1/rudybot/issues).
 
-# -*-org-*-
-
-* Roll the log file over
+# Roll the log file over
 that is, don't let it grow without bound, but instead, once it gets to
 a certain size, rename it and start a new file.
 
 It might be easiest to invoke "multilog" from Dan Bernstein's
-"daemontools" (http://cr.yp.to/daemontools/daemontools-0.76.tar.gz ;
-available on Ubuntu 10.04 in the "daemontools" package)
+[daemontools](http://cr.yp.to/daemontools/daemontools-0.76.tar.gz);
+available on Ubuntu 10.04 in the "daemontools" package
 
-* Run with "--warn info"
+# Run with `--warn info`
 ... and fix the various lint-like warnings that come up
 
-* Put the persistent data someplace safe
+# Put the persistent data someplace safe
 That's the big-log (which we mine for incubot-witticisms) and the
 userinfo db.  I keep accidentally deleting them, and losing months of
 accumulated data; they should be on S3 or something.
 
-Someone suggested Dropbox; that could work!
+One attractive idea for the big log: PostgreSQL running in Amazon's
+RDS.  Why?  'cuz
 
-* Incubot
-** Publish the last few "logs"
+- Amazon is unlikely to lose my data
+- PostgreSQL has some sorta full-text search (see http://rachbelaid.com/postgres-full-text-search-is-good-enough/)
+
+Another AWS-type of idea: use the simplest possible backing store, and
+combine it with
+[Cloudsearch](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/what-is-cloudsearch.html)
+
+# Incubot
+## Publish the last few "logs"
 
 For example, if someone says to him "you are clever" and he responds
 "I have a clever idea", there'll be messages like "incubot chose
 'clever'" in the log output ... make those messages accessible via
 HTTP so that people can tell why he said what he said.
 
-** A 'censor' command
+## A 'censor' command
 defverb #:master (censor objectionable_words) ...
 
 would eliminate rows in the incubot db that contain those words.
@@ -37,23 +44,31 @@ accidentally typed "censor the", I'd lose most of the corpus, since
 most log entries contain the word 'the'.
 
 In any case, deleting the word via a sqlite prompt is falling-down
-easy: see README.censor-nasty-words in this directory.
+easy: see `README.censor-nasty-words` in this directory.
 
-** Omit leading nicks from utterances
+## Omit leading nicks from utterances
 The original incubot does this.  E.g., if we find
-: ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG #scheme :rudybot: seen eli"
+
+    ":offby1!n=user@pdpc/supporter/monthlybyte/offby1 PRIVMSG #scheme :rudybot: seen eli"
+
 in the log, then we currently reduce that to
-: "rudybot: seen eli"
+
+    "rudybot: seen eli"
+
 but we should really omit the leading nick and colon, yielding
-: "seen eli"
+
+    "seen eli"
+
 That's because it looks odd for the bot to utter something that's
 directed at someone who probably isn't present.
-** Entirely omit, or at least trim, ACTION
+
+## Entirely omit, or at least trim, ACTION
 I just saw the bot respond with "\1ACTION does something or other\1",
 which was weird; it should have either said nothing, or else just
 "does something or other".
-** Use the same logic ...
-... to initially create "parsed-log", as to add individual utterances
+
+## Use the same logic ...
+... to initially create `parsed-log`, as to add individual utterances
 to it.
 
 For example, I'm pretty sure I omit utterances that are addressed to
@@ -63,7 +78,7 @@ quote", I don't add that, since it'd be dull.
 And yet when log-parser creates parsed-log, it blithely adds
 everything.
 
-** Rewrite "quote"
+## Rewrite "quote"
 
 Eliminate the "quotes" database, and just have "quote" find some
 random utternace by jordanb, and echo that.  I'm not saving the
@@ -73,23 +88,21 @@ what came from him.
 A super-simple hacky way would be for "quote" to simply turn around
 and do what "let's" would do.
 
-** Underweight recent utterances
+## Underweight recent utterances
 
-#+BEGIN_EXAMPLE
-<jordanb> Offby1 should make a lolbot.
-<offby1> already did
-<jordanb> Heh
-<jordanb> Have it join. ^_^
-<jordanb> rudybot: lol
-<rudybot> jordanb: lol
-<jordanb> rudybot: lolbot                                                                                           [16:19]
-<rudybot> jordanb: Offby1 should make a lolbot.
-<jordanb> O                                                                                                         [16:21]
-* offby1 makes a mental note to underweight recent utterances
-<jordanb> I'm using emacs over X because it's less broken than tramp.
-ERC>
-#+END_EXAMPLE
-** Favor utterances whose target word appears early
+    <jordanb> Offby1 should make a lolbot.
+    <offby1> already did
+    <jordanb> Heh
+    <jordanb> Have it join. ^_^
+    <jordanb> rudybot: lol
+    <rudybot> jordanb: lol
+    <jordanb> rudybot: lolbot                                                                                           [16:19]
+    <rudybot> jordanb: Offby1 should make a lolbot.
+    <jordanb> O                                                                                                         [16:21]
+    # offby1 makes a mental note to underweight recent utterances
+    ERC>
+
+## Favor utterances whose target word appears early
 Imagine we've chosen the word "enhance", and we find the the DB these two strings:
 "Enhance your manhood with Presto Manhood Enlarger™"
 "I would have preferred to enhance that with soup"
@@ -100,14 +113,14 @@ giving the first one more weight, since when you read it, you see the
 word earlier ... those examples I just gave above don't really
 demonstrate the value, so let's take a real example:
 
-: 2013-09-08T18:27:18Z incubot-server:incubot chose "enhance", which appears 117 times
-: 2013-09-08T18:27:20Z => PRIVMSG #emacs :macrobat: how do I enable SLIME autocompletion in my lisp buffer? ideally using the auto-complete extension for a nice display of the completion options. I've installed ac-slime, but that only seems to enhance the auto-completion in my SLIME REPL, not the buffer in which I am editing my file.
+    2013-09-08T18:27:18Z incubot-server:incubot chose "enhance", which appears 117 times
+    2013-09-08T18:27:20Z => PRIVMSG #emacs :macrobat: how do I enable SLIME autocompletion in my lisp buffer? ideally using the auto-complete extension for a nice display of the completion options. I've installed ac-slime, but that only seems to enhance the auto-completion in my SLIME REPL, not the buffer in which I am editing my file.
 
 That utterance is so long that you could die of boredom before getting
 to the bit that uses the word "enhance".  _That_ is why we should
 favor utterances where the word appears early.
 
-* Run as 'nobody' or some other user without permissions
+# Run as 'nobody' or some other user without permissions
 
 This hopefully won't require a code change, but it'd be good if it
 _didn't_ run as me, since if it did, it could conceivably read my
@@ -125,5 +138,6 @@ If all else fails, I can perhaps get the program to invoke "setuid"
 and/or "setgid", although Racket doesn't provide functions for that;
 I'd have to use the FFI.
 
-* Amend "quotes" list
-... with e.g., http://www.cyber.com.au/~twb/fortunes/emacs.quip
+# Amend "quotes" list
+
+... with e.g., [twb's quips](http://www.cyber.com.au/~twb/fortunes/emacs.quip)
