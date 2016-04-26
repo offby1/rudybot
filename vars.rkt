@@ -17,6 +17,8 @@
 (define *initial-channels* ; env var can be "#foo,#bar"
   (make-parameter (from-env "BOTCHANNELS" '(
                                             "#emacs"
+                                            "#racket"
+                                            "#scheme"
                                             ) #rx",")))
 (define *nickserv-password*
   (make-parameter (from-env "BOTPASSWD" (get-preference '|rudybot-freenode-nickserv-password|))))
