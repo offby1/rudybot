@@ -6,6 +6,8 @@
  (only-in "utils.rkt" safely)
  (only-in "vars.rkt" *incubot-logger*))
 
+(define (log str)
+  ((*incubot-logger*) str))
 
 (define *db-file-name*
   (make-parameter
@@ -46,7 +48,7 @@
                [tokes (safe-take tokes 4)])
       (define match-me (string-join tokes " "))
       (and (not (null? tokes))
-           ((*incubot-logger*) (format "Matching ~s from offset ~a" match-me ro))
+           (log (format "Matching ~s from offset ~a" match-me ro))
            (let ([texts (db:query-list conn
                                        @string-append{
                                                       SELECT  f_log.text
@@ -63,12 +65,12 @@
              ;; the string we're passing to MATCH.
              (if (null? texts)
                  (begin
-                   ((*incubot-logger*) (format "Nothing; trying again"))
+                   (log (format "Nothing; trying again"))
                    (loop (quotient ro 2)
                          (drop-right tokes 1)))
 
                  (begin
-                   ((*incubot-logger*) (format "W00t" ))
+                   (log (format "W00t" ))
                    (car texts))))))))
 
 (provide make-incubot-server)
