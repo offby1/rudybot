@@ -26,7 +26,7 @@
     ;; query
     `(
       [key . ,(bytes->string/utf-8 (get-preference 'google-API-key))]
-      [cx . "012774403818167417067:yduodfpvsvw"]
+      [cx . "012774403818167417067:n89ppe2mrss"]
       [q . ,text]
       [num . "1"]
       )
@@ -37,9 +37,9 @@
 
 (module+ test
   (define-test-suite search-tests
-    (let ((result (list-ref (hash-ref (search "cat pictures") 'items) 0)))
+    (let ((result (list-ref (hash-ref (search "\"with-temp-buffer\"") 'items) 0)))
       ;; Obviously these tests aren't reliable, as search results
       ;; change over time.
-      (check-equal? "Silly Cat Pictures -Adora Cats - Android Apps on Google Play" (hash-ref result 'title))
-      (check-equal? "https://play.google.com/store/apps/details?id=adora.cats" (hash-ref result 'link))))
+      (check-equal? (hash-ref result 'title) "GNU Emacs Lisp Reference Manual: Current Buffer")
+      (check-equal? (hash-ref result 'link) "https://www.gnu.org/software/emacs/manual/html_node/elisp/Current-Buffer.html")))
   (run-tests search-tests 'verbose))
