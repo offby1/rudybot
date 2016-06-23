@@ -9,6 +9,8 @@
 (provide search)
 (module+ test (require rackunit rackunit/text-ui))
 
+;; Control the search API at https://cse.google.com/manage/all
+
 ;; Do a simple Google search.
 (define (search text)
 
