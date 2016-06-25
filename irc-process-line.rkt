@@ -485,8 +485,7 @@
 
 (defverb (g query ...) "Do a Google search"
   (let ((result (list-ref (hash-ref (search (string-join query " ")) 'items) 0)))
-    (reply (hash-ref result 'title))
-    (reply (hash-ref result 'link))))
+    (reply "~a ~a" (hash-ref result 'title)(hash-ref result 'link))))
 
 (defverb (sentientp) "imitate fsbot"
   (reply "Any day now"))
