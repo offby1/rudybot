@@ -55,6 +55,7 @@
                                                       FROM    f_log
                                                       WHERE   f_log.text MATCH ?
                                                       AND     f_log.rowid > ?
+                                                      AND     f_log.rowid < (select max(rowid) from f_log)
                                                       ORDER   BY f_log.rowid ASC
                                                       LIMIT   1
                                                       }
