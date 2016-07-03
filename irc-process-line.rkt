@@ -267,18 +267,26 @@
                                    (not (regexp-match #rx"^offby1" nick))
                                    (equal? target "#emacs" ))))
                     ((*incubot-server*) 'put-string (string-join rest " "))))]
-             [",..."
+
+             ;; These trigger fsbot, and the combination of rudybot's
+             ;; reponse with fsbot's response (which for some reason
+             ;; always comes second) is, dare I say it, amusing.
+             [",..."                    ;[the sound of crickets permeates the air]
               (when (equal? target "#emacs")
                 (pm target "Woof."))]
 
-             [",…"
+             [",…"                      ;[In the distance, you see a tree bark]
               (when (equal? target "#emacs")
                 (pm target "\1ACTION makes like a tree, and leaves\1"))]
 
-             [",⋱"
+             [",⋱"                      ;[In the distance, there is no one to hear a tree fall]
               (when (equal? target "#emacs")
                 (pm target "\1ACTION makes the sound of one hand clapping\1"))
              ]
+             [",⋮"                      ;[In the distance, a fallen tree eerily rights itself]
+              (when (equal? target "#emacs")
+                (pm target "\1ACTION waves his hands and intones 'Abracadabra'\1"))
+              ]
              [_
               ((*incubot-server*)
                'put-string
