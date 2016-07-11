@@ -223,7 +223,8 @@
              (regexp-match? #rx"[Bb]ot$" (canonicalize-nick nick))
              (not (and
                    (string=? (canonicalize-nick nick) "fsbot")
-                   (member (car rest) '("g" "t8")))))
+                   (and (not (null? rest))
+                        (member (car rest) '("g" "t8"))))))
            (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
                 nick)]
           [(equal? target (unbox *my-nick*))
