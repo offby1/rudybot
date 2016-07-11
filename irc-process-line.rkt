@@ -859,9 +859,6 @@
     (begin (out "PART ~a" channel) (reply "OK"))
     (reply "not a proper channel name")))
 
-(defverb #:master (tell who stuff ...) "tell me to tell someone something"
-  (pm (*response-target*) "~a: ~a" who (string-join stuff)))
-
 (defverb #:master (emote stuff ...) "tell me to do something"
   (pm (*response-target*) "\1ACTION ~a\1" (string-join stuff)))
 
