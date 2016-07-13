@@ -56,9 +56,11 @@
             (cons (hash-ref ht 'title)
                   (hash-ref ht 'link)))
           (and (not corrected)
-               (let ((correction (hash-ref (hash-ref blob 'spelling) 'correctedQuery)))
-                 (loop (hash-ref (search correction) 'items #f)
-                       #t)))
+               (let ((spelling  (hash-ref blob 'spelling #f)))
+                 (and spelling
+                      (let ((correction (hash-ref spelling 'correctedQuery)))
+                        (loop (hash-ref (search correction) 'items #f)
+                              #t)))))
           ))))
 
 (module+ test

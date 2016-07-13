@@ -47,7 +47,7 @@
                      (c "frotz: plotz.")
                      (c "g property")
                      (c "g site:amazon.com shenengians during war")
-                     (c "g alkjdlsakjd")
+                     (c "g can you escape \\escaped \\\\escaping \\\\\\escapes in landscape capes\\?")
                      (c "everyone loves someone")
                      (c "plotz")
                      (meh "\1ACTION fred eats salami\1")
