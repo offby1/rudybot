@@ -14,7 +14,7 @@
          "userinfo.rkt"
          "utils.rkt"
          "xlate.rkt"
-         (only-in "search.rkt" search)
+         (only-in "search.rkt" google-search)
          "spelled-out-time.rkt"
          "quotes.rkt"
          "re.rkt"
@@ -497,8 +497,12 @@
   (reply "https://github.com/offby1/rudybot"))
 
 (defverb (g query ...) "Do a Google search"
-  (let ((result (list-ref (hash-ref (search (string-join query " ")) 'items) 0)))
-    (reply "~a ~a" (hash-ref result 'title)(hash-ref result 'link))))
+  (let ((search-string  (string-join query " ")))
+    (match (google-search search-string)
+           [(cons title link)
+            (reply "~a ~a" title link)]
+           [_
+            (reply "erp?")])))
 
 (defverb (sentientp) "imitate fsbot"
   (reply "Any day now"))
