@@ -21,7 +21,7 @@
      (bytes->string/utf-8 v)]
     [(? list? v)
      #:when (dict? v)
-     (make-immutable-hasheq (map (lambda (p) (cons (string->symbol (first p))
+     (make-immutable-hasheq (map (lambda (p) (cons (first p)
                                                    (to-jsexpr (second p))))
                        v))]
     [(? list? v)
@@ -54,9 +54,16 @@
                         (b . "b"))
                 #hasheq((b . "b")
                         (a . "a")))
-  (check-true (hash-eq? (to-jsexpr '(("k1" "v1")))))
-  (check-equal? (to-jsexpr '(("k1" "v1")))
-                #hasheq((k1 . "v1"))))
+  (check-true (hash-eq? (to-jsexpr '((k1 "v1")))))
+  (check-equal? (to-jsexpr '((k1 "v1")))
+                #hasheq((k1 . "v1")))
+
+  (match (maybe-parse-line "2015-08-23T20:55:35Z <= ((prefix #\"weber.freenode.net\"))")
+    [(cons timestamp sexp)
+     (check-equal?
+      (to-jsexpr sexp)
+      #hasheq((prefix . "weber.freenode.net")))]
+  ))
 
 
 (module+ main
