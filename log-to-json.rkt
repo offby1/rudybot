@@ -89,7 +89,8 @@
       (for ([line (in-lines inf)])
         (match (maybe-parse-line line)
           [(cons timestamp sexp )
-           (printf "~a~%" (list timestamp (to-jsexpr sexp)))]
+           (write-json (list timestamp (to-jsexpr sexp)))
+           (newline)]
           [_ #f])
         ))
     ))
