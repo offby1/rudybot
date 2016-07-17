@@ -4,6 +4,8 @@
 ;; sexp-like entries to JSON, so that other tools can do something
 ;; with them.
 
+(require (only-in json write-json jsexpr?))
+
 (define/contract (maybe-parse-line l)
   (string? . -> . (or/c (cons/c string? any/c) false/c))
   (match l
@@ -12,14 +14,40 @@
      ]
     [_ #f]))
 
+(define/contract (to-jsexpr value)
+  (any/c . -> . jsexpr?)
+  (match value
+    [(? bytes? v)
+     (bytes->string/utf-8 v)]
+    [(? list? v)
+     #:when (dict? v)
+     (make-hasheq (map (lambda (p) (cons (string->symbol (first p))
+                                         (to-jsexpr (second p))))
+                       v))]
+    [(? list? v)
+     (map to-jsexpr v)]
+    [(? symbol? v)
+     (symbol->string v)]
+    [_ value]))
+
 (module+ test
   (require rackunit)
   (check-false (maybe-parse-line "fred"))
   (check-false (maybe-parse-line "2016-07-13T04:24:14Z Main starting."))
+  (check-false (maybe-parse-line "2015-08-23T20:55:35Z => (left-pointing-arrow-only)"))
   (check-equal?
    (maybe-parse-line "2015-08-23T20:55:35Z <= ((prefix #\"weber.freenode.net\") (command #\"NOTICE\") (params (param #\"*\") (param #\"*** Looking up your hostname...\")))")
    (cons "2015-08-23T20:55:35Z"
-         '((prefix #"weber.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** Looking up your hostname..."))))))
+         '((prefix #"weber.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** Looking up your hostname...")))))
+
+  (check-equal? (to-jsexpr #"a byte string") "a byte string")
+  (check-equal? (to-jsexpr '(symbol "string"))  '("symbol" "string"))
+  (check-equal? #hasheq((a . "a")
+                        (b . "b"))
+                #hasheq((b . "b")
+                        (a . "a")))
+  (check-equal? (to-jsexpr '(("key" "value") ("another-key" "another value")))
+                #hasheq((key . "value") (another-key . "another value"))))
 
 (module+ main
   (call-with-input-file "big-log"
@@ -27,7 +55,7 @@
       (for ([line (in-lines inf)])
         (match (maybe-parse-line line)
           [(cons timestamp sexp )
-           (printf "JSONify ~a: ~a~%" timestamp sexp)]
+           (write-json (list timestamp (make-hasheq sexp)))]
           [_ #f])
         ))
     ))
