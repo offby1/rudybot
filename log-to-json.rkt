@@ -29,9 +29,16 @@
      (bytes->string/utf-8 v)]
     [(? list? v)
      #:when (dict? v)
-     (make-immutable-hasheq (map (lambda (p) (cons (first p)
-                                                   (to-jsexpr (second p))))
-                       v))]
+     (make-immutable-hasheq (map
+                             (lambda (p)
+                               (cons (first p)
+                                     (to-jsexpr
+                                      (if (eq? (first p)
+                                               'params)
+                                          (cdr p)
+                                          (second p)))
+                                     ))
+                             v))]
     [(? list? v)
      #:when (and (symbol? (first v))
                  (string? (second v)))
@@ -80,7 +87,13 @@
      (check-equal?
       (to-jsexpr sexp)
       #hasheq((prefix . "weber.freenode.net")))]
-  ))
+  )
+  (let ([sexp "((prefix #\"niven.freenode.net\") (command #\"001\") (params (param #\"rudybot\") (param #\"Welcome to the freenode Internet Relay Chat Network rudybot\")))"])
+    (check-equal? (to-jsexpr (flatten-params (read  (open-input-string sexp))))
+                  #hasheq((command . "001")
+                          (params . ("rudybot" "Welcome to the freenode Internet Relay Chat Network rudybot"))
+                          (prefix . "niven.freenode.net"))))
+  )
 
 
 (module+ main
