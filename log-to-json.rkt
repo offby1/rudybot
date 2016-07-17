@@ -10,7 +10,8 @@
   (string? . -> . (or/c (cons/c string? any/c) false/c))
   (match l
     [(regexp #px"^(.{19}Z) <= (.*)" (list _ timestamp sexp))
-     (cons timestamp (flatten-params (read  (open-input-string sexp))))
+     (and (char=? (string-ref sexp 0)  #\()
+          (cons timestamp (flatten-params (read  (open-input-string sexp)))))
      ]
     [_ #f]))
 
