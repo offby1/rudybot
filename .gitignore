@@ -4,7 +4,6 @@
 *.db-wal
 *~
 TAGS
-big-log
 big-log.*
 compiled
 parsed-log

@@ -1,0 +1,31 @@
+2011-06-03T14:11:54Z <= ":brx!~brx@p4FE11B58.dip.t-dialin.net JOIN :#emacs"
+2011-06-03T14:12:09Z <= ":bpalmer!~user@unaffiliated/bpalmer PART #emacs :\"\u0002ERC\u0002 Version 5.1.2 $Revision: 1.796.2.6 $ (IRC client for Emacs)\""
+2011-06-03T14:17:46Z (re)loading module from irc-process-line.rkt
+2011-06-03T14:19:50Z Main starting: c8b04bc
+2011-06-03T14:19:50Z incubot-server:Reading log from #<input-port:/usr/local/src/rudybot/parsed-log>...
+2011-06-03T14:20:59Z Not adding offensive string "My friend!  I think this might interest you!  Now that the Obama Nigger Tide is rapidly in retreat, the time for us to act is NOW!  Tired of Niggers and their monkeyshines?  Can't join the KKK because you are not White?  This is Billy Mayes here with an amazing new website!  Chimpout Forum!  http://www.chimpout.com/forum  Chimpout Forum welcomes anybody who hates niggers and isn't a nigger.      Asian?  No Problem!  Jewish?  We hav" to corpus
+2011-06-03T14:21:07Z Not adding offensive string "<bittwist> My friend!  I think this might interest you!  Now that the Obama Nigger Tide is rapidly in retreat, the time for us to act is NOW!  Tired of Niggers and their monkeyshines?  Can't join the KKK because you are not White?  This is Billy Mayes here with an amazing new website!  Chimpout Forum!  http://www.chimpout.com/forum  Chimpout Forum welcomes anybody who hates niggers and isn't a nigger.      Asian?  No Problem!  Jewish?  We ha" to corpus
+2011-06-03T14:29:21Z incubot-server:Reading log from #<input-port:/usr/local/src/rudybot/parsed-log>...done
+2011-06-03T14:29:21Z Bot version c8b04bc starting
+2011-06-03T14:29:21Z <= ((prefix #"niven.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** Looking up your hostname...")))
+2011-06-03T14:29:21Z => "NICK rudybot"
+2011-06-03T14:29:21Z => "USER luser unknown-host localhost :Eric Hanchrow's bot, version c8b04bc"
+2011-06-03T14:29:21Z => "PRIVMSG NickServ :identify xyzzy"
+2011-06-03T14:29:21Z <= ((prefix #"niven.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** Checking Ident")))
+2011-06-03T14:29:21Z <= ((prefix #"niven.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** Found your hostname")))
+2011-06-03T14:29:32Z <= ((prefix #"niven.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** No Ident response")))
+2011-06-03T14:29:32Z <= ((prefix #"niven.freenode.net") (command #"001") (params (param #"rudybot") (param #"Welcome to the freenode Internet Relay Chat Network rudybot")))
+2011-06-03T14:29:32Z Yay, we're in
+2015-08-23T20:55:34Z (re)loading module from irc-process-line.rkt
+2015-08-23T20:55:34Z Main starting: ff06543
+2015-08-23T20:55:35Z Bot version ff06543 starting
+2015-08-23T20:55:35Z <= ((prefix #"weber.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** Looking up your hostname...")))
+2015-08-23T20:55:35Z => NICK rudybot
+2015-08-23T20:55:35Z => USER luser unknown-host localhost :Eric Hanchrow's bot, version ff06543
+2015-08-23T20:55:35Z => PRIVMSG NickServ :identify xyzzy
+2015-08-23T20:55:35Z <= ((prefix #"weber.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** Checking Ident")))
+2015-08-23T20:55:36Z <= ((prefix #"weber.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** Found your hostname")))
+2015-08-24T19:35:08Z (re)loading module from irc-process-line.rkt
+2015-08-24T19:35:09Z Main starting: unknown
+2015-08-24T19:42:13Z (re)loading module from irc-process-line.rkt
+2015-08-24T19:42:14Z Main starting: unknown
