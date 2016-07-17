@@ -82,17 +82,17 @@
                                         (params . ((param "foo")(param "bar")))))
                 #hasheq((k1 . "v1")
                         (params .  ("foo" "bar"))))
-  (match (maybe-parse-line "2015-08-23T20:55:35Z <= ((prefix #\"weber.freenode.net\"))")
-    [(cons timestamp sexp)
-     (check-equal?
-      (to-jsexpr sexp)
-      #hasheq((prefix . "weber.freenode.net")))]
-  )
-  (let ([sexp "((prefix #\"niven.freenode.net\") (command #\"001\") (params (param #\"rudybot\") (param #\"Welcome to the freenode Internet Relay Chat Network rudybot\")))"])
-    (check-equal? (to-jsexpr (flatten-params (read  (open-input-string sexp))))
-                  #hasheq((command . "001")
-                          (params . ("rudybot" "Welcome to the freenode Internet Relay Chat Network rudybot"))
-                          (prefix . "niven.freenode.net"))))
+  (check-equal?
+   (to-jsexpr '((prefix #"weber.freenode.net")))
+   #hasheq((prefix . "weber.freenode.net")))
+  (check-equal? (to-jsexpr '((prefix #"niven.freenode.net")
+                             (command #"001")
+                             (params
+                              #"rudybot"
+                              #"Welcome to the freenode Internet Relay Chat Network rudybot")))
+                #hasheq((prefix . "niven.freenode.net")
+                        (command . "001")
+                        (params . ("rudybot" "Welcome to the freenode Internet Relay Chat Network rudybot"))))
   )
 
 
