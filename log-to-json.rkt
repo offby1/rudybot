@@ -21,14 +21,22 @@
      (bytes->string/utf-8 v)]
     [(? list? v)
      #:when (dict? v)
-     (make-hasheq (map (lambda (p) (cons (string->symbol (first p))
-                                         (to-jsexpr (second p))))
+     (make-immutable-hasheq (map (lambda (p) (cons (string->symbol (first p))
+                                                   (to-jsexpr (second p))))
                        v))]
     [(? list? v)
+     #:when (and (symbol? (first v))
+                 (string? (second v)))
+     (list (symbol->string (first v))
+           (second v))
+     ]
+     [(? list? v)
      (map to-jsexpr v)]
     [(? symbol? v)
-     (symbol->string v)]
-    [_ value]))
+      v]
+    [(? string? v)
+     v]
+    ))
 
 (module+ test
   (require rackunit)
@@ -46,8 +54,10 @@
                         (b . "b"))
                 #hasheq((b . "b")
                         (a . "a")))
-  (check-equal? (to-jsexpr '(("key" "value") ("another-key" "another value")))
-                #hasheq((key . "value") (another-key . "another value"))))
+  (check-true (hash-eq? (to-jsexpr '(("k1" "v1")))))
+  (check-equal? (to-jsexpr '(("k1" "v1")))
+                #hasheq((k1 . "v1"))))
+
 
 (module+ main
   (call-with-input-file "big-log"
@@ -55,7 +65,7 @@
       (for ([line (in-lines inf)])
         (match (maybe-parse-line line)
           [(cons timestamp sexp )
-           (write-json (list timestamp (make-hasheq sexp)))]
+           (print (list timestamp (to-jsexpr sexp)))]
           [_ #f])
         ))
     ))
