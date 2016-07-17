@@ -1,4 +1,4 @@
-#lang racket
+#lang debug racket
 
 ;; read the big-log that rudybot emits, and convert the stupid
 ;; sexp-like entries to JSON, so that other tools can do something
@@ -13,6 +13,10 @@
      (cons timestamp (read  (open-input-string sexp)))
      ]
     [_ #f]))
+
+(define (flatten-params ht)
+  #hasheq((k1 . "v1") (params .  ("foo" "bar"))))
+
 
 (define/contract (to-jsexpr value)
   (any/c . -> . jsexpr?)
@@ -58,6 +62,10 @@
   (check-equal? (to-jsexpr '((k1 "v1")))
                 #hasheq((k1 . "v1")))
 
+  (check-equal? (flatten-params #hasheq((k1 . "v1")
+                                        (params . ((param "foo")(param "bar")))))
+                #hasheq((k1 . "v1")
+                        (params .  ("foo" "bar"))))
   (match (maybe-parse-line "2015-08-23T20:55:35Z <= ((prefix #\"weber.freenode.net\"))")
     [(cons timestamp sexp)
      (check-equal?
