@@ -10,12 +10,15 @@
   (string? . -> . (or/c (cons/c string? any/c) false/c))
   (match l
     [(regexp #px"^(.{19}Z) <= (.*)" (list _ timestamp sexp))
-     (cons timestamp (read  (open-input-string sexp)))
+     (cons timestamp (flatten-params (read  (open-input-string sexp))))
      ]
     [_ #f]))
 
-(define (flatten-params ht)
-  #hasheq((k1 . "v1") (params .  ("foo" "bar"))))
+(define (flatten-params alist)
+  (let ([params (dict-ref alist 'params #f)])
+    (if params
+        (dict-set alist 'params (map second params))
+        alist)))
 
 
 (define/contract (to-jsexpr value)
@@ -34,10 +37,10 @@
      (list (symbol->string (first v))
            (second v))
      ]
-     [(? list? v)
+    [(? list? v)
      (map to-jsexpr v)]
     [(? symbol? v)
-      v]
+     v]
     [(? string? v)
      v]
     ))
@@ -50,7 +53,7 @@
   (check-equal?
    (maybe-parse-line "2015-08-23T20:55:35Z <= ((prefix #\"weber.freenode.net\") (command #\"NOTICE\") (params (param #\"*\") (param #\"*** Looking up your hostname...\")))")
    (cons "2015-08-23T20:55:35Z"
-         '((prefix #"weber.freenode.net") (command #"NOTICE") (params (param #"*") (param #"*** Looking up your hostname...")))))
+         '((prefix #"weber.freenode.net") (command #"NOTICE") (params  #"*"  #"*** Looking up your hostname..."))))
 
   (check-equal? (to-jsexpr #"a byte string") "a byte string")
   (check-equal? (to-jsexpr '(symbol "string"))  '("symbol" "string"))
@@ -62,6 +65,11 @@
   (check-equal? (to-jsexpr '((k1 "v1")))
                 #hasheq((k1 . "v1")))
 
+  (check-equal?
+   (flatten-params '((prefix #"nick!knack@frotz") (command #"123") (params (param #"#channel") (param #"some stuff"))))
+   '((prefix #"nick!knack@frotz")
+     (command #"123")
+     (params #"#channel" #"some stuff")))
   (check-equal? (flatten-params #hasheq((k1 . "v1")
                                         (params . ((param "foo")(param "bar")))))
                 #hasheq((k1 . "v1")
@@ -80,7 +88,7 @@
       (for ([line (in-lines inf)])
         (match (maybe-parse-line line)
           [(cons timestamp sexp )
-           (print (list timestamp (to-jsexpr sexp)))]
+           (printf "~a~%" (list timestamp (to-jsexpr sexp)))]
           [_ #f])
         ))
     ))
