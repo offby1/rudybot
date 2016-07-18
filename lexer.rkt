@@ -36,19 +36,18 @@
    [(? string? message)
     (parse-message (open-input-string message))]
    [(? input-port? message)
-    (begin0
-        (cons
-         (if (char=? #\: (peek-char message))
-             (begin
-               (read-char message)
-               (cons 'prefix (parse-prefix message)))
-             '(prefix))
+    (cons
+     (if (char=? #\: (peek-char message))
          (begin
-           (eat-ws message)
-           (begin0
-               `([command . ,(parse-command message)]
-                 [params . ,(parse-params message)])
-             (parse-crlf message)))))]))
+           (read-char message)
+           (cons 'prefix (parse-prefix message)))
+         '(prefix))
+     (begin
+       (eat-ws message)
+       (begin0
+           `([command . ,(parse-command message)]
+             [params . ,(parse-params message)])
+         (parse-crlf message))))]))
 
 (module+ test
  (define-test-suite all-tests
