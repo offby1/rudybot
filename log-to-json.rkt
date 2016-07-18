@@ -4,20 +4,25 @@
 ;; sexp-like entries to JSON, so that other tools can do something
 ;; with them.
 
-(require (only-in json write-json jsexpr?))
+(require (only-in json write-json jsexpr?)
+         (only-in "lexer.rkt" parse-message))
 
 (define/contract (maybe-parse-line l)
   (string? . -> . (or/c (cons/c string? any/c) false/c))
   (match l
-    [(regexp #px"^(.{19}Z) <= (.*)" (list _ timestamp sexp))
+    [(regexp #px"^(.{19}Z) <= (.*)" (list _ timestamp meat))
 
-     ;; The real log has two different varieties of entry: one is a
-     ;; sort of sexp, which we recognize because it begins with a (;
-     ;; the other is an unparsed string, which we ignore for now (but
-     ;; which we already know how to parse: lexer.rkt has the code).
+     ;; The log has two different varieties of entry: one is a sort of
+     ;; sexp, which we recognize because it begins with a left paren;
+     ;; the other is an unparsed string, which we parse via
+     ;; lexer.rkt).
 
-     (and (char=? (string-ref sexp 0)  #\()
-          (cons timestamp (to-jsexpr (read  (open-input-string sexp)))))
+     (match (string-ref meat 0)
+       [#\(
+        (cons timestamp (to-jsexpr (read  (open-input-string meat))))]
+       [#\"
+        (cons timestamp (to-jsexpr (parse-message (read (open-input-string meat)))))]
+       [_ #f])
      ]
     [_ #f]))
 
@@ -34,6 +39,12 @@
   (check-false (maybe-parse-line "fred"))
   (check-false (maybe-parse-line "2016-07-13T04:24:14Z Main starting."))
   (check-false (maybe-parse-line "2015-08-23T20:55:35Z => (left-pointing-arrow-only)"))
+  (check-equal? (maybe-parse-line "2011-06-03T14:11:54Z <= \":brx!~brx@p4FE11B58.dip.t-dialin.net JOIN :#emacs\"")
+                (cons "2011-06-03T14:11:54Z"
+                      #hasheq((params . ("#emacs"))
+                              (command . "JOIN")
+                              (prefix . "brx!~brx@p4FE11B58.dip.t-dialin.net"))
+                      ))
   (check-equal? (to-jsexpr '((prefix #"niven.freenode.net")
                              (command #"001")
                              (params
