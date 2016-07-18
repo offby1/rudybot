@@ -10,89 +10,46 @@
   (string? . -> . (or/c (cons/c string? any/c) false/c))
   (match l
     [(regexp #px"^(.{19}Z) <= (.*)" (list _ timestamp sexp))
+
+     ;; The real log has two different varieties of entry: one is a
+     ;; sort of sexp, which we recognize because it begins with a (;
+     ;; the other is an unparsed string, which we ignore for now (but
+     ;; which we already know how to parse: lexer.rkt has the code).
+
      (and (char=? (string-ref sexp 0)  #\()
-          (cons timestamp (flatten-params (read  (open-input-string sexp)))))
+          (cons timestamp (to-jsexpr (read  (open-input-string sexp)))))
      ]
     [_ #f]))
 
-(define (flatten-params alist)
-  (let ([params (dict-ref alist 'params #f)])
-    (if params
-        (dict-set alist 'params (map second params))
-        alist)))
-
-
-(define/contract (to-jsexpr value)
-  (any/c . -> . jsexpr?)
-  (match value
-    [(? bytes? v)
-     (bytes->string/utf-8 v)]
-    [(? list? v)
-     #:when (dict? v)
-     (make-immutable-hasheq (map
-                             (lambda (p)
-                               (cons (first p)
-                                     (to-jsexpr
-                                      (if (eq? (first p)
-                                               'params)
-                                          (cdr p)
-                                          (second p)))
-                                     ))
-                             v))]
-    [(? list? v)
-     #:when (and (symbol? (first v))
-                 (string? (second v)))
-     (list (symbol->string (first v))
-           (second v))
-     ]
-    [(? list? v)
-     (map to-jsexpr v)]
-    [(? symbol? v)
-     v]
-    [(? string? v)
-     v]
-    ))
+(define/contract (to-jsexpr alist)
+  (dict? . -> . jsexpr?)
+  (make-immutable-hasheq
+   (list
+    (cons 'command (bytes->string/utf-8 (car (dict-ref alist 'command))))
+    (cons 'prefix  (bytes->string/utf-8 (car (dict-ref alist 'prefix))))
+    (cons 'params  (map (compose bytes->string/utf-8 second) (dict-ref alist 'params))))))
 
 (module+ test
   (require rackunit)
   (check-false (maybe-parse-line "fred"))
   (check-false (maybe-parse-line "2016-07-13T04:24:14Z Main starting."))
   (check-false (maybe-parse-line "2015-08-23T20:55:35Z => (left-pointing-arrow-only)"))
-  (check-equal?
-   (maybe-parse-line "2015-08-23T20:55:35Z <= ((prefix #\"weber.freenode.net\") (command #\"NOTICE\") (params (param #\"*\") (param #\"*** Looking up your hostname...\")))")
-   (cons "2015-08-23T20:55:35Z"
-         '((prefix #"weber.freenode.net") (command #"NOTICE") (params  #"*"  #"*** Looking up your hostname..."))))
-
-  (check-equal? (to-jsexpr #"a byte string") "a byte string")
-  (check-equal? (to-jsexpr '(symbol "string"))  '("symbol" "string"))
-  (check-equal? #hasheq((a . "a")
-                        (b . "b"))
-                #hasheq((b . "b")
-                        (a . "a")))
-  (check-true (hash-eq? (to-jsexpr '((k1 "v1")))))
-  (check-equal? (to-jsexpr '((k1 "v1")))
-                #hasheq((k1 . "v1")))
-
-  (check-equal?
-   (flatten-params '((prefix #"nick!knack@frotz") (command #"123") (params (param #"#channel") (param #"some stuff"))))
-   '((prefix #"nick!knack@frotz")
-     (command #"123")
-     (params #"#channel" #"some stuff")))
-  (check-equal? (flatten-params #hasheq((k1 . "v1")
-                                        (params . ((param "foo")(param "bar")))))
-                #hasheq((k1 . "v1")
-                        (params .  ("foo" "bar"))))
-  (check-equal?
-   (to-jsexpr '((prefix #"weber.freenode.net")))
-   #hasheq((prefix . "weber.freenode.net")))
   (check-equal? (to-jsexpr '((prefix #"niven.freenode.net")
                              (command #"001")
                              (params
-                              #"rudybot"
-                              #"Welcome to the freenode Internet Relay Chat Network rudybot")))
+                              (param #"rudybot")
+                              (param #"Welcome to the freenode Internet Relay Chat Network rudybot"))))
                 #hasheq((prefix . "niven.freenode.net")
                         (command . "001")
                         (params . ("rudybot" "Welcome to the freenode Internet Relay Chat Network rudybot"))))
+
+  (check-equal?
+   (maybe-parse-line
+    "2015-08-23T20:55:35Z <= ((prefix #\"weber.freenode.net\") (command #\"NOTICE\") (params (param #\"*\") (param #\"*** Looking up your hostname...\")))")
+   (cons "2015-08-23T20:55:35Z"
+         #hasheq((prefix . "weber.freenode.net")
+                 (command . "NOTICE")
+                 (params . ("*"  "*** Looking up your hostname...")))))
   )
 
 
@@ -102,7 +59,7 @@
       (for ([line (in-lines inf)])
         (match (maybe-parse-line line)
           [(cons timestamp sexp )
-           (write-json (list timestamp (to-jsexpr sexp)))
+           (write-json (list timestamp sexp))
            (newline)]
           [_ #f])
         ))
