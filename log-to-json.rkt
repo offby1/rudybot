@@ -31,14 +31,13 @@
   (make-immutable-hasheq
    (append-map
     (match-lambda
-      [(list symbol)
-       '()]
+      [(list 'params (list 'param (? bytes? v)) ...)
+       (list (cons 'params (map bytes->string/utf-8 v)))]
 
-      [(list 'params v ...)
-       (list (cons 'params (map (compose bytes->string/utf-8 second) v)))]
+      [(list symbol (? bytes? v))
+       (list (cons symbol (bytes->string/utf-8 v)))]
 
-      [(list symbol v)
-       (list (cons symbol (bytes->string/utf-8 v)))])
+      [_ '()])
     alist)))
 
 
@@ -75,11 +74,18 @@
    (cons "2010-01-19T03:01:07Z"
          #hasheq((command . "NOTICE")
                  (params . ("AUTH" "*** Checking ident")))))
+  (check-equal?
+   (maybe-parse-line
+    "2011-06-03T17:43:54Z <= ((params (param . #f)))")
+   (cons
+    "2011-06-03T17:43:54Z"
+    #hasheq()
+    ))
   )
 
 
 (module+ main
-  (call-with-input-file "big-log"
+  (call-with-input-file "/mnt/rudybot/big-log.restored"
     (lambda (inf)
       (call-with-output-file "/dev/null" #:exists 'append
         (lambda (outf)
