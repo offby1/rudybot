@@ -29,10 +29,18 @@
 (define/contract (to-jsexpr alist)
   (dict? . -> . jsexpr?)
   (make-immutable-hasheq
-   (list
-    (cons 'command (bytes->string/utf-8 (car (dict-ref alist 'command))))
-    (cons 'prefix  (bytes->string/utf-8 (car (dict-ref alist 'prefix))))
-    (cons 'params  (map (compose bytes->string/utf-8 second) (dict-ref alist 'params))))))
+   (append-map
+    (match-lambda
+      [(list symbol)
+       '()]
+
+      [(list 'params v ...)
+       (list (cons 'params (map (compose bytes->string/utf-8 second) v)))]
+
+      [(list symbol v)
+       (list (cons symbol (bytes->string/utf-8 v)))])
+    alist)))
+
 
 (module+ test
   (require rackunit)
@@ -61,17 +69,25 @@
          #hasheq((prefix . "weber.freenode.net")
                  (command . "NOTICE")
                  (params . ("*"  "*** Looking up your hostname...")))))
+  (check-equal?
+   (maybe-parse-line
+    "2010-01-19T03:01:07Z <= \"NOTICE AUTH :*** Checking ident\"")
+   (cons "2010-01-19T03:01:07Z"
+         #hasheq((command . "NOTICE")
+                 (params . ("AUTH" "*** Checking ident")))))
   )
 
 
 (module+ main
   (call-with-input-file "big-log"
     (lambda (inf)
-      (for ([line (in-lines inf)])
-        (match (maybe-parse-line line)
-          [(cons timestamp sexp )
-           (write-json (list timestamp sexp))
-           (newline)]
-          [_ #f])
-        ))
+      (call-with-output-file "/dev/null" #:exists 'append
+        (lambda (outf)
+          (for ([line (in-lines inf)])
+              (match (maybe-parse-line line)
+                [(cons timestamp sexp )
+                 (write-json (list timestamp sexp) outf)
+                 (newline outf)]
+                [_ #f])
+            ))))
     ))
