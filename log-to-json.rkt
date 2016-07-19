@@ -89,11 +89,17 @@
     (lambda (inf)
       (call-with-output-file "/dev/null" #:exists 'append
         (lambda (outf)
-          (for ([line (in-lines inf)])
+          (for ([(line index) (in-indexed (in-lines inf))])
+            (when (zero? (remainder index 5000))
+              (printf "~a~%" index))
+            (with-handlers ([exn:fail?
+                             (lambda (e)
+                               (printf "~s => ~a~%" line e))]
+                            )
               (match (maybe-parse-line line)
                 [(cons timestamp sexp )
                  (write-json (list timestamp sexp) outf)
                  (newline outf)]
-                [_ #f])
+                [_ #f]))
             ))))
     ))
