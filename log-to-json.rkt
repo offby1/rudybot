@@ -10,20 +10,13 @@
 (define/contract (maybe-parse-line l)
   (string? . -> . (or/c (cons/c string? any/c) false/c))
   (match l
-    [(regexp #px"^(.{19}Z) <= (.*)" (list _ timestamp meat))
-
-     ;; The log has two different varieties of entry: one is a sort of
-     ;; sexp, which we recognize because it begins with a left paren;
-     ;; the other is an unparsed string, which we parse via
-     ;; lexer.rkt).
-
-     (match (string-ref meat 0)
-       [#\(
-        (cons timestamp (to-jsexpr (read  (open-input-string meat))))]
-       [#\"
-        (cons timestamp (to-jsexpr (parse-message (read (open-input-string meat)))))]
-       [_ #f])
-     ]
+    ;; The log has two different varieties of entry: one is a sort of
+    ;; sexp, which we recognize because it begins with a left paren;
+    ;; the other is an unparsed string, which we parse via lexer.rkt).
+    [(regexp #px"^(.{19}Z) <= (\\(.*\\))" (list _ timestamp sexp))
+     (cons timestamp (to-jsexpr (read  (open-input-string sexp))))]
+    [(regexp #px"^(.{19}Z) <= (\".*\")" (list _ timestamp string))
+     (cons timestamp (to-jsexpr (parse-message (read (open-input-string string)))))]
     [_ #f]))
 
 (define/contract (to-jsexpr alist)
@@ -31,6 +24,8 @@
   (make-immutable-hasheq
    (append-map
     (match-lambda
+      ;; I have no idea why the log writes out "params" this
+      ;; verbosely.
       [(list 'params (list 'param (? bytes? v)) ...)
        (list (cons 'params (map bytes->string/utf-8 v)))]
 
