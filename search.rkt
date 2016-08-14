@@ -11,9 +11,13 @@
 
 ;; Control the search API at https://cse.google.com/manage/all
 
+;; You can try out the search engine by hand with your browser
+;; at
+;; https://cse.google.com/cse/publicurl?cx=012774403818167417067:n89ppe2mrss
+
 ;; Do a simple Google search.  Returns a nested hash table full of
 ;; symbols and strings and whatnot.
-(define (search text)
+(define (search text [number-of-results 1])
 
   (call/input-url
    (make-url
@@ -30,13 +34,10 @@
     `(
       [key . ,(bytes->string/utf-8 (get-preference 'google-API-key))]
 
-      ;; You can try out the search engine by hand with your browser
-      ;; at
-      ;; https://cse.google.com/cse/publicurl?cx=012774403818167417067:n89ppe2mrss
       [cx . "012774403818167417067:n89ppe2mrss"]
 
       [q . ,text]
-      [num . "1"]
+      [num . ,(format "~a" number-of-results)]
       )
     #f ;; fragment
     )
@@ -88,3 +89,8 @@
     (check-false (google-search "doesn't matter" hopeless-search)))
 
   (run-tests search-tests 'verbose))
+
+(module+ main
+  (require racket/pretty)
+  (pretty-print
+   (search "Cats with helmets" 10)))
