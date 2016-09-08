@@ -7,10 +7,15 @@ to ``/etc/init`` and then ``# start rudybot``.
 Getting an error about ``rackunit`` not being available?  That can be
 caused by using the ``racket-textual`` package instead of ``racket``.
 
-Run the tests like this:
+Run the unit tests like this:
 
     $ raco test -x .
-    
+
+Run the integration tests by somehow creating corpus.db (alas I can't
+think of the steps at the moment), then
+
+    $ racket servers.rkt
+
 # Some specs:
 
 - [rfc1459][]
