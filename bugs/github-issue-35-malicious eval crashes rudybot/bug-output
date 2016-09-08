@@ -1,0 +1,26 @@
+/usr/bin/time -l racket servers.rkt
+default module name resolver called with three arguments (deprecated)
+2016-09-08T14:20:19Z (re)loading module from irc-process-line.rkt
+Say goodbye to your environment ...Reading quotes file
+ poof
+2016-09-08T14:20:19Z Main starting.
+2016-09-08T14:20:19Z Bot version ad72c90 starting
+2016-09-08T14:20:19Z <= ((prefix #"n!n@n") (command #"PRIVMSG") (params (param #"#c") (param #"rudybot: eval (for ([i (in-naturals)])(displayln \"reproduce the bug\"))")))
+2016-09-08T14:20:19Z Doing for n: eval ("(for" "([i" "(in-naturals)])(displayln" "\"reproduce" "the" "bug\"))")
+2016-09-08T14:20:20Z => PRIVMSG #c :n: your sandbox is ready
+2016-09-08T14:20:30Z => PRIVMSG #c :n: error: with-limit: out of time
+       15.06 real        13.91 user         1.11 sys
+1427005440  maximum resident set size
+         0  average shared memory size
+         0  average unshared data size
+         0  average unshared stack size
+    537935  page reclaims
+         0  page faults
+         0  swaps
+        69  block input operations
+         1  block output operations
+         0  messages sent
+         0  messages received
+         0  signals received
+        71  voluntary context switches
+     25328  involuntary context switches

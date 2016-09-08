@@ -1,0 +1,16 @@
+    > sup homie                                                                                           [14:11]
+    <rudybot> sup homie
+    >  eval (for ([i (in-naturals)])(displayln "reproduce the bug"))
+    <rudybot> your sandbox is ready
+    > sup homie                                                                                           [14:12]
+    *** No such nick: rudybot
+    *** Join: rudybot (~luser@ec2-52-8-12-207.us-west-1.compute.amazonaws.com, rudebot: Eric Hanchrow's
+        bot, version f076ed2) joined rudybot
+
+Corresponding lines from /var/log/messages:
+
+    Sep  8 07:07:03 ip-10-0-0-142 init: rudybot main process (23851) killed by ABRT signal
+    Sep  8 07:07:03 ip-10-0-0-142 init: rudybot main process ended, respawning
+
+Although other times I've seen the OOM killer invoked.
+

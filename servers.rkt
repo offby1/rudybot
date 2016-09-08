@@ -41,17 +41,7 @@
                      (c "eval (date->string (seconds->date 1333210982))")))
                    (#t
                     (list
-                     (meh "Hey everyone!  What's happening?")
-                     (c "uptime")
-                     (c "settle your mettle")
-                     (c "frotz: plotz.")
-                     (c "g property")
-                     (c "g site:amazon.com shenengians during war")
-                     (c "g can you escape \\escaped \\\\escaping \\\\\\escapes in landscape capes\\?")
-                     (c "everyone loves someone")
-                     (c "plotz")
-                     (meh "\1ACTION fred eats salami\1")
-                     (c "is salami really made of meat?")))
+                     (c "eval (for ([i (in-naturals)])(displayln \"reproduce the bug\"))")))
                    (#f
                     ;; Typical stuff from ircd-seven
                     `(":bartol.freenode.net NOTICE * :*** No Ident response"
