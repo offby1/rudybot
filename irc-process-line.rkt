@@ -220,12 +220,14 @@
 
          (cond
            [(and
-             (regexp-match? #rx"[Bb]ot$" (canonicalize-nick nick))
+             (or
+              (regexp-match? #rx"[Bb]ot$" (canonicalize-nick nick))
+              (string=? "bottle" (canonicalize-nick nick)))
              (not (and
                    (string=? (canonicalize-nick nick) "fsbot")
                    (and (not (null? rest))
                         (member (car rest) '("g" "t8"))))))
-           (log "nick '~a' ends with 'bot', so I ain't gonna reply.  Bot wars, you know."
+           (log "nick '~a' sounds like a bot, so I ain't gonna reply.  Bot wars, you know."
                 nick)]
           [(equal? target (unbox *my-nick*))
            (log "~a privately said ~a to me"
