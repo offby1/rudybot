@@ -16,6 +16,7 @@
 ;; This should probably be a hash table, keyed by network name.
 (define *initial-channels* ; env var can be "#foo,#bar"
   (make-parameter (from-env "BOTCHANNELS" '(
+                                            "##cinema"
                                             "#emacs"
                                             "#racket"
                                             "#scheme"
