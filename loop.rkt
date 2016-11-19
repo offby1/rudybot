@@ -50,7 +50,7 @@
   (when (positive? consecutive-failed-connections)
     (log "~a consecutive-failed-connections"
          consecutive-failed-connections)
-    (sleep (expt 2 consecutive-failed-connections)))
+    (sleep (* 10 (expt 2 consecutive-failed-connections))))
 
   (with-handlers ([exn:fail:network?
                    (lambda (exn)
