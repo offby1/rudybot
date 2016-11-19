@@ -242,7 +242,7 @@
              (for ([word (in-list (cons first-word rest))])
                (match word
                  [(regexp url-regexp (list url _ _))
-                  (when (<= 75 (string-length url))
+                  (when (<= 110 (string-length url))
                     ;; TODO -- calling this synchronously seems like a
                     ;; bad idea -- what if the call takes forever?
                     (with-handlers ([exn:fail:http?
