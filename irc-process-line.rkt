@@ -868,6 +868,11 @@
 (defverb #:master (emote stuff ...) "tell me to do something"
   (pm (*response-target*) "\1ACTION ~a\1" (string-join stuff)))
 
+(defverb (swat victim) "smite 'em"
+  ;; You'd think I could just use "emote" here.  Nope, apparantly
+  ;; that's not bound like a normal function.
+  (pm (*response-target*) "\1ACTION waves his Palm of Slapping® threateningly at ~a\1" victim))
+
 (defverb #:master (ghost victim) "kill an errant client that's using my favorite nick"
   (pm "NickServ" (format "ghost ~a ~a" victim (*nickserv-password*))))
 
