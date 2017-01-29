@@ -247,7 +247,7 @@
                     ;; bad idea -- what if the call takes forever?
                     (with-handlers ([exn:fail:http?
                                      (lambda (e)
-                                       (pm target "tinyurl is feeling poorly today: ~a (~a)"
+                                       (pm target "The URL shortener is feeling poorly today: ~a (~a)"
                                            (exn:fail:http-code e)
                                            (exn-message e)))])
                       (pm target "~a" (make-tiny-url url))))

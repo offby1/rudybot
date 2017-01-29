@@ -48,7 +48,7 @@
          ([exn:fail:network?
            (lambda (e)
              (fprintf (current-error-port)
-                      "Can't contact tinyurl; skipping the test~%"))])
+                      "Can't contact the URL shortener; skipping the test~%"))])
        (check-equal?
         (make-tiny-url "http://photo.net")
         "http://teensy.info/do55JLwjk5")))))
