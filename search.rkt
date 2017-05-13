@@ -80,7 +80,7 @@
       ;; Obviously these tests aren't reliable, as search results
       ;; change over time.
       (check-equal? (hash-ref result 'title) "GNU Emacs Lisp Reference Manual: Current Buffer")
-      (check-equal? (hash-ref result 'link) "https://www.gnu.org/software/emacs/manual/html_node/elisp/Current-Buffer.html"))
+      (check-equal? (hash-ref result 'link) "http://www.gnu.org/s/emacs/manual/html_node/elisp/Current-Buffer.html"))
 
     (check-equal?
      (google-search "uups I done spelt it rong" simulated-search)
