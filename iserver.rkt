@@ -77,7 +77,8 @@
 (provide make-incubot-server)
 (define (make-incubot-server)
   (define connection (db:sqlite3-connect
-                      #:database (*db-file-name*)))
+                      #:database (*db-file-name*)
+                      #:mode 'create))
   (lambda (command-sym inp)
     (match command-sym
       ['put-string
