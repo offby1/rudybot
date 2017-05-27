@@ -29,3 +29,23 @@
 2015-08-24T19:35:09Z Main starting: unknown
 2015-08-24T19:42:13Z (re)loading module from irc-process-line.rkt
 2015-08-24T19:42:14Z Main starting: unknown
+2017-05-27T20:12:07Z <= ((prefix #"quotemstr!~quotemstr@dancol.org") (command #"PRIVMSG") (params (param #"#emacs") (param #"Someone actually used the variables I rage-added after losing an emacs-devel argument")))
+2017-05-27T20:12:11Z <= ((prefix #"yamad!~yamad@99-45-173-177.lightspeed.sntcca.sbcglobal.net") (command #"PRIVMSG") (params (param #"#emacs") (param #"ok, mystery partially solved, desktop is automatically turning on undo-tree")))
+2017-05-27T20:12:39Z <= ((prefix #"yamad!~yamad@99-45-173-177.lightspeed.sntcca.sbcglobal.net") (command #"PRIVMSG") (params (param #"#emacs") (param #"which i suppose i understand in principle, but it doesn't save that i interactively turned it off")))
+2017-05-27T20:12:44Z <= ((prefix #"slemonide!~Thunderbi@108.63.56.249") (command #"QUIT") (params (param #"Client Quit")))
+2017-05-27T20:12:51Z <= ((prefix #"mizu_no_oto!~textual@c-73-149-231-115.hsd1.ma.comcast.net") (command #"JOIN") (params (param #"#racket")))
+2017-05-27T20:12:52Z <= ((prefix #"tlophd_!~thadthema@adsl-99-140-180-36.dsl.chcgil.sbcglobal.net") (command #"NICK") (params (param #"thad_the_man")))
+2017-05-27T20:12:53Z <= ((prefix #"wasamasa!~wasamasa@evil/maintainer/wasamasa") (command #"PRIVMSG") (params (param #"#emacs") (param #"quotemstr: nice")))
+2017-05-27T20:12:53Z <= ((prefix) (command #"PING") (params (param #"card.freenode.net")))
+2017-05-27T20:12:53Z => PONG :card.freenode.net
+2017-05-27T20:13:11Z <= ((prefix #"wasamasa!~wasamasa@evil/maintainer/wasamasa") (command #"PRIVMSG") (params (param #"#emacs") (param #"quotemstr: btw, did you read that the author of the faster-elc-loading branch gave up on that?")))
+2017-05-27T20:13:18Z <= ((prefix #"quotemstr!~quotemstr@dancol.org") (command #"PRIVMSG") (params (param #"#emacs") (param #"wasamasa: I did not")))
+2017-05-27T20:13:20Z <= ((prefix #"wasamasa!~wasamasa@evil/maintainer/wasamasa") (command #"PRIVMSG") (params (param #"#emacs") (param #"quotemstr: your chance to shine!")))
+2017-05-27T20:13:28Z <= ((prefix #"mizu_no_oto!~textual@c-73-149-231-115.hsd1.ma.comcast.net") (command #"QUIT") (params (param #"Client Quit")))
+2017-05-27T20:13:28Z <= ((prefix #"quotemstr!~quotemstr@dancol.org") (command #"PRIVMSG") (params (param #"#emacs") (param #"wasamasa: I was just rebasing my patch")))
+2017-05-27T20:13:32Z <= ((prefix #"wasamasa!~wasamasa@evil/maintainer/wasamasa") (command #"PRIVMSG") (params (param #"#emacs") (param #"the darwinian battle allows you to turn this around")))
+2017-05-27T20:13:36Z <= ((prefix #"quotemstr!~quotemstr@dancol.org") (command #"PRIVMSG") (params (param #"#emacs") (param #"wasamasa: Why give up on it though? I mean, elc loading improvements are welcome")))
+2017-05-27T20:13:42Z <= ((prefix #"wasamasa!~wasamasa@evil/maintainer/wasamasa") (command #"PRIVMSG") (params (param #"#emacs") (param #"I dunno")))
+2017-05-27T20:13:50Z <= ((prefix #"wasamasa!~wasamasa@evil/maintainer/wasamasa") (command #"PRIVMSG") (params (param #"#emacs") (param #"I'm still at basic C hacking level")))
+2017-05-27T20:15:21Z <= ((prefix) (command #"PING") (params (param #"card.freenode.net")))
+2017-05-27T20:15:21Z => PONG :card.freenode.net
