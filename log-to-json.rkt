@@ -1,4 +1,4 @@
-#lang debug racket
+#lang racket
 
 ;; read the big-log that rudybot emits, and convert the stupid
 ;; sexp-like entries to JSON, so that other tools can do something
@@ -107,7 +107,7 @@
           (for ([(line index) (in-indexed (in-lines inf))])
             (when (zero? (remainder index 5000))
               (printf "~a~%" index))
-            (let ([maybe-json #R(maybe-parse-line line)])
+            (let ([maybe-json (maybe-parse-line line)])
               (when maybe-json
                 (let ([maybe-es-json  (elasticsearch-ify-log maybe-json)])
                   (when maybe-es-json
