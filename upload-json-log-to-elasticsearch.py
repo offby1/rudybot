@@ -26,9 +26,6 @@ POST messages/message/_delete_by_query?conflicts=proceed
 }
 """
 
-# TODO -- query elasticsearch before starting, to find the newest
-# timestamp; only upload newer items.
-
 # I don't want the actual URL here since the server's permissions are
 # too lax, and anything in this file will wind up on github
 ELASTICSEARCH_DOMAIN_ENDPOINT = os.getenv('ELASTICSEARCH_DOMAIN_ENDPOINT')
@@ -38,25 +35,29 @@ def short_hash(stuff):
     return hashlib.sha256(stuff).hexdigest()[0:8]
 
 
-def ingest_one_batch(es, batch_of_lines):
+def ingest_one_batch(es, batch_of_lines, newest_already_uploaded_timestamp):
     index_action_dicts = []
     for line in batch_of_lines:
         data = json.loads(line)
-        data.update(
-            {
-                '_index': 'messages',
-                '_type': 'message',
-                '_id': short_hash(line.encode('utf-8'))
-            })
-        index_action_dicts.append(data)
+        timestamp = data['timestamp']
+        if timestamp >= newest_already_uploaded_timestamp:
+            data.update(
+                {
+                    '_index': 'messages',
+                    '_type': 'message',
+                    '_id': short_hash(line.encode('utf-8'))
+                })
+            index_action_dicts.append(data)
 
-    elasticsearch.helpers.bulk(es, index_action_dicts)
+    if index_action_dicts:
+        elasticsearch.helpers.bulk(es, index_action_dicts)
 
     return sum((len(l) for l in batch))
 
 
 LINES_PER_BATCH = 50000
 NUMBER_OF_WORKER_THREADS = 2
+
 
 def line_batcher(inf, number_of_lines):
     batch = []
@@ -69,6 +70,15 @@ def line_batcher(inf, number_of_lines):
         yield batch
 
 
+def _get_hwm(es):
+    # e.g. {'hits': {'hits': [{'_source': {'timestamp': '2017-02-15T10:40:07Z'}}]}}
+    result = es.search (index='messages',
+                        size=1,
+                        filter_path=['hits.hits._source.timestamp'],
+                        sort='timestamp:desc')
+    return result['hits']['hits'][0]['_source']['timestamp']
+
+
 if __name__ == "__main__":
     es = elasticsearch.Elasticsearch(hosts=[
         {
@@ -78,12 +88,16 @@ if __name__ == "__main__":
         }
     ])
 
+    newest_already_uploaded_timestamp = _get_hwm(es)
+
+    print(f'Will only upload records more recent than {newest_already_uploaded_timestamp}')
+
     with open('big-log.json') as inf:
         with progressbar.ProgressBar(max_value=os.fstat(inf.fileno()).st_size) as progress:
             with concurrent.futures.ThreadPoolExecutor(max_workers=NUMBER_OF_WORKER_THREADS) as executor:
                 futures = []
                 for batch in line_batcher(inf, LINES_PER_BATCH):
-                    f = executor.submit(ingest_one_batch, es, batch)
+                    f = executor.submit(ingest_one_batch, es, batch, newest_already_uploaded_timestamp)
                     f.add_done_callback(lambda f: progress.update(progress.value + f.result()))
                     futures.append(f)
 
