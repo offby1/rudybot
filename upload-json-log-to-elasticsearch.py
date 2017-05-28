@@ -16,15 +16,12 @@ import elasticsearch            # pip install elasticsearch
 import elasticsearch.helpers
 import progressbar              # pip install progressbar2
 
-# To delete the whole mess in order to start over, paste this into https://wat/_plugin/kibana/app/kibana#/dev_tools/console
-"""
-POST messages/message/_delete_by_query?conflicts=proceed
-{
-  "query": {
-    "match_all": {}
-  }
-}
-"""
+
+def _delete_everything_and_start_over(es):
+    es.delete_by_query(index='messages',
+                       body={'query': {'match_all': {}}},
+                       conflicts='proceed',
+                       request_timeout=60)
 
 # I don't want the actual URL here since the server's permissions are
 # too lax, and anything in this file will wind up on github
