@@ -3,11 +3,17 @@ entry to elasticsearch.
 
 """
 
+# This is surprsingly slow; I suspect I want to use the "bulk
+# ingestion" API
+# (https://www.elastic.co/guide/en/elasticsearch/reference/5.4/docs-bulk.html)
+
 import hashlib
 import os
 import pprint
 import progressbar              # pip install progressbar2
+import queue
 import requests
+import threading
 
 # I don't want the actual URL here since its permissions are too lax,
 # and anything in this file will wind up on github
@@ -27,7 +33,27 @@ def compute_document_url(line):
         short_hash(line))
 
 
+def worker():
+    while True:
+        item = work_queue.get()
+        if item is None:
+            break
+        response = requests.put(url=item['url'],
+                                data=item['data']).json()
+
+        if response.get('error'):
+            pprint.pprint(response)
+            exit(1)
+
+        work_queue.task_done()
+
+
 if __name__ == "__main__":
+    work_queue = queue.Queue(maxsize=100)
+    threads = [threading.Thread(target=worker) for _ in range(10)]
+    for t in threads:
+        t.start()
+
     with open('big-log.json', 'rb') as inf:
         progress = progressbar.ProgressBar(max_value=os.fstat(inf.fileno()).st_size)
 
@@ -38,14 +64,19 @@ if __name__ == "__main__":
         lines_read = 1
         while line:
             url = compute_document_url(line)
-            response = requests.put(url=url, data=line).json()
-
-            if response.get('error'):
-                pprint.pprint(response)
-                exit(1)
+            work_queue.put(dict(url=url, data=line))
 
             if (lines_read % 100) == 0:
                 progress.update(inf.tell())
 
             line = inf.readline()
             lines_read += 1
+
+    work_queue.join()
+
+    # stop workers
+    for t in threads:
+        work_queue.put(None)
+
+    for t in threads:
+        t.join()
