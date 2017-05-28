@@ -4,7 +4,6 @@ entry to elasticsearch.
 """
 
 import hashlib
-import json
 import os
 import pprint
 import progressbar              # pip install progressbar2
@@ -18,22 +17,18 @@ ELASTICSEARCH_DOMAIN_MESSAGE_CONTAINER = '/messages/message'
 
 
 def short_hash(stuff):
-    return hashlib.sha256(stuff).hexdigest()[0:4]
+    return hashlib.sha256(stuff).hexdigest()[0:8]
 
 
-def compute_message_id(entry):
-    return '{}-{}'.format(entry['timestamp'], short_hash(entry['text'].encode('utf-8')))
-
-
-def compute_document_url(entry):
+def compute_document_url(line):
     return 'https://{}/{}/{}'.format(
         ELASTICSEARCH_DOMAIN_ENDPOINT,
         ELASTICSEARCH_DOMAIN_MESSAGE_CONTAINER,
-        compute_message_id(entry))
+        short_hash(line))
 
 
 if __name__ == "__main__":
-    with open('big-log.json') as inf:
+    with open('big-log.json', 'rb') as inf:
         progress = progressbar.ProgressBar(max_value=os.fstat(inf.fileno()).st_size)
 
         # Oddly, we can't use "for line in inf:" here, because that
@@ -42,10 +37,8 @@ if __name__ == "__main__":
         line = inf.readline()
         lines_read = 1
         while line:
-            entry = json.loads(line)
-
-            url = compute_document_url(entry)
-            response = requests.put(url=url, json=entry).json()
+            url = compute_document_url(line)
+            response = requests.put(url=url, data=line).json()
 
             if response.get('error'):
                 pprint.pprint(response)
