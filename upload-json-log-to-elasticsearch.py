@@ -68,6 +68,12 @@ def line_batcher(inf, number_of_lines):
 
 
 def _get_hwm(es):
+    """Return the timestamp of the newest message currently in elasticsearch.
+
+    This lets us save gobs of time when bulk-uploading, by simply
+    skipping documents that we've presumably already uploaded.
+
+    """
     # e.g. {'hits': {'hits': [{'_source': {'timestamp': '2017-02-15T10:40:07Z'}}]}}
     result = es.search (index='messages',
                         size=1,
