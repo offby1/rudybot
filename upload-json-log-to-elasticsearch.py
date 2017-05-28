@@ -7,8 +7,8 @@ import hashlib
 import json
 import os
 import pprint
+import progressbar              # pip install progressbar2
 import requests
-import sys
 
 # I don't want the actual URL here since its permissions are too lax,
 # and anything in this file will wind up on github
@@ -34,7 +34,14 @@ def compute_document_url(entry):
 
 if __name__ == "__main__":
     with open('big-log.json') as inf:
-        for line in inf:
+        progress = progressbar.ProgressBar(max_value=os.fstat(inf.fileno()).st_size)
+
+        # Oddly, we can't use "for line in inf:" here, because that
+        # causes the "tell" method to raise an exception.
+        # https://stackoverflow.com/a/42150352/20146
+        line = inf.readline()
+        lines_read = 1
+        while line:
             entry = json.loads(line)
 
             url = compute_document_url(entry)
@@ -44,5 +51,8 @@ if __name__ == "__main__":
                 pprint.pprint(response)
                 exit(1)
 
-            print('.', end='', file=sys.stderr)
-    print(file=sys.stderr)
+            if (lines_read % 100) == 0:
+                progress.update(inf.tell())
+
+            line = inf.readline()
+            lines_read += 1
