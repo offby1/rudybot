@@ -9,3 +9,4 @@ compiled
 parsed-log
 sandbox-log
 /nohup.out
+/__pycache__/
