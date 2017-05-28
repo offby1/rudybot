@@ -1,15 +1,14 @@
 """Read the log stream produced by log-to-json.rkt, and upload each
 entry to elasticsearch.
 
-Obviously this is forehead-smackingly inefficient, but so far I've
-been to lazy to break out boto3 and do it properly.
-
 """
 
 import hashlib
 import json
 import os
-import subprocess
+import pprint
+import requests
+import sys
 
 # I don't want the actual URL here since its permissions are too lax,
 # and anything in this file will wind up on github
@@ -27,7 +26,7 @@ def compute_message_id(entry):
 
 
 def compute_document_url(entry):
-    return '{}/{}/{}'.format(
+    return 'https://{}/{}/{}'.format(
         ELASTICSEARCH_DOMAIN_ENDPOINT,
         ELASTICSEARCH_DOMAIN_MESSAGE_CONTAINER,
         compute_message_id(entry))
@@ -39,9 +38,11 @@ if __name__ == "__main__":
             entry = json.loads(line)
 
             url = compute_document_url(entry)
-            commandline = ['curl', '-XPUT', url, '-d', json.dumps(entry)]
-            curl_process = subprocess.run(commandline, stdout=subprocess.PIPE)
-            response = json.loads(curl_process.stdout)
-            Message = response.get('Message')
-            if Message and "not authorized" in Message:
+            response = requests.put(url=url, json=entry).json()
+
+            if response.get('error'):
+                pprint.pprint(response)
                 exit(1)
+
+            print('.', end='', file=sys.stderr)
+    print(file=sys.stderr)
