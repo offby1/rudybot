@@ -33,6 +33,9 @@ def short_hash(stuff):
 
 
 def ingest_one_batch(es, batch_of_lines, newest_already_uploaded_timestamp):
+    if newest_already_uploaded_timestamp is None:
+        newest_already_uploaded_timestamp = ''
+
     index_action_dicts = []
     for line in batch_of_lines:
         data = json.loads(line)
@@ -79,6 +82,9 @@ def _get_hwm(es):
                         size=1,
                         filter_path=['hits.hits._source.timestamp'],
                         sort='timestamp:desc')
+    if not result:
+        return None
+
     return result['hits']['hits'][0]['_source']['timestamp']
 
 
