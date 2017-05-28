@@ -7,13 +7,26 @@ entry to elasticsearch.
 # ingestion" API
 # (https://www.elastic.co/guide/en/elasticsearch/reference/5.4/docs-bulk.html)
 
+# To delete the whole mess in order to start over, paste this into https://wat/_plugin/kibana/app/kibana#/dev_tools/console
+# POST messages/message/_delete_by_query?conflicts=proceed
+# {
+#   "query": {
+#     "match_all": {}
+#   }
+# }
+
 import hashlib
+import json
 import os
 import pprint
-import progressbar              # pip install progressbar2
 import queue
-import requests
 import threading
+
+import line_batcher
+
+import elasticsearch
+import elasticsearch.helpers
+import progressbar              # pip install progressbar2
 
 # I don't want the actual URL here since its permissions are too lax,
 # and anything in this file will wind up on github
@@ -34,16 +47,30 @@ def compute_document_url(line):
 
 
 def worker():
+    es = elasticsearch.Elasticsearch(hosts=[
+        {
+            'host': ELASTICSEARCH_DOMAIN_ENDPOINT,
+            'use_ssl': True,
+            'port': 443,
+        }
+    ])
     while True:
-        item = work_queue.get()
-        if item is None:
+        batch_of_lines = work_queue.get()
+        if batch_of_lines is None:
             break
-        response = requests.put(url=item['url'],
-                                data=item['data']).json()
 
-        if response.get('error'):
-            pprint.pprint(response)
-            exit(1)
+        index_action_dicts = []
+        for line in batch_of_lines:
+            data = json.loads(line)
+            data.update(
+                {
+                    '_index': 'messages',
+                    '_type': 'message',
+                    '_id': short_hash(line.encode('utf-8'))
+                })
+            index_action_dicts.append(data)
+
+        elasticsearch.helpers.bulk(es, index_action_dicts)
 
         work_queue.task_done()
 
@@ -54,23 +81,16 @@ if __name__ == "__main__":
     for t in threads:
         t.start()
 
-    with open('big-log.json', 'rb') as inf:
+    with open('big-log.json') as inf:
         progress = progressbar.ProgressBar(max_value=os.fstat(inf.fileno()).st_size)
 
         # Oddly, we can't use "for line in inf:" here, because that
         # causes the "tell" method to raise an exception.
         # https://stackoverflow.com/a/42150352/20146
-        line = inf.readline()
-        lines_read = 1
-        while line:
-            url = compute_document_url(line)
-            work_queue.put(dict(url=url, data=line))
+        for batch in line_batcher.batch(inf, 50000):
+            work_queue.put(batch)
 
-            if (lines_read % 100) == 0:
-                progress.update(inf.tell())
-
-            line = inf.readline()
-            lines_read += 1
+            progress.update(inf.tell())
 
     work_queue.join()
 
