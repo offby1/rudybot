@@ -15,11 +15,11 @@ def keep_looking_for_witticism(*args):
     for minimum in ("90%", "60%", "30%"):
         hits = find_witticism(*args, minimum_should_match=minimum)
         if hits:
-            _e(f'Found {len(hits)} hits with {minimum}')
+            _e('Found {} hits with {}'.format(len(hits), minimum))
             return hits
         else:
-            _e(f'No hits with {minimum}')
-    _e(f'Nuts')
+            _e('No hits with {}'.format(minimum))
+    _e('Nuts')
 
 
 HITS_TO_FETCH = 10

@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     newest_already_uploaded_timestamp = _get_hwm(es)
 
-    print(f'Will only upload records more recent than {newest_already_uploaded_timestamp}')
+    print('Will only upload records more recent than {}'.format(newest_already_uploaded_timestamp))
 
     with open('big-log.json') as inf:
         with progressbar.ProgressBar(max_value=os.fstat(inf.fileno()).st_size) as progress:
