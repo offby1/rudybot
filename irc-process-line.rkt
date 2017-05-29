@@ -924,6 +924,9 @@
         words))))
   (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
 
+  (define (trim-trailing-newline str)
+    (regexp-replace #rx"\n$" str ""))
+
   ;; Ideally we'd prevent ACTION from getting into the corpus in the
   ;; first place.  See https://github.com/offby1/rudybot/issues/14
   (define (trim-ACTION str)
@@ -938,7 +941,8 @@
        (lambda ()
          (reply "~a"
                 (trim-ACTION
-                 (trim-leading-nick incubot-witticism))))))
+                 (trim-leading-nick
+                  (trim-trailing-newline incubot-witticism)))))))
 
 ;; ----------------------------------------------------------------------------
 ;; Main dispatchers
