@@ -1,3 +1,4 @@
+import datetime
 import os
 import pprint
 import random
@@ -74,7 +75,8 @@ def find_witticism(input_string, timestamp_of_input, minimum_should_match):
 @click.command()
 @click.argument('text', nargs=-1)
 def main(text):
-    wits_hits = keep_looking_for_witticism(' '.join(text), "2017-05-28T22:54:14Z")
+    iso_3339_now = datetime.datetime.utcnow().isoformat() + 'Z'
+    wits_hits = keep_looking_for_witticism(' '.join(text), iso_3339_now)
     if wits_hits:
         print(random.choice(wits_hits[0:HITS_TO_FETCH])['_source']['text'])
 
