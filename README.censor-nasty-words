@@ -1,3 +1,7 @@
+-- If we were still using sqlite for the witticisms, we'd do the
+-- below.  However, we're now using AWS Elasticsearch.  I assume it's
+-- easy to delete "documents" from it, but don't quite know how.
+
 -- Let's delete all traces of the word "nasty", because that's a nasty word.
 
 DELETE FROM f_log

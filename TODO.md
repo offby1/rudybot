@@ -27,13 +27,6 @@ combine it with
 [Cloudsearch](http://docs.aws.amazon.com/cloudsearch/latest/developerguide/what-is-cloudsearch.html)
 
 # Incubot
-## Publish the last few "logs"
-
-For example, if someone says to him "you are clever" and he responds
-"I have a clever idea", there'll be messages like "incubot chose
-'clever'" in the log output ... make those messages accessible via
-HTTP so that people can tell why he said what he said.
-
 ## A 'censor' command
 defverb #:master (censor objectionable_words) ...
 
@@ -119,24 +112,6 @@ demonstrate the value, so let's take a real example:
 That utterance is so long that you could die of boredom before getting
 to the bit that uses the word "enhance".  _That_ is why we should
 favor utterances where the word appears early.
-
-# Run as 'nobody' or some other user without permissions
-
-This hopefully won't require a code change, but it'd be good if it
-_didn't_ run as me, since if it did, it could conceivably read my
-Sekrit files.
-
-I am not aware, off the top of my head, of an easy way to do this
-without a code change :-|  Presumably some supervisor-like system
-could do this for me, but the one I'm currently using -- "upstart" (on
-Amazon Linux) doesn't let me specify a run-as UID, damn it.  Maybe I
-can just wedge a "su" or "sudo" invocation into the upstart config
-file ... although I dimly recall that that doesn't work for some
-obscure reason.
-
-If all else fails, I can perhaps get the program to invoke "setuid"
-and/or "setgid", although Racket doesn't provide functions for that;
-I'd have to use the FFI.
 
 # Amend "quotes" list
 

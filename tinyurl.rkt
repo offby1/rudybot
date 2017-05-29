@@ -31,7 +31,9 @@
    port->string))
 
 ;; *groan* Now that I've added spam protection to teensy.info, these
-;; tests fail with HTTP 401!  Dunno what to do about that.
+;; tests fail with HTTP 401!  Dunno what to do about that.  Run 'em on
+;; the ec2 box, I guess, since ISTR that teensy has effecively
+;; whitelisted that box's IP address.
 (module+ test
  (define tinyurl-tests
 
