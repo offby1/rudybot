@@ -10,3 +10,4 @@ parsed-log
 sandbox-log
 /nohup.out
 /__pycache__/
+elasticsearch.venv

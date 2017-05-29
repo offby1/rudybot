@@ -909,7 +909,19 @@
 ;; Incubot-like
 
 (define (get-incubot-witticism words)
-  (define incubot-witticism ((*incubot-server*) 'get (map string-downcase words)))
+  (define incubot-witticism
+    (with-output-to-string
+      (thunk
+       (apply
+        system*
+        "/usr/bin/env"
+        "LANG=en_US.UTF-8"
+        (format
+         "ELASTICSEARCH_DOMAIN_ENDPOINT=~a"
+         (get-preference '|ELASTICSEARCH_DOMAIN_ENDPOINT|))
+        "./elasticsearch.venv/bin/python3"
+        "wit.py"
+        words))))
   (define (strip-just-one rx) (curryr (curry regexp-replace rx) ""))
 
   ;; Ideally we'd prevent ACTION from getting into the corpus in the
