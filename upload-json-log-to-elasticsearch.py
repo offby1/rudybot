@@ -52,7 +52,7 @@ def ingest_one_batch(es, batch_of_lines, newest_already_uploaded_timestamp):
     if index_action_dicts:
         elasticsearch.helpers.bulk(es, index_action_dicts)
 
-    return sum((len(l) for l in batch))
+    return sum((len(l) for l in batch_of_lines))
 
 
 LINES_PER_BATCH = 50000
