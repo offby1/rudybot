@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import pprint
 import random
@@ -45,7 +46,7 @@ def find_witticism(input_string, timestamp_of_input, minimum_should_match):
 
     # https://www.elastic.co/guide/en/elasticsearch/reference/5.4/query-dsl-common-terms-query.html
 
-    response = es.search(
+    request = dict(
         body={
             "query": {
                 "bool": {
@@ -69,7 +70,14 @@ def find_witticism(input_string, timestamp_of_input, minimum_should_match):
             }
         },
         size=HITS_TO_FETCH)
+    json.dump(request,
+              sys.stderr,
+              indent=2,
+              sort_keys=True)
+
+    response = es.search(**request)
     _e(pprint.pformat(response))
+
     hits = response['hits']['hits']
     return hits
 
