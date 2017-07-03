@@ -78,7 +78,7 @@ def find_witticism(input_string, timestamp_of_input, minimum_should_match):
     response = es.search(**request)
     _e(pprint.pformat(response))
 
-    hits = response['hits']['hits']
+    hits = response['hits']['hits']  # they just keep on coming
     return hits
 
 
@@ -93,7 +93,7 @@ def get(text):
     iso_3339_now = datetime.datetime.utcnow().isoformat() + 'Z'
     wits_hits = keep_looking_for_witticism(' '.join(text), iso_3339_now)
     if wits_hits:
-        print(random.choice(wits_hits[0:HITS_TO_FETCH])['_source']['text'])
+        print(random.choice(wits_hits)['_source']['text'])
 
 
 def validate_timestamp(ctx, param, value):
@@ -127,13 +127,16 @@ def save(speaker, timestamp, target, text):
 
 
 if __name__ == "__main__":
+    host = os.getenv('ELASTICSEARCH_DOMAIN_ENDPOINT')
+    if not host:
+        print("This ain't gonna work until you set ELASTICSEARCH_DOMAIN_ENDPOINT in the environment")
+        exit(1)
     main.add_command(get)
     main.add_command(save)
 
-    ELASTICSEARCH_DOMAIN_ENDPOINT = os.getenv('ELASTICSEARCH_DOMAIN_ENDPOINT')
     es = elasticsearch.Elasticsearch(hosts=[
         {
-            'host': ELASTICSEARCH_DOMAIN_ENDPOINT,
+            'host': host,
             'use_ssl': True,
             'port': 443,
         }
