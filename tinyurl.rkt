@@ -33,6 +33,10 @@
 ;; *groan* Now that I've added spam protection to teensy.info, these
 ;; tests fail with HTTP 401!  Dunno what to do about that.
 (module+ test
+  ;; TODO -- skip these tests if they can't possibly succeed, such as
+  ;; when our host isn't the ec2 instance on which rudybot runs
+  ;; (teensy.info requires a "Captcha" thing in order to accept
+  ;; requests from other hosts)
  (define tinyurl-tests
 
    (test-suite
