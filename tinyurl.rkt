@@ -35,6 +35,10 @@
 ;; the ec2 box, I guess, since ISTR that teensy has effecively
 ;; whitelisted that box's IP address.
 (module+ test
+  ;; TODO -- skip these tests if they can't possibly succeed, such as
+  ;; when our host isn't the ec2 instance on which rudybot runs
+  ;; (teensy.info requires a "Captcha" thing in order to accept
+  ;; requests from other hosts)
  (define tinyurl-tests
 
    (test-suite

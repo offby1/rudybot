@@ -294,6 +294,10 @@
               (when (equal? target "#emacs")
                 (pm target "\1ACTION waves his hands and intones 'Abracadabra'\1"))
               ]
+             [",᠁"                      ;From hell's heart I stab at thee.
+              (when (equal? target "#emacs")
+                (pm target "\1ACTION lobs a wicked insult at fsbot\1"))
+              ]
              [_
               ((*incubot-server*)
                'put-string
