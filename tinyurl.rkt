@@ -27,7 +27,7 @@
           ,(path/param "" '()))
         `((input_url . ,long-url))
         #f)
-   get-pure-port/gack
+   (lambda (url) (get-pure-port/gack url '("Accept:text/json")))
    port->string))
 
 ;; *groan* Now that I've added spam protection to teensy.info, these
