@@ -17,7 +17,7 @@
 (provide/contract [make-tiny-url (string? . -> . string?)])
 (define (make-tiny-url long-url)
   (call/input-url
-   (url "http"
+   (url "https"
         #f
         "teensy.info"
         #f
@@ -45,7 +45,7 @@
      "absurdly long"
      (check-equal?
       (make-tiny-url "http://www.badastronomy.com/bablog/2008/05/26/best-image-ever/whoa/baby/surely-this-URL-is-long-enough-to-make-tiny")
-      "http://teensy.info/dloXC4cxoW"))
+      "https://teensy.info/dloXC4cxoW"))
     (test-case
      "photo.net"
      (with-handlers
@@ -55,5 +55,5 @@
                       "Can't contact the URL shortener; skipping the test~%"))])
        (check-equal?
         (make-tiny-url "http://photo.net")
-        "http://teensy.info/do55JLwjk5")))))
+        "https://teensy.info/do55JLwjk5")))))
  (run-tests tinyurl-tests 'verbose))
