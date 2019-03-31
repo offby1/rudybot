@@ -4,6 +4,6 @@ tags:
 
 TAGS: tags
 
-.PHONY: check
-check:
+.PHONY: check test
+check test:
 	raco test -x .
