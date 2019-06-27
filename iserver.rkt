@@ -72,6 +72,12 @@
 
                  (begin
                    (log (format "W00t" ))
+                   ;; 2019-06-27T13:36 Z
+                   ;; <JordiGH> offby1: Maaaakkkke it reply with the thing in the log immediately after the found hit.
+                   ;; <offby1> JordiGH: Thaaaaaatttte would be even more random than what it does currently
+                   ;; <JordiGH> No it wouldn't.
+                   ;; <JordiGH> It's more likely to be a reply.
+
                    (car texts))))))))
 
 (provide make-incubot-server)
