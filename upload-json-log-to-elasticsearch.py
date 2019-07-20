@@ -12,12 +12,11 @@ import hashlib
 import json
 import os
 
-import botocore.configloader    # pip install botocore
-import elasticsearch            # pip install elasticsearch
+import es_client
+
 import elasticsearch.exceptions
 import elasticsearch.helpers
 import progressbar              # pip install progressbar2
-from requests_aws4auth import AWS4Auth # pip install requests-aws4auth
 
 
 # Everything goes here.  We create this if it does't already exist.
@@ -29,12 +28,6 @@ def _delete_everything_and_start_over(es):
                        body={'query': {'match_all': {}}},
                        conflicts='proceed',
                        request_timeout=60)
-
-
-# I don't want the actual URL here since the server's permissions are
-# too lax, and anything in this file will wind up on github
-# This should be the same as the value in ~/.racket/racket-prefs.rktd
-ELASTICSEARCH_DOMAIN_ENDPOINT = os.getenv('ELASTICSEARCH_DOMAIN_ENDPOINT')
 
 
 def short_hash(stuff):
@@ -102,18 +95,11 @@ def _get_hwm(es):
     return result['hits']['hits'][0]['_source']['timestamp']
 
 
+# TODO -- use 'click' or something, and accept the name of an AWS
+# config "profile" on the command line, which defaults to "default"
+# Then use it in the multi_file_load_config calls below
 if __name__ == "__main__":
-    es = elasticsearch.Elasticsearch(
-        connection_class=elasticsearch.RequestsHttpConnection,
-        hosts=[{'host': ELASTICSEARCH_DOMAIN_ENDPOINT, 'port': 443,}],
-        http_auth=AWS4Auth(
-            botocore.configloader.multi_file_load_config("~/.aws/credentials")['profiles']['default']['aws_access_key_id'],
-            botocore.configloader.multi_file_load_config("~/.aws/credentials")['profiles']['default']['aws_secret_access_key'],
-            botocore.configloader.multi_file_load_config("~/.aws/config")['profiles']['default']['region'],
-            'es'),
-        use_ssl=True,
-        verify_certs=True,
-    )
+    es = es_client.get_es_client()
 
     newest_already_uploaded_timestamp = _get_hwm(es)
 

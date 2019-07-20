@@ -6,6 +6,8 @@ import random
 import re
 import sys
 
+import es_client
+
 import arrow                    # pip install arrow
 import click                    # pip install click
 import elasticsearch            # pip install elasticsearch
@@ -134,12 +136,6 @@ if __name__ == "__main__":
     main.add_command(get)
     main.add_command(save)
 
-    es = elasticsearch.Elasticsearch(hosts=[
-        {
-            'host': host,
-            'use_ssl': True,
-            'port': 443,
-        }
-    ])
+    es = es_client.get_es_client()
 
     main()
