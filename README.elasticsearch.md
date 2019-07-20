@@ -3,6 +3,9 @@ and various config describing it.
 
 I've done it once before but can't remember how I did it; watch as I try to recreate it.
 
+btw the client I'm using isn't part of boto, oddly; instead it's
+https://elasticsearch-py.readthedocs.io/en/master/
+
 - Went to https://us-west-1.console.aws.amazon.com/es/home?region=us-west-1#create-domain, started clicking buttons
   I chose that region because rudybot runs on my one ec2 instance that is in that same region.
 
@@ -49,3 +52,15 @@ I've done it once before but can't remember how I did it; watch as I try to recr
 
 After enabling logging, it's clear my requests aren't being signed _at all_, so no wonder I'm getting a 403.
 Maybe I just need to pass some more environment-variable mojo.
+
+[Docs for the
+client](https://elasticsearch-py.readthedocs.io/en/master/#compatibility)
+say I should be using `elasticsearch>=6.0.0,<7.0.0`, since the version
+of Elasticsearch is 6.7
+
+    :-) 2019-07-20T22:21:32+0000 [ip-10-0-0-79 ~]$ aws es  describe-elasticsearch-domain --domain-name rudybot-witticisms | fgrep ElasticsearchVersion
+            "ElasticsearchVersion": "6.7",
+
+Downgrading didn't help.
+
+https://elasticsearch-py.readthedocs.io/en/master/#running-on-aws-with-iam seems to describe how I'd expect it to work.

@@ -15,6 +15,7 @@ import os
 import elasticsearch            # pip install elasticsearch
 import elasticsearch.helpers
 import progressbar              # pip install progressbar2
+from requests_aws4auth import AWS4Auth # pip install requests-aws4auth
 
 
 def _delete_everything_and_start_over(es):
@@ -91,13 +92,13 @@ def _get_hwm(es):
 
 
 if __name__ == "__main__":
-    es = elasticsearch.Elasticsearch(hosts=[
-        {
-            'host': ELASTICSEARCH_DOMAIN_ENDPOINT,
-            'use_ssl': True,
-            'port': 443,
-        }
-    ])
+    es = elasticsearch.Elasticsearch(
+        connection_class=elasticsearch.RequestsHttpConnection,
+        hosts=[{'host': ELASTICSEARCH_DOMAIN_ENDPOINT, 'port': 443,}],
+        http_auth=AWS4Auth(ACCESS_KEY, SECRET_KEY, REGION, 'es'),
+        use_ssl=True,
+        verify_certs=True,
+    )
 
     newest_already_uploaded_timestamp = _get_hwm(es)
 
