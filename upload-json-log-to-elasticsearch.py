@@ -14,13 +14,18 @@ import os
 
 import botocore.configloader    # pip install botocore
 import elasticsearch            # pip install elasticsearch
+import elasticsearch.exceptions
 import elasticsearch.helpers
 import progressbar              # pip install progressbar2
 from requests_aws4auth import AWS4Auth # pip install requests-aws4auth
 
 
+# Everything goes here.  We create this if it does't already exist.
+MESSAGES_INDEX_NAME = 'messages'
+
+
 def _delete_everything_and_start_over(es):
-    es.delete_by_query(index='messages',
+    es.delete_by_query(index=MESSAGES_INDEX_NAME,
                        body={'query': {'match_all': {}}},
                        conflicts='proceed',
                        request_timeout=60)
@@ -47,7 +52,7 @@ def ingest_one_batch(es, batch_of_lines, newest_already_uploaded_timestamp):
         if timestamp >= newest_already_uploaded_timestamp:
             data.update(
                 {
-                    '_index': 'messages',
+                    '_index': MESSAGES_INDEX_NAME,
                     '_type': 'message',
                     '_id': short_hash(line.encode('utf-8'))
                 })
@@ -82,10 +87,15 @@ def _get_hwm(es):
 
     """
     # e.g. {'hits': {'hits': [{'_source': {'timestamp': '2017-02-15T10:40:07Z'}}]}}
-    result = es.search (index='messages',
-                        size=1,
-                        filter_path=['hits.hits._source.timestamp'],
-                        sort='timestamp:desc')
+    result = None
+    try:
+        result = es.search (index=MESSAGES_INDEX_NAME,
+                            size=1,
+                            filter_path=['hits.hits._source.timestamp'],
+                            sort='timestamp:desc')
+    except elasticsearch.exceptions.NotFoundError:
+        pass
+
     if not result:
         return None
 
