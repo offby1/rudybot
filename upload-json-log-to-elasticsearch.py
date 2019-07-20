@@ -23,8 +23,10 @@ def _delete_everything_and_start_over(es):
                        conflicts='proceed',
                        request_timeout=60)
 
+
 # I don't want the actual URL here since the server's permissions are
 # too lax, and anything in this file will wind up on github
+# This should be the same as the value in ~/.racket/racket-prefs.rktd
 ELASTICSEARCH_DOMAIN_ENDPOINT = os.getenv('ELASTICSEARCH_DOMAIN_ENDPOINT')
 
 
