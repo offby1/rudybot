@@ -70,3 +70,36 @@ me.
 
 Uploading now; the progress bar suggests it'll take about 20 minutes
 total for the big-log.json file which is 1226075745 bytes.
+
+After yet more policy fiddling, I can access kibana reasonably safely:
+
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "*"
+          },
+          "Action": "es:*",
+          "Resource": "arn:aws:es:us-west-1:661326993281:domain/rudybot-witticisms/*"
+        }
+      ]
+    }
+
+I ssh to my usual EC2 instance like so
+
+    ssh -L4430:SEKRIT-ELASTICSEARCH-DOMAN-NAME.us-west-1.es.amazonaws.com:443 -t ec2 tmux attach -d
+
+Then on the laptop I go to
+
+    https://localhost:4430/_plugin/kibana/app/kibana#/home?_g=()
+
+... after telling it to unclench about the SSL cert of course.
+
+I can't swear to it, but I think access to the endpoint is restricted
+to just my "VPC", which ... uh in English I think means only my EC2
+instance can connect to it.
+
+Which further means that I don't need to keep the domain name secret,
+but let's continue doing that anyway.
