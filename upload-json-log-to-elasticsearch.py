@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 
+import botocore.configloader    # pip install botocore
 import elasticsearch            # pip install elasticsearch
 import elasticsearch.helpers
 import progressbar              # pip install progressbar2
@@ -95,7 +96,11 @@ if __name__ == "__main__":
     es = elasticsearch.Elasticsearch(
         connection_class=elasticsearch.RequestsHttpConnection,
         hosts=[{'host': ELASTICSEARCH_DOMAIN_ENDPOINT, 'port': 443,}],
-        http_auth=AWS4Auth(ACCESS_KEY, SECRET_KEY, REGION, 'es'),
+        http_auth=AWS4Auth(
+            botocore.configloader.multi_file_load_config("~/.aws/credentials")['profiles']['default']['aws_access_key_id'],
+            botocore.configloader.multi_file_load_config("~/.aws/credentials")['profiles']['default']['aws_secret_access_key'],
+            botocore.configloader.multi_file_load_config("~/.aws/config")['profiles']['default']['region'],
+            'es'),
         use_ssl=True,
         verify_certs=True,
     )
