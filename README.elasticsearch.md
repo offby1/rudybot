@@ -13,4 +13,39 @@ I've done it once before but can't remember how I did it; watch as I try to recr
 - after updating the semi-random endpoint, and trying "python3 upload-json-log-to-elasticsearch.py", it dies with
   elasticsearch.exceptions.AuthorizationException: AuthorizationException(403, '{"Message":"User: anonymous is not authorized to perform: es:ESHttpGet"}')
 
-No idea how that used to work :-|
+  No idea how that used to work :-|
+
+- the access policy at https://us-west-1.console.aws.amazon.com/es/home?region=us-west-1#domain:resource=rudybot-witticisms;action=access-policy is
+
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::661326993281:root"
+            },
+            "Action": "es:*",
+            "Resource": "arn:aws:es:us-west-1:661326993281:domain/rudybot-witticisms/*"
+          }
+        ]
+      }
+
+- Created arn:aws:iam::661326993281:policy/ElasticSearchFullAccess, which looks like this
+
+      {
+          "Version": "2012-10-17",
+          "Statement": [
+              {
+                  "Sid": "VisualEditor0",
+                  "Effect": "Allow",
+                  "Action": "es:*",
+                  "Resource": "*"
+              }
+          ]
+      }
+
+  ... attached that to my EC2 instance's IAM role arn:aws:iam::661326993281:role/teensy-server ... let's see if that does anything
+
+After enabling logging, it's clear my requests aren't being signed _at all_, so no wonder I'm getting a 403.
+Maybe I just need to pass some more environment-variable mojo.
