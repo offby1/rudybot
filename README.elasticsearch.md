@@ -63,4 +63,10 @@ of Elasticsearch is 6.7
 
 Downgrading didn't help.
 
-https://elasticsearch-py.readthedocs.io/en/master/#running-on-aws-with-iam seems to describe how I'd expect it to work.
+https://elasticsearch-py.readthedocs.io/en/master/#running-on-aws-with-iam
+works.  It isn't smart enough to read the files under ~/.aws for me
+(let alone use the EC2-IAM role thing), but botocore will do that for
+me.
+
+Uploading now; the progress bar suggests it'll take about 20 minutes
+total for the big-log.json file which is 1226075745 bytes.
