@@ -497,10 +497,10 @@
       [_ (reply "~a" q)])))
 
 (defverb (source) "my source location"
-  (reply "git clone git://github.com/offby1/rudybot.git"))
+  (reply "git clone git://gitlab.com/offby1/rudybot.git"))
 
 (defverb (url) "my web page"
-  (reply "https://github.com/offby1/rudybot"))
+  (reply "https://gitlab.com/offby1/rudybot"))
 
 (defverb (g query ...) "Do a Google search"
   (let ((search-string  (string-join query " ")))
