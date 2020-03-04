@@ -20,9 +20,12 @@ think of the steps at the moment), then
 
 - [rfc1459][]
 - [ctcpspec][]
+- [ircv3][]
 
 [rfc1459]: http://tools.ietf.org/html/rfc1459
 [ctcpspec]: http://www.irchelp.org/irchelp/rfc/ctcpspec.html
+[ircv3]: https://ircv3.net/
+
 
 # Backups
 
