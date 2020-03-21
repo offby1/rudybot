@@ -25,7 +25,7 @@
   (make-parameter (from-env "BOTPASSWD" (get-preference '|rudybot-freenode-nickserv-password|))))
 (define *bot-gives-up-after-this-many-silent-seconds* (make-parameter 250))
 (define *irc-server-hostname* (make-parameter "localhost"))
-(define *irc-server-port* (make-parameter "6667"))
+(define *irc-server-port* (make-parameter "6697"))
 
 (define *sandboxes* (make-hash))
 (define *max-values-to-display* 5)

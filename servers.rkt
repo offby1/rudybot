@@ -6,11 +6,13 @@
          "quotes.rkt"
          "clearenv.rkt"
          (only-in "iserver.rkt" make-incubot-server)
+         (only-in openssl ssl-connect)
          scheme/port)
 
 (define (real-server)
-  (let-values ([(ip op) (tcp-connect (*irc-server-hostname*)
-                                     (*irc-server-port*))])
+  (let-values ([(ip op) (ssl-connect (*irc-server-hostname*)
+                                     (*irc-server-port*)
+                                     'secure)])
     (file-stream-buffer-mode op 'line)
     (values ip op)))
 

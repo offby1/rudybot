@@ -31,7 +31,7 @@
   ;;   (read-eval-print-loop))
 
   (parameterize* ([*irc-server-hostname* "chat.freenode.org"]
-                  [*irc-server-port* 6667]
+                  [*irc-server-port* 6697]
                   [*userinfo-database-directory-name* "userinfo.db"]
                   [*incubot-logger* log]
                   [*incubot-server* (make-incubot-server)])
