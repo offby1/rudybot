@@ -1,5 +1,8 @@
 #lang racket
 
+;; if porting this to Python, consider using either https://github.com/google/nsjail or
+;; https://github.com/python-discord/snekbox (which is based upon it).
+
 (require racket/sandbox
          net/url)
 
