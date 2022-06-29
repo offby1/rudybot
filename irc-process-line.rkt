@@ -114,7 +114,7 @@
     (if (*nickserv-password*)
           (begin
             (out "NICK ~a" (unbox *my-nick*))
-            (out "USER luser unknown-host localhost :Eric Hanchrow's bot, version ~a"
+            (out "USER luser unknown-host localhost :Amin Bandali's bot, version ~a"
                  (git-version))
             (out "AUTHENTICATE PLAIN"))
           (log "I'd register my nick, if I had a password."))
@@ -191,7 +191,7 @@
          (when (equal? "VERSION" request-word)
            (pm #:notice? #t
                nick
-               "\u0001VERSION ~a (eric.hanchrow@gmail.com):v4.~a:Racket scheme version ~a on ~a\0001"
+               "\u0001VERSION ~a (bandali@gnu.org):v4.~a:Racket scheme version ~a on ~a\0001"
                (unbox *my-nick*)
                (git-version)
                (version)
